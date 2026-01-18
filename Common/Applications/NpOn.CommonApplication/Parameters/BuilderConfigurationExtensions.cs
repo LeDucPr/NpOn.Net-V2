@@ -1,6 +1,6 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
 
-namespace Common.Extensions.NpOn.CommonApplication.Parameters;
+namespace Common.Applications.NpOn.CommonApplication.Parameters;
 
 public static class BuilderConfigurationExtensions
 {

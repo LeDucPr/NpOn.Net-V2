@@ -1,6 +1,6 @@
 ﻿using Common.Extensions.NpOn.CommonInternalCache;
 
-namespace Common.Extensions.NpOn.CommonApplication.Builders;
+namespace Common.Applications.NpOn.CommonApplication.Builders;
 
 public static class BuilderExtensions
 {

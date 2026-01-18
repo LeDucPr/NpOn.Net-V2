@@ -1,4 +1,4 @@
-﻿namespace Common.Extensions.NpOn.CommonWebApplication.Services;
+﻿namespace Common.Applications.NpOn.CommonApplication.Utils;
 
 public interface ILogAction
 {

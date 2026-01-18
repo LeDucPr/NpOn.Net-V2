@@ -1,6 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonWebApplication.Services;
-
-namespace Common.Extensions.NpOn.CommonApplication.Utils;
+﻿namespace Common.Applications.NpOn.CommonApplication.Utils;
 
 public class LogAction : ILogAction
 {

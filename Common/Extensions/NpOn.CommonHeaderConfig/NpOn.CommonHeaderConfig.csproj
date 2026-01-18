@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Extensions.NpOn.HeaderConfig</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0"/>
+        <PackageReference Include="protobuf-net" Version="3.2.56"/>
+        <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.187"/>
+        <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.0.187"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
+        <ProjectReference Include="..\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
+    </ItemGroup>
+    
+</Project>

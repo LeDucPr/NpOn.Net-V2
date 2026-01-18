@@ -1,13 +1,11 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using Common.Extensions.NpOn.CommonApplication.Builders;
-using Common.Extensions.NpOn.CommonApplication.Parameters;
-using Common.Extensions.NpOn.CommonApplication.Utils;
+using Common.Applications.NpOn.CommonApplication.Builders;
+using Common.Applications.NpOn.CommonApplication.Parameters;
+using Common.Applications.NpOn.CommonApplication.Utils;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -15,13 +13,14 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Serilog;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
-namespace Common.Extensions.NpOn.CommonApplication;
+namespace Common.Applications.NpOn.CommonApplication;
 
 public abstract class CommonProgram
 {
@@ -32,13 +31,15 @@ public abstract class CommonProgram
         Args = args;
     }
 
-    protected async Task RunAsync()
+    protected virtual async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
         builder.Configuration.InitGlobal();
         await builder.Services.AddCollectionServices(async (services) =>
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             ConfigureBaseServices(services);
+#pragma warning restore CS0618 // Type or member is obsolete
             await ConfigureServices(services);
             return services;
         });
@@ -391,6 +392,14 @@ public abstract class CommonProgram
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ConfigureEndpointDefaults(listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+            });
+        });
+
         // host-domain-start
         string hostDomain = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostDomain).AsDefaultString();
         var hostPort = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostPort).AsDefaultInt();
@@ -403,24 +412,4 @@ public abstract class CommonProgram
     }
 
     #endregion Private Methods
-}
-
-public class GuidEmptyAsNullConverter : System.Text.Json.Serialization.JsonConverter<Guid?>
-{
-    public override void Write(Utf8JsonWriter writer, Guid? value, JsonSerializerOptions options)
-    {
-        if (value == null || value == Guid.Empty)
-        {
-            // null → JSON engine will be ignored property WhenWritingNull
-            writer.WriteNullValue();
-            return;
-        }
-
-        writer.WriteStringValue(value.Value);
-    }
-
-    public override Guid? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        return reader.GetGuid();
-    }
 }
