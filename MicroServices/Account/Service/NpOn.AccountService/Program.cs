@@ -1,7 +1,6 @@
+using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using Common.Infrastructures.NpOn.DbFactory.Redis;
@@ -11,10 +10,13 @@ using MicroServices.Account.Service.NpOn.AccountService.Services;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
+using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.CommonGrpcApplication;
+using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
 
-public sealed class Program : CommonProgram
+public sealed class Program : GrpcCommonProgram
 {
     private Program(string[] args) : base(args)
     {
@@ -28,6 +30,8 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
+        services.AddConnectService(new GeneralServiceClientResolver(), null, EApplicationConfiguration.GeneralServiceUrl);
+        
         // Main Database (account)
         // services.AddSingleton<IDbFactoryWrapper>(_ =>
         // {

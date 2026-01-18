@@ -21,6 +21,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
       <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
       <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
     </ItemGroup>

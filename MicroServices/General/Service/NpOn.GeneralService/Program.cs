@@ -4,6 +4,7 @@ using Common.Extensions.NpOn.CommonWebApplication;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.CommonGrpcCall;
 
 namespace MicroServices.General.Service.NpOn.GeneralService;
 
@@ -21,6 +22,10 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
+        // call load balancing services 
+        services.AddConnectService(new GeneralServiceClientResolver(), null, EApplicationConfiguration.GeneralServiceUrl);
+        
+        // utils
         services.AddSingleton<IDbFactoryWrapper>(_ =>
         {
             string connectionString =

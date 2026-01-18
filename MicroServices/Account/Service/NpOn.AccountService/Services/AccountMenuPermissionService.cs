@@ -1,4 +1,4 @@
-using Common.Extensions.NpOn.CommonWebApplication.Services;
+using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;

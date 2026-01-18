@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj" />

@@ -1,6 +1,6 @@
-﻿using Common.Extensions.NpOn.CommonGrpcContract;
+﻿using Common.Applications.NpOn.CommonApplication.Services;
+using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;

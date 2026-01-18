@@ -1,10 +1,10 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;

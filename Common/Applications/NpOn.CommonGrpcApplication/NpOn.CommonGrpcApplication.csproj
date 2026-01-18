@@ -8,7 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\NpOn.CommonApplication\NpOn.CommonApplication.csproj" />
+        <PackageReference Include="protobuf-net" Version="3.2.56"/>
+        <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.187"/>
+        <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.0.187"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj" />
+        <ProjectReference Include="..\..\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj" />
+        <ProjectReference Include="..\NpOn.CommonApplication\NpOn.CommonApplication.csproj"/>
     </ItemGroup>
 
 </Project>
