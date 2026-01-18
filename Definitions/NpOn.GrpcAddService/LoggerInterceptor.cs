@@ -9,10 +9,10 @@ public class LoggerInterceptor(
     IHttpContextAccessor? httpContextAccessor
 ) : Interceptor
 {
-    private const string MicroserviceCallerUserName = "caller-user";
-    private const string MicroserviceCallerMachineName = "caller-machine";
-    private const string MicroserviceCallerOsVersion = "caller-os";
-    private const string MicroserviceCallerSessionCode = "caller-vnnss"; // session
+    private const string MicroserviceCallerUserName = "caller-npon-user";
+    private const string MicroserviceCallerMachineName = "caller-npon-machine";
+    private const string MicroserviceCallerOsVersion = "caller-npon-os";
+    private const string MicroserviceCallerSessionCode = "caller-npon-session"; // session (need override)/owner
     public string? Host { get; set; }
 
     public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(

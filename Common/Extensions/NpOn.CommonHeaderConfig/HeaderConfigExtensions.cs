@@ -4,15 +4,15 @@ namespace Common.Extensions.NpOn.HeaderConfig;
 
 public static class HeaderConfigExtensions
 {
-    public static IHeaderConfig? InitGrpcHeaderConfig(
+    public static GrpcHeaderConfig? InitGrpcHeaderConfig(
         EGrpcEndUseType endUseType,
         Dictionary<string, string>? headers = null
     ) => endUseType switch
     {
-        EGrpcEndUseType.ExternalServer when headers is not { Count: > 0 } => null,
+        EGrpcEndUseType.CallToExternalServer when headers is not { Count: > 0 } => null,
 
-        EGrpcEndUseType.InternalServer or
-            EGrpcEndUseType.ExternalServer or
+        EGrpcEndUseType.CallToInternalServer or
+            EGrpcEndUseType.CallToExternalServer or
             EGrpcEndUseType.Client => new GrpcHeaderConfig(endUseType, headers),
 
         _ => null

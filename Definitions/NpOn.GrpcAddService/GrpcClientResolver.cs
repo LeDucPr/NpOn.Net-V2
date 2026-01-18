@@ -23,11 +23,9 @@ public static class GrpcClientResolver
     private static void ConfigGrpcClientOptions(GrpcClientFactoryOptions grpcClientFactoryOptions, string address,
         IServiceProvider serviceProvider)
     {
-        // if (!address.StartsWith("http"))
-        // {
-        //     return;
-        // }
-
+        if (!address.StartsWith("http")) // http/3 neeed https 
+            return;
+        
         SocketsHttpHandler socketsHttpHandler = new SocketsHttpHandler()
         {
             // keeps connection alive
@@ -38,6 +36,7 @@ public static class GrpcClientResolver
             KeepAlivePingTimeout = TimeSpan.FromSeconds(
                 EApplicationConfiguration.KeepAlivePingTimeoutSeconds.GetAppSettingConfig().AsDefaultInt()),
             EnableMultipleHttp2Connections = true, // allows channel to add additional HTTP/2 connections
+            EnableMultipleHttp3Connections = true, // allows channel to add additional HTTP/3 connections
             MaxConnectionsPerServer = int.MaxValue,
         };
         var methodConfig = new MethodConfig
@@ -53,14 +52,14 @@ public static class GrpcClientResolver
             }
         };
         grpcClientFactoryOptions.Address = new Uri(address);
-        grpcClientFactoryOptions.ChannelOptionsActions.Add(o =>
+        grpcClientFactoryOptions.ChannelOptionsActions.Add(option =>
         {
-            o.HttpHandler = socketsHttpHandler;
-            o.MaxReceiveMessageSize = int.MaxValue;
-            o.MaxSendMessageSize = int.MaxValue;
-            o.Credentials = ChannelCredentials.Insecure;
-            o.ServiceProvider = serviceProvider;
-            o.ServiceConfig = new ServiceConfig
+            option.HttpHandler = socketsHttpHandler;
+            option.MaxReceiveMessageSize = int.MaxValue;
+            option.MaxSendMessageSize = int.MaxValue;
+            option.Credentials = ChannelCredentials.Insecure;
+            option.ServiceProvider = serviceProvider;
+            option.ServiceConfig = new ServiceConfig
             {
                 LoadBalancingConfigs = { new RoundRobinConfig() },
                 MethodConfigs = { methodConfig }

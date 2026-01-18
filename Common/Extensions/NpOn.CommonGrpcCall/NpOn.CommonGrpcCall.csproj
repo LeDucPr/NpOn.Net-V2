@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
       <ProjectReference Include="..\NpOn.CommonMode\NpOn.CommonMode.csproj" />
     </ItemGroup>
 

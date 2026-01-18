@@ -4,14 +4,19 @@ using Grpc.Core;
 
 namespace Common.Extensions.NpOn.HeaderConfig;
 
-public class GrpcHeaderConfig : IHeaderConfig<Metadata>
+public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
 {
     // internal
-    private const string GrpcInternalCallerUserNameInternal = "caller-user"; // client
-    private const string GrpcInternalCallerMachineNameInternal = "caller-machine"; // machine
-    private const string GrpcInternalCallerOsVersionInternal = "caller-os"; // system
-    private const string GrpcInternalCallerSessionCodeInternal = "caller-vnnss"; // session
-    private readonly string _grpcInternalCallerSessionCodeInternalValue = string.Empty;
+    private const string GrpcInternalCallerUserName = DefaultHeaderConstant.GrpcInternalCallerUserName; // client
+    private const string GrpcInternalCallerMachineName = DefaultHeaderConstant.GrpcInternalCallerMachineName; // machine
+    private const string GrpcInternalCallerOsVersion = DefaultHeaderConstant.GrpcInternalCallerOsVersion; // system
+
+    private const string GrpcInternalCallerSessionCode =
+        DefaultHeaderConstant.GrpcInternalCallerSessionCode; // session (need override)/owner
+
+    private readonly string _grpcInternalCallerSessionCodeValue =
+        DefaultHeaderConstant.GrpcInternalCallerSessionCodeDefaultValue;
+
 
     private readonly Metadata? _metadataHeaders;
     private readonly Metadata? _acceptMetadataHeaders;
@@ -27,20 +32,20 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata>
         endUseType = decomposeEndUseTypes.First();
         _metadataEntries ??= [];
         _endUseType = endUseType;
-        if (_endUseType == EGrpcEndUseType.InternalServer)
+        if (_endUseType == EGrpcEndUseType.CallToInternalServer)
         {
             _metadataHeaders = new Metadata();
-            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerUserNameInternal, Environment.UserName));
-            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerMachineNameInternal, Environment.MachineName));
-            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerOsVersionInternal,
+            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerUserName, Environment.UserName));
+            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerMachineName, Environment.MachineName));
+            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerOsVersion,
                 Environment.OSVersion.ToString()));
-            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerSessionCodeInternal,
-                _grpcInternalCallerSessionCodeInternalValue));
+            _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerSessionCode,
+                _grpcInternalCallerSessionCodeValue));
             _metadataEntries.ForEach(x => _metadataHeaders.Add(x));
             return;
         }
 
-        if (_endUseType == EGrpcEndUseType.ExternalServer)
+        if (_endUseType == EGrpcEndUseType.CallToExternalServer)
         {
             _metadataHeaders = new Metadata();
             _metadataEntries.AddRange(headers?.Select(header => new Metadata.Entry(header.Key, header.Value)) ?? []);
@@ -60,7 +65,7 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata>
     {
         if (_metadataHeaders == null)
             return;
-        if (_endUseType == EGrpcEndUseType.InternalServer || _endUseType == EGrpcEndUseType.ExternalServer)
+        if (_endUseType == EGrpcEndUseType.CallToInternalServer || _endUseType == EGrpcEndUseType.CallToExternalServer)
         {
             var callerUserEntry = _metadataHeaders.Get(key);
             if (callerUserEntry != null)
@@ -81,4 +86,5 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata>
     }
 
     public Metadata? GetHeader() => _metadataHeaders ?? _acceptMetadataHeaders;
+    public List<Metadata.Entry>? GetAllEntries() => _metadataEntries;
 }
