@@ -2,6 +2,7 @@ using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication;
+using Common.Extensions.NpOn.HeaderConfig;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
@@ -24,6 +25,7 @@ public sealed class Program : CommonProgram
     protected override Task ConfigureServices(IServiceCollection services)
     {
         // call load balancing services 
+        services.AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
         services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
         
         // utils

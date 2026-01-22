@@ -1,13 +1,11 @@
-using Common.Extensions.NpOn.CommonEnums;
+using Common.Applications.NpOn.CommonRestApplication;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication;
-using Common.Extensions.NpOn.CommonWebApplication.Middlewares;
 using Controllers.NpOn.SSO.Controllers;
 
 namespace Controllers.NpOn.SSO;
 
-public sealed class Program : CommonProgram
+public sealed class Program : RestCommonProgram
 {
     private Program(string[] args) : base(args)
     {
@@ -21,7 +19,6 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        // services.AddTransient<AuthenFilterHandlerMiddleware>();
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();
@@ -29,7 +26,7 @@ public sealed class Program : CommonProgram
 
         services.AddControllers();
         services.AddControllers()
-            .AddApplicationPart(typeof(CommonProgram).Assembly); // NpOn.CommonWebApplication
+            .AddApplicationPart(typeof(RestCommonProgram).Assembly); // NpOn.CommonRest(Api)Application
 
         return Task.CompletedTask;
     }
@@ -38,14 +35,13 @@ public sealed class Program : CommonProgram
     {
         if (EApplicationConfiguration.IsUseMiddlewareLogger.GetAppSettingConfig().AsDefaultBool())
         {
-            app.UseRequestResponseLogging();
+            // app.UseRequestResponseLogging();
         }
 
 
-        app.UseTokenValidation();
-        app.UsePermissionValidation();
+        // app.UseTokenValidation();
+        // app.UsePermissionValidation();
 
-        // app.UseMiddleware<AuthenFilterHandlerMiddleware>();
         return Task.CompletedTask;
     }
 }

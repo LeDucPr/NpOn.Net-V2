@@ -3,6 +3,7 @@ using Common.Applications.NpOn.CommonGrpcApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
+using Common.Extensions.NpOn.HeaderConfig;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using Common.Infrastructures.NpOn.DbFactory.Redis;
@@ -32,6 +33,7 @@ public sealed class Program : GrpcCommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
+        services.AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
         services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
         services.AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
