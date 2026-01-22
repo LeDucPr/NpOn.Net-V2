@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Grpc.Core;
 using Grpc.Net.Client.Configuration;
@@ -24,11 +25,11 @@ public static class InternalGrpcClientResolverExtensions
 {
     public static IServiceCollection AddConnectService // other service call this method
     (this IServiceCollection services, InternalGrpcClientResolver resolver, string? url = null,
-        EApplicationConfiguration? eUrlConfiguration = null)
+        EUrlConfiguration? eUrlConfiguration = null)
     {
         if (eUrlConfiguration != null)
         {
-            string configuration = ((EApplicationConfiguration)eUrlConfiguration).GetAppSettingConfig().AsEmptyString();
+            string configuration = ((EUrlConfiguration)eUrlConfiguration).GetAppSettingConfig().AsEmptyString();
             url = configuration;
         }
 

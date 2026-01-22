@@ -1,5 +1,7 @@
 using Common.Applications.NpOn.CommonApplication.Services;
+using Common.Applications.NpOn.CommonGrpcApplication;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
@@ -11,7 +13,7 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
-using NpOn.CommonGrpcApplication;
+using NpOn.CommonApplicationExtension;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
@@ -30,8 +32,9 @@ public sealed class Program : GrpcCommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        services.AddConnectService(new GeneralServiceClientResolver(), null, EApplicationConfiguration.GeneralServiceUrl);
-        
+        services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
+        services.AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+
         // Main Database (account)
         // services.AddSingleton<IDbFactoryWrapper>(_ =>
         // {
@@ -70,6 +73,9 @@ public sealed class Program : GrpcCommonProgram
             services.AddHostedService<HostingApp>();
         }
 
+        services.AddRabbitMq(); // rabbitMq
+        services.AddKafka(); // kafka
+
         // rabbitMq
         bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
         if (isUseRabbitMq)
@@ -95,7 +101,7 @@ public sealed class Program : GrpcCommonProgram
         services.AddTransient<IAccountGroupService, AccountGroupService>();
         services.AddTransient<IAccountMenuService, AccountMenuService>();
         services.AddTransient<IAccountMenuPermissionService, AccountMenuPermissionService>();
-        
+
         // Add Repository
         services.AddTransient<IAccountInfoStorageAdapter, AccountInfoStorageAdapter>();
         services.AddTransient<IAccountPermissionStorageAdapter, AccountPermissionStorageAdapter>();
@@ -108,11 +114,8 @@ public sealed class Program : GrpcCommonProgram
         return Task.CompletedTask;
     }
 
-    protected override void ConfigureBasePipeline(WebApplication app)
-    {
-        app.MapGet("/", () => "NpOn.AccountService");
-        base.ConfigureBasePipeline(app);
-    }
+    // protected override void ConfigureBasePipeline(WebApplication app)
+    // { app.MapGet("/", () => "NpOn.AccountService"); base.ConfigureBasePipeline(app); }
 
     protected override Task ConfigurePipeline(WebApplication app)
     {

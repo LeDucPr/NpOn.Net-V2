@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 
 namespace Common.Applications.NpOn.CommonApplication.Parameters;
 

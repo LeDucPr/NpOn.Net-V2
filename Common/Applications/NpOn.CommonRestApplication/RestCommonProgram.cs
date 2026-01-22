@@ -1,6 +1,7 @@
 ﻿using Common.Applications.NpOn.CommonApplication;
 using Common.Applications.NpOn.CommonRestApplication.Extensions;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 
 namespace Common.Applications.NpOn.CommonRestApplication;

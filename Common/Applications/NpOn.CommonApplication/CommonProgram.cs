@@ -5,6 +5,7 @@ using Common.Applications.NpOn.CommonApplication.Builders;
 using Common.Applications.NpOn.CommonApplication.Parameters;
 using Common.Applications.NpOn.CommonApplication.Utils;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,7 +35,7 @@ public abstract class CommonProgram
     protected virtual async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
-        builder.Configuration.InitGlobal();
+        builder.Configuration.InitConfigs(typeof(EApplicationConfiguration), typeof(EUrlConfiguration));
         await builder.Services.AddCollectionServices(async (services) =>
         {
 #pragma warning disable CS0618 // Type or member is obsolete

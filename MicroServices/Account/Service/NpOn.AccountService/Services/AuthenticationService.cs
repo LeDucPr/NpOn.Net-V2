@@ -1,8 +1,10 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Common.Applications.NpOn.CommonApplication.Parameters;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
@@ -496,7 +498,7 @@ public class AuthenticationService(
     )
     {
         string sessionKey =
-            $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuidAsString()}";
+            $"{ContextServiceCode.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuidAsString()}";
         int minuteExpire = _expireTokenMinutes;
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -504,12 +506,12 @@ public class AuthenticationService(
             .AsDefaultString());
         List<Claim> claims =
         [
-            new(ContextService.SessionCode, sessionKey),
-            new(ContextService.TokenCreatedUtc, DateTime.UtcNow.AddMinutes(minuteExpire).ToIso8601()),
-            new(ContextService.Permission, account.Permission.EnumAsInt().AsDefaultString()),
-            new($"{ContextService.MinuteExpirePrefix}", minuteExpire.ToString()),
+            new(ContextServiceCode.SessionCode, sessionKey),
+            new(ContextServiceCode.TokenCreatedUtc, DateTime.UtcNow.AddMinutes(minuteExpire).ToIso8601()),
+            new(ContextServiceCode.Permission, account.Permission.EnumAsInt().AsDefaultString()),
+            new($"{ContextServiceCode.MinuteExpirePrefix}", minuteExpire.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, account.UserName),
-            new(ContextService.LoginTypeEnumCode, loginType.EnumAsInt().AsDefaultString()),
+            new(ContextServiceCode.LoginTypeEnumCode, loginType.EnumAsInt().AsDefaultString()),
             new(JwtRegisteredClaimNames.Sid, account.Id.AsDefaultString()),
             new(JwtHeaderParameterNames.Typ, loginType.GetDisplayName())
         ];

@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Common.Extensions.NpOn.CommonEnums.MarkerAttributes;
 
-namespace Common.Extensions.NpOn.CommonEnums;
+namespace Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 
 /// <summary>
 /// EApplicationConfiguration get config params from appsettings.json
 /// Đm cấm format
 /// </summary>
+[AppConfig]
 public enum EApplicationConfiguration
 {
     [Display(Name = "HostPort")] HostPort, // - int
@@ -16,8 +18,10 @@ public enum EApplicationConfiguration
     [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int
     [Display(Name = "IsUseRedisCache")] IsUseRedisCache, // - bool
 
-    [Display(Name = "DnsResolverFactory")]
-    DnsResolverFactory, // thời gian làm mới Dns service discovery (gRPC client-side load balancing) - int
+    
+    // Connection Settings
+    [Display(Name = "IsUseEnableUnencryptedMode")] IsUseEnableUnencryptedMode, // - boolean (Internal Service?)
+    [Display(Name = "DnsRefreshInterval")] DnsRefreshInterval, // thời gian làm mới Dns service discovery (gRPC client-side load balancing) - int
     [Display(Name = "IsStartAsync")] IsStartAsync, // - boolean
     [Display(Name = "IsAutomaticKeyGeneration")] IsAutomaticKeyGeneration, // - boolean
     [Display(Name = "CorsPolicy")] CorsPolicy, // - string
@@ -73,12 +77,6 @@ public enum EApplicationConfiguration
     [Display(Name = "ExceptionUrl")] ExceptionUrl, // - string
     [Display(Name = "UnauthenticatedAccountUrl")] UnauthenticatedAccountUrl, // - string
     #endregion Exception 
-    
-    
-    #region UrlZone
-    AccountServiceUrl, // - string
-    GeneralServiceUrl, // - string
-    #endregion UrlZone
     
     
     #region Media Upload

@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using MicroServices.Account.Service.NpOn.IAccountService;
 
@@ -9,7 +10,7 @@ public static partial class ServiceRegisterGrpc
     public static IServiceCollection AccountServiceRegisterGrpc(this IServiceCollection services)
     {
         var accountServiceUrl =
-            EApplicationConfiguration.AccountServiceUrl.GetAppSettingConfig().AsDefaultString();
+            EUrlConfiguration.AccountServiceUrl.GetAppSettingConfig().AsDefaultString();
         if (string.IsNullOrWhiteSpace(accountServiceUrl))
             return services;
         services.RegisterGrpcClientLoadBalancing<IAccountInfoService>(accountServiceUrl);

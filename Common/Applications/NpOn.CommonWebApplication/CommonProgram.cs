@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication.Builders;
 using Common.Extensions.NpOn.CommonWebApplication.Parameters;
@@ -43,7 +44,7 @@ public abstract class CommonProgram
     protected async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
-        builder.Configuration.InitGlobal();
+        builder.Configuration.InitConfigs(typeof(EApplicationConfiguration), typeof(EUrlConfiguration));
         await builder.Services.AddCollectionServices(async (services) =>
         {
             ConfigureBaseServices(services);
@@ -162,7 +163,7 @@ public abstract class CommonProgram
         });
         services.RegisterGrpcClientLoadBalancing(); // add DI multi Services
         AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-        int dnsRsvF = EApplicationConfiguration.DnsResolverFactory.GetAppSettingConfig().AsDefaultInt();
+        int dnsRsvF = EApplicationConfiguration.DnsRefreshInterval.GetAppSettingConfig().AsDefaultInt();
         services.AddSingleton<ResolverFactory>(new DnsResolverFactory(refreshInterval: TimeSpan.FromSeconds(dnsRsvF)));
         // services.AddGrpc();
 

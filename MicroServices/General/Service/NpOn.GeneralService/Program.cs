@@ -1,4 +1,5 @@
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
@@ -23,7 +24,7 @@ public sealed class Program : CommonProgram
     protected override Task ConfigureServices(IServiceCollection services)
     {
         // call load balancing services 
-        services.AddConnectService(new GeneralServiceClientResolver(), null, EApplicationConfiguration.GeneralServiceUrl);
+        services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
         
         // utils
         services.AddSingleton<IDbFactoryWrapper>(_ =>
@@ -46,11 +47,8 @@ public sealed class Program : CommonProgram
         return Task.CompletedTask;
     }
 
-    protected override void ConfigureBasePipeline(WebApplication app)
-    {
-        app.MapGet("/", () => "NpOn.GeneralService");
-        base.ConfigureBasePipeline(app);
-    }
+    // protected override void ConfigureBasePipeline(WebApplication app)
+    // { app.MapGet("/", () => "NpOn.GeneralService"); base.ConfigureBasePipeline(app); }
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
