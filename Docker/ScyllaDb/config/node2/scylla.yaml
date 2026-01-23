@@ -280,6 +280,7 @@ broadcast_rpc_address: scylla-node2
 # Uncomment to enable experimental features
 experimental_features:
     - udf
+    - uda
 #     - alternator-streams
 #     - consistent-topology-changes
 #     - broadcast-tables
