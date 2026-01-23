@@ -1,0 +1,8 @@
+# Truy cập vào shell của WSL (nếu bạn dùng WSL2 backend)
+wsl -d docker-desktop
+
+# Chạy lệnh nâng giới hạn (trong môi trường WSL)
+sysctl -w fs.aio-max-nr=250000
+
+# Thoát ra
+exit

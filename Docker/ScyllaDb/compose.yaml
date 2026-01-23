@@ -5,6 +5,7 @@ services:
     hostname: scylla-node1
     image: scylladb/scylla:latest
     restart: unless-stopped
+    command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
     volumes:
       - scylla1_data:/var/lib/scylla
       - ./config/node1/scylla.yaml:/etc/scylla/scylla.yaml
@@ -18,6 +19,7 @@ services:
       - 9100:9100   # Node exporter
       - 9160:9160   # Thrift
       - 7199:7199   # JMX
+      - 10000:10000 # rest api
     networks:
       vnet:
 
@@ -26,6 +28,7 @@ services:
     hostname: scylla-node2
     image: scylladb/scylla:latest
     restart: unless-stopped
+    command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
     volumes:
       - scylla2_data:/var/lib/scylla
       - ./config/node2/scylla.yaml:/etc/scylla/scylla.yaml
@@ -49,6 +52,7 @@ services:
     hostname: scylla-node3
     image: scylladb/scylla:latest
     restart: unless-stopped
+    command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
     volumes:
       - scylla3_data:/var/lib/scylla
       - ./config/node3/scylla.yaml:/etc/scylla/scylla.yaml
