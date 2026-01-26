@@ -29,7 +29,7 @@ services:
       --maxmemory=2gb
       --proactor_threads=4
       --dir /data
-      # ĐỔI TỪ save_schedule SANG snapshot_cron Ở ĐÂY
+      # ĐỔI TỪ save_schedule SANG snapshot_cron
       --snapshot_cron="*/5 * * * *"
     volumes:
       - dragonfly_data:/data
