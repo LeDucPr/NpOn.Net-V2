@@ -1,22 +1,57 @@
 version: '3.8'
+
 services:
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    container_name: es-setup
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+    user: "0"
+    command: >
+      bash -c '
+        apt-get update && apt-get install -y unzip curl;
+        # 1. Tạo Certs
+        if [ ! -f config/certs/ca.zip ]; then
+          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+          unzip config/certs/ca.zip -d config/certs;
+        fi;
+        if [ ! -f config/certs/certs.zip ]; then
+          echo -e "instances:\n  - name: es01\n    dns:\n      - es01\n      - localhost\n  - name: es02\n    dns:\n      - es02\n      - localhost" > config/certs/instances.yml;
+          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+          unzip config/certs/certs.zip -d config/certs;
+        fi;
+        chown -R 1000:0 config/certs;
+        
+        # 2. Đợi ES01 lên để set mật khẩu cho kibana_system
+        echo "Waiting for Elasticsearch to start...";
+        until curl -s http://es01:9200; do sleep 2; done;
+        
+        echo "Setting kibana_system password...";
+        curl -s -u elastic:${ELASTIC_PASSWORD} -X POST "http://es01:9200/_security/user/kibana_system/_password" \
+          -H "Content-Type: application/json" \
+          -d "{\"password\":\"${KIBANA_PASSWORD}\"}";
+        echo "All systems green!";
+      '
+
   es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     container_name: es01
     environment:
       - node.name=es01
       - cluster.name=es-docker-cluster
-      - discovery.seed_hosts=es02
       - cluster.initial_master_nodes=es01,es02
-      - bootstrap.memory_lock=true
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - discovery.seed_hosts=es02
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+      - xpack.security.enabled=true
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es01/es01.key
+      - xpack.security.transport.ssl.certificate=certs/es01/es01.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms4g -Xmx4g
     volumes:
+      - certs:/usr/share/elasticsearch/config/certs
       - elasticsearch_data01:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
@@ -27,29 +62,110 @@ services:
     environment:
       - node.name=es02
       - cluster.name=es-docker-cluster
-      - discovery.seed_hosts=es01
       - cluster.initial_master_nodes=es01,es02
-      - bootstrap.memory_lock=true
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - discovery.seed_hosts=es01
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+      - xpack.security.enabled=true
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es02/es02.key
+      - xpack.security.transport.ssl.certificate=certs/es02/es02.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms4g -Xmx4g
     volumes:
+      - certs:/usr/share/elasticsearch/config/certs
       - elasticsearch_data02:/usr/share/elasticsearch/data
 
-  kibana:
+  kib01:
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
     container_name: kib01
     ports:
       - 5601:5601
     environment:
       - ELASTICSEARCH_HOSTS=["http://es01:9200","http://es02:9200"]
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    depends_on:
+      es01:
+        condition: service_started
 
 volumes:
+  certs:
   elasticsearch_data01:
   elasticsearch_data02:
+  kibana_data:
+
+
+
+
+# version: '3.8'
+# services:
+#   es01:
+#     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+#     container_name: es01
+#     environment:
+#       - node.name=es01
+#       - cluster.name=es-docker-cluster
+#       - cluster.initial_master_nodes=es01,es02
+#       - discovery.seed_hosts=es02
+#       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+#       - bootstrap.memory_lock=true
+#       - ES_JAVA_OPTS=-Xms2g -Xmx2g
+#       # Bật SSL nhưng dùng chế độ tự tạo (không cần file .p12 bên ngoài)
+#       - xpack.security.enabled=true
+#       - xpack.security.http.ssl.enabled=false # Tắt SSL cho web để bạn vào localhost:9200 cho dễ
+#       - xpack.security.transport.ssl.enabled=true
+#       - xpack.security.transport.ssl.verification_mode=none # "Lách" kiểm tra chứng chỉ
+#     ulimits:
+#       memlock:
+#         soft: -1
+#         hard: -1
+#     volumes:
+#       - elasticsearch_data01:/usr/share/elasticsearch/data
+#     ports:
+#       - 9200:9200
+
+#   es02:
+#     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+#     container_name: es02
+#     environment:
+#       - node.name=es02
+#       - cluster.name=es-docker-cluster
+#       - cluster.initial_master_nodes=es01,es02
+#       - discovery.seed_hosts=es01
+#       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+#       - bootstrap.memory_lock=true
+#       - ES_JAVA_OPTS=-Xms2g -Xmx2g
+#       - xpack.security.enabled=true
+#       - xpack.security.http.ssl.enabled=false
+#       - xpack.security.transport.ssl.enabled=true
+#       - xpack.security.transport.ssl.verification_mode=none
+#     ulimits:
+#       memlock:
+#         soft: -1
+#         hard: -1
+#     volumes:
+#       - elasticsearch_data02:/usr/share/elasticsearch/data
+
+#   kib01:
+#     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+#     container_name: kib01
+#     ports:
+#       - 5601:5601
+#     environment:
+#       - ELASTICSEARCH_HOSTS=["http://es01:9200","http://es02:9200"]
+#       - ELASTICSEARCH_USERNAME=elastic
+#       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+#     depends_on:
+#       - es01
+#       - es02
+#     volumes:
+#       - kibana_data:/usr/share/kibana/data
+
+# volumes:
+#   elasticsearch_data01:
+#   elasticsearch_data02:
+#   kibana_data:
