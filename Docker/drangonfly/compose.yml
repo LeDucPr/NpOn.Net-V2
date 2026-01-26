@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  dragonfly:
+    image: 'docker.dragonflydb.io/dragonflydb/dragonfly:latest'
+    container_name: dragonfly_main
+    ports:
+      - "6379:6379"
+    ulimits:
+      memlock: -1
+      nofile:
+        # Set both soft and hard limits for open files
+        soft: 65535 
+        hard: 65535
+    environment:
+      - DFLY_requirepass=${REDIS_PASSWORD}
+    # command: >
+    #   --logtostderr
+    #   --requirepass=${REDIS_PASSWORD}
+    #   --cache_mode=true
+    #   --maxmemory=2gb
+    #   --proactor_threads=4
+    #   --dir /data
+    #   --save_schedule "*/5 * * * *"
+    command: >
+      --logtostderr
+      --requirepass=${REDIS_PASSWORD}
+      --cache_mode=true
+      --maxmemory=2gb
+      --proactor_threads=4
+      --dir /data
+      # ĐỔI TỪ save_schedule SANG snapshot_cron Ở ĐÂY
+      --snapshot_cron="*/5 * * * *"
+    volumes:
+      - dragonfly_data:/data
+    restart: always
+
+  dragonfly-ui:
+    image: rediscommander/redis-commander:latest
+    container_name: dragonfly_ui
+    environment:
+      - REDIS_HOSTS=local:dragonfly:6379:0:${REDIS_PASSWORD}
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin_pass
+    ports:
+      - "8083:8081"
+    depends_on:
+      - dragonfly
+    volumes:
+      - dragonfly_ui_data:/data
+    restart: always
+
+volumes:
+  dragonfly_data:
+  dragonfly_ui_data:
