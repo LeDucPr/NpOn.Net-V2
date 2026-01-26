@@ -49,12 +49,15 @@ services:
     depends_on:
       redpanda:
         condition: service_healthy
+    volumes:
+      - redpanda_data_init:/var/lib/redpanda/data
+
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     networks:
-      - monitoring
+      monitoring: {}
     ports:
       - "9090:9090"
     user: root
@@ -63,28 +66,32 @@ services:
       - -c
       - |
         mkdir -p /etc/prometheus
+
+        # File cấu hình Prometheus
         cat > /etc/prometheus/prometheus.yml <<'EOF'
         global:
           scrape_interval: 15s
           evaluation_interval: 15s
-        
+
         scrape_configs:
           - job_name: 'redpanda'
             static_configs:
-              - targets: ['redpanda:9644'] 
-        
-        # Tạo file cấu hình bảo mật web (Basic Auth)
-        # Hash bên dưới là của mật khẩu: npon_prom_pass
-        cat > /etc/prometheus/web-config.yml <<'EOF'
-        basic_auth_users:
-          npon_prom: $2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUX
+              - targets: ['redpanda:9644']
         EOF
-        
-        /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.config.file=/etc/prometheus/web-config.yml
+
+        cat > /etc/prometheus/web-config.yml <<'EOF'
+        EOF
+
+                exec /bin/prometheus \
+                  --config.file=/etc/prometheus/prometheus.yml \
+                  --storage.tsdb.path=/prometheus \
+                  --web.config.file=/etc/prometheus/web-config.yml
     volumes:
       - prometheus_data:/prometheus
     depends_on:
       - redpanda
+
+
 
   grafana:
     image: grafana/grafana:latest
@@ -123,6 +130,7 @@ services:
         
         /run.sh
 
+
   redpanda-console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:latest
@@ -159,6 +167,7 @@ volumes:
   redpanda_data:
   prometheus_data:
   grafana_data:
+  redpanda_data_init:
 
 networks:
   monitoring:
