@@ -83,5 +83,11 @@ public enum EDbError
     [Display(Name = "Redis Execute Error")]
     RedisExecute,
 
+    [Display(Name = "ElasticSearch Response (Result is null)")]
+    ElasticSearchResponseIsNull,
+
+    [Display(Name = "ElasticSearch Execute Error")]
+    ElasticSearchExecute,
+
     #endregion Result
 }

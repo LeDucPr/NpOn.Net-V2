@@ -11,6 +11,7 @@ public enum EDb : byte
     [Display(Name = "MongoDb")] MongoDb = 4,
     [Display(Name = "Mssql")] Mssql = 5,
     [Display(Name = "Redis")] Redis = 6,
+    [Display(Name = "ElasticSearch")] ElasticSearch = 7,
 }
 
 public static class EDbExtension
@@ -26,6 +27,7 @@ public static class EDbExtension
             EDb.Mssql => EDbLanguage.Sql,
             EDb.MongoDb => EDbLanguage.Bson,
             EDb.Redis => EDbLanguage.Json,
+            EDb.ElasticSearch => EDbLanguage.Json,
             _ => throw new NotSupportedException($"The database language for '{db}' is not supported."),
         };
     }
@@ -40,6 +42,7 @@ public static class EDbExtension
             EDb.Mssql,
             EDb.MongoDb,
             EDb.Redis,
+            EDb.ElasticSearch,
         ];
         if (validTypes.Contains(dbType)) return true;
         return false;

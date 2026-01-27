@@ -101,6 +101,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.CommonHeaderConfig", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.CommonApplicationExtension", "Common\Applications\NpOn.CommonApplicationExtension\NpOn.CommonApplicationExtension.csproj", "{93DA4A94-E022-4FE7-9829-0EB2FA1C6AA9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ElasticSearchExtCm", "Common\Infrastructures\NpOn.ElasticSearchExtCm\NpOn.ElasticSearchExtCm.csproj", "{661587D6-A78E-4EEB-B990-A7C94A5A1706}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -251,6 +253,10 @@ Global
 		{93DA4A94-E022-4FE7-9829-0EB2FA1C6AA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93DA4A94-E022-4FE7-9829-0EB2FA1C6AA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93DA4A94-E022-4FE7-9829-0EB2FA1C6AA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{661587D6-A78E-4EEB-B990-A7C94A5A1706}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{661587D6-A78E-4EEB-B990-A7C94A5A1706}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{661587D6-A78E-4EEB-B990-A7C94A5A1706}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{661587D6-A78E-4EEB-B990-A7C94A5A1706}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -302,5 +308,6 @@ Global
 		{CD01AA0F-D628-4B3E-A095-B77A1D4BC7EA} = {3E4BDAE5-9D01-428D-A48F-5A8F943FE139}
 		{8AEB36D6-91D9-4F48-8DFD-6B2E9E27DD7D} = {3E4BDAE5-9D01-428D-A48F-5A8F943FE139}
 		{93DA4A94-E022-4FE7-9829-0EB2FA1C6AA9} = {BC1E392D-C850-43AE-AE5F-C684E5BD8246}
+		{661587D6-A78E-4EEB-B990-A7C94A5A1706} = {F18CA1AA-1C81-4D36-9AFE-463039E910C5}
 	EndGlobalSection
 EndGlobal
