@@ -1,5 +1,6 @@
 using System.Collections;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Elastic.Clients.Elasticsearch;
 

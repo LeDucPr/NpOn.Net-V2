@@ -32,10 +32,13 @@ public abstract class CommonProgram
         Args = args;
     }
 
-    protected virtual async Task RunAsync()
+    protected async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
-        builder.Configuration.InitConfigs(typeof(EApplicationConfiguration), typeof(EUrlConfiguration));
+        builder.Configuration.InitConfigs(
+            typeof(EApplicationConfiguration),
+            typeof(EUrlConfiguration)
+        );
         await builder.Services.AddCollectionServices(async (services) =>
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -392,6 +395,13 @@ public abstract class CommonProgram
     private WebApplicationBuilder CreateDefaultBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        // add custom config (only new version) // appsettings.YAML
+        builder.Configuration.Sources.Clear(); // clear appsettings.JSON
+        builder.Configuration.AddYamlFile("appsettings.yaml", optional: true, reloadOnChange: true) // imperative
+            .AddEnvironmentVariables() // override Docker Compose 
+            // .AddYamlFile($"appsettings.{builder.Environment.EnvironmentName}.yaml", optional: true)
+            ;
 
         builder.WebHost.ConfigureKestrel(options =>
         {

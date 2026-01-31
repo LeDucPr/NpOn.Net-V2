@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse</RootNamespace>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
+        <ProjectReference Include="..\..\..\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj"/>
+    </ItemGroup>
+    
+</Project>

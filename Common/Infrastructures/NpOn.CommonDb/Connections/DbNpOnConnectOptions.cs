@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

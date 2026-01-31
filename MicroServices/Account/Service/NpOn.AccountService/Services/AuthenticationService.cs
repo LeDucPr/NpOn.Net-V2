@@ -26,7 +26,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AuthenticationService(
-    IPostgresBaseRepository baseRepository,
+    INpOnPostgresBaseRepository baseRepository,
     IAuthenticationStorageAdapter authenticationStorageAdapter,
     IAccountInfoStorageAdapter accountInfoStorageAdapter,
     IAccountPermissionService accountPermissionService,

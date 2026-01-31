@@ -12,12 +12,12 @@ using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountGroupService(
-    IPostgresBaseRepository baseRepository,
+    INpOnPostgresBaseRepository baseRepository,
     IAccountGroupStorageAdapter accountGroupStorageAdapter,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAccountGroupService
 {
-    private IPostgresBaseRepository _baseRepository = baseRepository;
+    private INpOnPostgresBaseRepository _baseRepository = baseRepository;
     public async Task<CommonResponse> GroupAddOrChange(AccountGroupAddOrChangeCommand command)
     {
         return await CommonProcess(async (response) =>

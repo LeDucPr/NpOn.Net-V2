@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication.Services;

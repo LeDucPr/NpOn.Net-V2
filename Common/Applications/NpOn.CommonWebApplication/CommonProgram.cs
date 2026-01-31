@@ -14,7 +14,6 @@ using Common.Infrastructures.NpOn.KafkaExtCm.Topics;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 using Confluent.Kafka;
-using Definitions.NpOn.GrpcAddService;
 using Grpc.Net.Client.Balancer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -161,7 +160,7 @@ public abstract class CommonProgram
             config.MaxSendMessageSize = int.MaxValue;
             //config.Interceptors.Add<>();
         });
-        services.RegisterGrpcClientLoadBalancing(); // add DI multi Services
+        // services.RegisterGrpcClientLoadBalancing(); // add DI multi Services
         AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         int dnsRsvF = EApplicationConfiguration.DnsRefreshInterval.GetAppSettingConfig().AsDefaultInt();
         services.AddSingleton<ResolverFactory>(new DnsResolverFactory(refreshInterval: TimeSpan.FromSeconds(dnsRsvF)));

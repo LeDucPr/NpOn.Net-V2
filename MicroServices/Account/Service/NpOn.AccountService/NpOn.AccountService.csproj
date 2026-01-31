@@ -9,6 +9,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.KafkaAppExtUse\NpOn.KafkaAppExtUse.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RabbitMqAppExtUse\NpOn.RabbitMqAppExtUse.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonGrpcApplication\NpOn.CommonGrpcApplication.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />

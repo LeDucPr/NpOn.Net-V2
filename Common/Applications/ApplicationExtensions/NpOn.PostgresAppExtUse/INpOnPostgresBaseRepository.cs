@@ -1,3 +1,3 @@
 ﻿namespace Common.Infrastructures.NpOn.BaseRepository.Postgres;
 
-public interface IPostgresBaseRepository : IBaseRepository;
+public interface INpOnPostgresBaseRepository : INpOnBaseRepository;

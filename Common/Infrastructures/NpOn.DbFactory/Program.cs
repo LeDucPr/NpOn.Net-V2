@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 using Common.Infrastructures.NpOn.CassandraExtCm.Results;
 using Common.Infrastructures.NpOn.CommonDb.Connections;

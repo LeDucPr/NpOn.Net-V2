@@ -17,7 +17,7 @@ public class AccountPermissionService(
     IAccountPermissionStorageAdapter accountPermissionStorageAdapter,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IAccountGroupStorageAdapter accountGroupStorageAdapter,
-    IPostgresBaseRepository baseRepository,
+    INpOnPostgresBaseRepository baseRepository,
     ILogger<AccountPermissionService> logger
 ) : CommonService(logger), IAccountPermissionService
 {

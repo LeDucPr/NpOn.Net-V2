@@ -1,15 +1,17 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Infrastructures.NpOn.BaseRepository;
+using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using NpgsqlTypes;
 
-namespace Common.Infrastructures.NpOn.BaseRepository.Postgres;
+namespace Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 
 /// <summary>
 /// Decorator class for IDbFactoryWrapper to add PostgresSQL-specific functionalities.
 /// </summary>
-public class PostgresFactoryWrapper(IDbFactoryWrapper dbFactoryWrapper) : IPostgresFactoryWrapper
+public class NpOnNpOnPostgresFactoryWrapper(IDbFactoryWrapper dbFactoryWrapper) : INpOnPostgresFactoryWrapper
 {
     public string? FactoryOptionCode => dbFactoryWrapper.FactoryOptionCode;
     public EDb DbType => dbFactoryWrapper.DbType;
@@ -33,14 +35,14 @@ public class PostgresFactoryWrapper(IDbFactoryWrapper dbFactoryWrapper) : IPostg
     /// <summary>
     /// Implements the specific Execute method for PostgreSQL commands.
     /// </summary>
-    public Task<INpOnWrapperResult?> Execute(RepositoryCommand repositoryCommand)
+    public Task<INpOnWrapperResult?> Execute(NpOnRepositoryCommand npOnRepositoryCommand)
     {
-        if (repositoryCommand.ExecType == EExecType.ExecFunc)
+        if (npOnRepositoryCommand.ExecType == EExecType.ExecFunc)
         {
-            var typedParameters = repositoryCommand.Parameters?.OfType<INpOnDbCommandParam<NpgsqlDbType>>().ToList();
-            return ExecuteFuncParams(repositoryCommand.CommandText, typedParameters);
+            var typedParameters = npOnRepositoryCommand.Parameters?.OfType<INpOnDbCommandParam<NpgsqlDbType>>().ToList();
+            return ExecuteFuncParams(npOnRepositoryCommand.CommandText, typedParameters);
         }
 
-        return ExecuteAsync(repositoryCommand.CommandText, repositoryCommand.Parameters?.ToList() ?? []);
+        return ExecuteAsync(npOnRepositoryCommand.CommandText, npOnRepositoryCommand.Parameters?.ToList() ?? []);
     }
 }

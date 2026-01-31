@@ -5,7 +5,7 @@ using Common.Infrastructures.NpOn.KafkaExtCm.Senders;
 using Common.Infrastructures.NpOn.KafkaExtCm.Topics;
 using Confluent.Kafka;
 
-namespace NpOn.CommonApplicationExtension;
+namespace Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 
 public static class KafkaServiceCollectionExtensions
 {

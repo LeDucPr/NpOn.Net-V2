@@ -13,7 +13,7 @@ using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountInfoService(
-    IPostgresBaseRepository baseRepository,
+    INpOnPostgresBaseRepository baseRepository,
     IAccountInfoStorageAdapter accountInfoStorageAdapter,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAccountInfoService

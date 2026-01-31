@@ -1,4 +1,4 @@
-﻿namespace Common.Extensions.NpOn.CommonEnums;
+﻿namespace Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
 public enum ERedisCommand
 {

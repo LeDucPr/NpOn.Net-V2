@@ -7,7 +7,7 @@ namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountMenuPermissionService(
     IAccountMenuPermissionStorageAdapter accountMenuPermissionStorageAdapter,
-    IPostgresBaseRepository baseRepository,
+    INpOnPostgresBaseRepository baseRepository,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAccountMenuPermissionService
 {

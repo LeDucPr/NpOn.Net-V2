@@ -3,7 +3,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 
-namespace NpOn.CommonApplicationExtension;
+namespace Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 
 public static class RabbitMqServiceCollectionExtensions
 {

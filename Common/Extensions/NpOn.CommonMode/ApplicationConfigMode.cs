@@ -1,5 +1,5 @@
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
-using Common.Extensions.NpOn.CommonEnums.MarkerAttributes;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums.MarkerAttributes;
 using Microsoft.Extensions.Configuration;
 
 namespace Common.Extensions.NpOn.CommonMode;

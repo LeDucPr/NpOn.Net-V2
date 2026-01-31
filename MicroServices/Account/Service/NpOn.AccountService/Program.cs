@@ -1,7 +1,11 @@
+using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonGrpcApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Infrastructures.NpOn.BaseRepository.Postgres;
@@ -14,7 +18,6 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
-using NpOn.CommonApplicationExtension;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
@@ -47,7 +50,7 @@ public sealed class Program : GrpcCommonProgram
         //         new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
         //     return factoryWrapper;
         // });
-        services.AddSingleton<IPostgresFactoryWrapper>(_ =>
+        services.AddSingleton<INpOnPostgresFactoryWrapper>(_ =>
         {
             string connectionString =
                 EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
@@ -55,10 +58,10 @@ public sealed class Program : GrpcCommonProgram
                 EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IDbFactoryWrapper factoryWrapper =
                 new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
-            return new PostgresFactoryWrapper(factoryWrapper);
+            return new NpOnNpOnPostgresFactoryWrapper(factoryWrapper);
         });
 
-        services.AddSingleton<IPostgresBaseRepository, PostgresBaseRepository>();
+        services.AddSingleton<INpOnPostgresBaseRepository, NpOnPostgresBaseRepository>();
 
         services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(_ =>
         {
@@ -74,14 +77,12 @@ public sealed class Program : GrpcCommonProgram
         {
             services.AddHostedService<HostingApp>();
         }
-
-        services.AddRabbitMq(); // rabbitMq
-        services.AddKafka(); // kafka
-
+        
         // rabbitMq
         bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
         if (isUseRabbitMq)
         {
+            services.AddRabbitMq(); // rabbitMq
             services.AddTransient<AccountSaveLoginRabbitMqConsumer>()
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginRabbitMqConsumer>>();
             services.AddTransient<AccountSaveLogoutRabbitMqConsumer>()
@@ -92,6 +93,7 @@ public sealed class Program : GrpcCommonProgram
         bool isUseKafka = EApplicationConfiguration.IsUseKafka.GetAppSettingConfig().AsDefaultBool();
         if (isUseKafka)
         {
+            services.AddKafka(); // kafka
             services.AddTransient<AccountSaveLoginKafkaConsumer>()
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
         }

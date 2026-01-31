@@ -12,7 +12,7 @@ using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountMenuService(
-    IPostgresBaseRepository baseRepository,
+    INpOnPostgresBaseRepository baseRepository,
     IAccountMenuStorageAdapter accountMenuStorageAdapter,
     ILogger<CommonService> logger) : CommonService(logger), IAccountMenuService
 {
