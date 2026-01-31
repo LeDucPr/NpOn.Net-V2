@@ -1,8 +1,6 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands.Extensions;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.DbFactory.FactoryResults;
 
@@ -101,31 +99,6 @@ public class DbFactoryWrapper : IDbFactoryWrapper
             if (connection == null) return null;
             INpOnDbCommand command = new NpOnDbCommand(_dbType, queryString, parameters);
             return await connection.Driver.Execute(command);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-        finally
-        {
-            if (connection != null) _factory.ReleaseConnection(connection);
-        }
-    }
-
-    public async Task<INpOnWrapperResult?> ExecuteFunc(string funcName, Dictionary<string, object> parameters,
-        bool isUseInputJson = false, string? isUseOutputJsonAsName = null)
-    {
-        if (_factory == null) return null;
-        NpOnDbConnection? connection = null;
-        try
-        {
-            connection = await _factory.GetConnectionAsync();
-            if (connection == null) return null;
-            INpOnDbExecCommand execCommand =
-                new NpOnDbExecCommand(_dbType, funcName, parameters, isUseOutputJsonAsName);
-            if (isUseInputJson)
-                execCommand = execCommand.AsFullJsonBlock();
-            return await connection.Driver.ExecuteFunc(execCommand);
         }
         catch (Exception)
         {

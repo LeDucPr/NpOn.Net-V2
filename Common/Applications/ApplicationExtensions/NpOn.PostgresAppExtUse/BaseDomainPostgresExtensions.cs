@@ -1,14 +1,15 @@
 ﻿using System.Reflection;
 using System.Text;
+using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
 using Common.Extensions.NpOn.HandleFlow.Attributes;
 using Common.Infrastructures.NpOn.PostgresExtCm.Results;
 using Npgsql;
 using NpgsqlTypes;
 
-namespace Common.Extensions.NpOn.CommonBaseDomain;
+namespace Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 
-public static partial class BaseDomainExtensions
+public static class BaseDomainExtensions
 {
     public static (string CommandText, List<NpgsqlParameter> Parameters) ToPostgresParamsInsert
         (this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
@@ -337,7 +338,7 @@ public static partial class BaseDomainExtensions
     }
 
     // Convert enums and common types to safe Npgsql representations by using the centralized utility
-    private static (object? Value, NpgsqlDbType? DbType) NormalizeForNpgsql(object raw, Type memberType)
+    private static (object? Value, NpgsqlDbType? DbType) NormalizeForNpgsql(object? raw, Type memberType)
     {
         return PostgresUtils.NormalizeValueForNpgsql(raw, memberType);
     }

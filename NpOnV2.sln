@@ -33,7 +33,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.CommonMode", "Common\E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.HandleFlow", "Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj", "{E30AC131-A9E1-4467-A9AA-8F4FA8185A21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.BaseRepository", "Common\Infrastructures\NpOn.BaseRepository\NpOn.BaseRepository.csproj", "{6D001D40-7C89-4D92-92A9-75F02AAB8E1E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.BaseExecution", "Common\Infrastructures\NpOn.BaseExecution\NpOn.BaseExecution.csproj", "{6D001D40-7C89-4D92-92A9-75F02AAB8E1E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.CassandraExtCm", "Common\Infrastructures\NpOn.CassandraExtCm\NpOn.CassandraExtCm.csproj", "{E2B9D48E-8C2F-4788-B0FD-E7D205ED4ADC}"
 EndProject

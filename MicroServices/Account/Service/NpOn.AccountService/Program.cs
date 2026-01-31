@@ -8,7 +8,6 @@ using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using Common.Infrastructures.NpOn.DbFactory.Redis;
 using MicroServices.Account.Service.NpOn.AccountService.KafkaConsumers;
@@ -58,11 +57,9 @@ public sealed class Program : GrpcCommonProgram
                 EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IDbFactoryWrapper factoryWrapper =
                 new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
-            return new NpOnNpOnPostgresFactoryWrapper(factoryWrapper);
+            return new NpOnPostgresFactoryWrapper(factoryWrapper);
         });
-
-        services.AddSingleton<INpOnPostgresBaseRepository, NpOnPostgresBaseRepository>();
-
+        
         services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(_ =>
         {
             string connectionString =

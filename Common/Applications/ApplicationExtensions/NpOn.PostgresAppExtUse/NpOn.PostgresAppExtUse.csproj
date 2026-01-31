@@ -10,7 +10,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\..\..\Infrastructures\NpOn.BaseRepository\NpOn.BaseRepository.csproj" />
+      <ProjectReference Include="..\..\..\Infrastructures\NpOn.BaseExecution\NpOn.BaseExecution.csproj" />
       <ProjectReference Include="..\..\..\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
       <ProjectReference Include="..\..\..\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
     </ItemGroup>

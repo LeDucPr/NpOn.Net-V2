@@ -1,7 +1,7 @@
-﻿using Common.Applications.NpOn.CommonApplication.Services;
+﻿using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Definitions.NpOn.ProjectEnums.AccountEnums;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;
@@ -17,7 +17,7 @@ public class AccountPermissionService(
     IAccountPermissionStorageAdapter accountPermissionStorageAdapter,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IAccountGroupStorageAdapter accountGroupStorageAdapter,
-    INpOnPostgresBaseRepository baseRepository,
+    INpOnPostgresFactoryWrapper baseRepository,
     ILogger<AccountPermissionService> logger
 ) : CommonService(logger), IAccountPermissionService
 {

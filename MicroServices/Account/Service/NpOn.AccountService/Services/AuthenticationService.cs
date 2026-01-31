@@ -1,13 +1,13 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Parameters;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
 using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
@@ -26,7 +26,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AuthenticationService(
-    INpOnPostgresBaseRepository baseRepository,
+    INpOnPostgresFactoryWrapper baseRepository,
     IAuthenticationStorageAdapter authenticationStorageAdapter,
     IAccountInfoStorageAdapter accountInfoStorageAdapter,
     IAccountPermissionService accountPermissionService,

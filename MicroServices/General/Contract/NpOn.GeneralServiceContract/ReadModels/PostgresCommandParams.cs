@@ -1,7 +1,7 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.BaseRepository;
+using Common.Infrastructures.NpOn.BaseExecution;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using ProtoBuf;
 
@@ -20,9 +20,9 @@ public class CommandRModel : BaseGeneralRModel
         ((NpOnDbCommandParamGrpcList?)ProtoBufMode.ProtoBufDeserialize(ParamsPayload, typeof(NpOnDbCommandParamGrpcList)))
         ?.Items.Select(x => x.ToDbParam()).ToArray();
 
-    public NpOnRepositoryCommand ToCommand()
+    public NpOnExecuteCommand ToCommand()
     {
-        return new NpOnRepositoryCommand
+        return new NpOnExecuteCommand
         {
             CommandText = CommandText,
             ExecType = ExecType, 

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
@@ -53,7 +54,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     return;
                 }
 
-                (string commandText, List<NpgsqlParameter> npgsqlParameters) = command.ActionType switch
+                (string commandText, IEnumerable<NpgsqlParameter> npgsqlParameters) = command.ActionType switch
                 {
                     ERepositoryAction.Add => domainList.ToPostgresParamsInsert(),
                     ERepositoryAction.Update => domainList.ToPostgresParamsUpdate(),
