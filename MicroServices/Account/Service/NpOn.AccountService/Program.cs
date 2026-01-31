@@ -1,15 +1,13 @@
 using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonGrpcApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
-using Common.Infrastructures.NpOn.DbFactory.Generics;
-using Common.Infrastructures.NpOn.DbFactory.Redis;
 using MicroServices.Account.Service.NpOn.AccountService.KafkaConsumers;
 using MicroServices.Account.Service.NpOn.AccountService.RabbitMqConsumers;
 using MicroServices.Account.Service.NpOn.AccountService.Services;
@@ -38,37 +36,10 @@ public sealed class Program : GrpcCommonProgram
         services.AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
         services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
         services.AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
-
-        // Main Database (account)
-        // services.AddSingleton<IDbFactoryWrapper>(_ =>
-        // {
-        //     string connectionString =
-        //         EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
-        //     int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
-        //     IDbFactoryWrapper factoryWrapper =
-        //         new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
-        //     return factoryWrapper;
-        // });
-        services.AddSingleton<INpOnPostgresFactoryWrapper>(_ =>
-        {
-            string connectionString =
-                EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
-            int connectionNumber =
-                EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
-            IDbFactoryWrapper factoryWrapper =
-                new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
-            return new NpOnPostgresFactoryWrapper(factoryWrapper);
-        });
         
-        services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(_ =>
-        {
-            string connectionString =
-                EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
-            int connectionNumber = EApplicationConfiguration.RedisConnectionNumber.GetAppSettingConfig().AsDefaultInt();
-            IRedisFactoryWrapper factoryWrapper =
-                new RedisFactoryWrapper(connectionString, EDb.Redis, connectionNumber, true);
-            return (RedisFactoryWrapper)factoryWrapper;
-        });
+        services
+            .AddPostgres()
+            .AddRedis();
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

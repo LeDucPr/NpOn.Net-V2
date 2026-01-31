@@ -107,6 +107,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.RabbitMqAppExtUse", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.PostgresAppExtUse", "Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj", "{153924BB-6E93-48A8-B654-0A453FE0773F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.RedisAppExtUse", "Common\Applications\ApplicationExtensions\NpOn.RedisAppExtUse\NpOn.RedisAppExtUse.csproj", "{A381468D-AB40-4D0C-914E-9C75BE56EC61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -265,6 +267,10 @@ Global
 		{153924BB-6E93-48A8-B654-0A453FE0773F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{153924BB-6E93-48A8-B654-0A453FE0773F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{153924BB-6E93-48A8-B654-0A453FE0773F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A381468D-AB40-4D0C-914E-9C75BE56EC61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A381468D-AB40-4D0C-914E-9C75BE56EC61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A381468D-AB40-4D0C-914E-9C75BE56EC61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A381468D-AB40-4D0C-914E-9C75BE56EC61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -319,5 +325,6 @@ Global
 		{A01D4F34-D88E-4D41-A8B7-D0AA989234D3} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
 		{BA4C9BED-4C6B-4EE4-BB2C-481A915EEC50} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
 		{153924BB-6E93-48A8-B654-0A453FE0773F} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
+		{A381468D-AB40-4D0C-914E-9C75BE56EC61} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
 	EndGlobalSection
 EndGlobal

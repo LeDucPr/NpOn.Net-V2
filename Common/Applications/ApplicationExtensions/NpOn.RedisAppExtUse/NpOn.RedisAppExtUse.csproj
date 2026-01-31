@@ -4,14 +4,11 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse</RootNamespace>
+        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse</RootNamespace>
         <OutputType>Library</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
-      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\..\..\Infrastructures\NpOn.BaseExecution\NpOn.BaseExecution.csproj" />
       <ProjectReference Include="..\..\..\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
       <ProjectReference Include="..\..\..\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
     </ItemGroup>

@@ -24,4 +24,8 @@
       <ProjectReference Include="..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Redis\" />
+    </ItemGroup>
+
 </Project>

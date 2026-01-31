@@ -1,12 +1,11 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.DbFactory.Generics;
 using Common.Infrastructures.NpOn.RedisExtCm.Commands;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
 using StackExchange.Redis;
 
-namespace Common.Infrastructures.NpOn.DbFactory.Redis;
+namespace Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 
 public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
 {
