@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Common.Applications.NpOn.CommonRestApplication.Extensions;
+namespace Common.Applications.NpOn.CommonApplication.Extensions;
 
 public class GuidEmptyAsNullConverter : System.Text.Json.Serialization.JsonConverter<Guid?>
 {

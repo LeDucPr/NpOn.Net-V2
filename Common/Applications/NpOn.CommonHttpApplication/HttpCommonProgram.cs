@@ -1,15 +1,16 @@
-﻿using Common.Applications.NpOn.CommonApplication;
-using Common.Applications.NpOn.CommonRestApplication.Extensions;
+using Common.Applications.NpOn.CommonApplication;
+using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
+using NpOn.AddGrpcAppExtUse;
 
-namespace Common.Applications.NpOn.CommonRestApplication;
+namespace Common.Applications.NpOn.CommonHttpApplication;
 
-public abstract class RestCommonProgram : CommonProgram
+public abstract class HttpCommonProgram : CommonProgram
 {
     protected new readonly string[] Args;
 
-    protected RestCommonProgram(string[] args) : base(args)
+    protected HttpCommonProgram(string[] args) : base(args)
     {
         Args = args;
     }
@@ -22,6 +23,9 @@ public abstract class RestCommonProgram : CommonProgram
                 System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
             options.JsonSerializerOptions.Converters.Add(new GuidEmptyAsNullConverter());
         });
+
+        if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+            services.AddGrpcDefaultMode();
         return Task.CompletedTask;
     }
 

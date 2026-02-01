@@ -1,19 +1,16 @@
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication;
 using Common.Extensions.NpOn.HeaderConfig;
-using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
-using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.General.Service.NpOn.GeneralService;
 
-public sealed class Program : CommonProgram
+public sealed class Program : HttpCommonProgram
 {
     private Program(string[] args) : base(args)
     {

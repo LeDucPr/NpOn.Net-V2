@@ -24,6 +24,7 @@ public enum EApplicationConfiguration
     [Display(Name = "DnsRefreshInterval")] DnsRefreshInterval, // thời gian làm mới Dns service discovery (gRPC client-side load balancing) - int
     [Display(Name = "IsStartAsync")] IsStartAsync, // - boolean
     [Display(Name = "IsAutomaticKeyGeneration")] IsAutomaticKeyGeneration, // - boolean
+    [Display(Name = "IsUseGrpcStandardMode")] IsUseGrpcStandardMode, // - boolean
     [Display(Name = "CorsPolicy")] CorsPolicy, // - string
     [Display(Name = "AutoAddCredential")] AutoAddCredential, // - string
     // ReSharper disable once InconsistentNaming

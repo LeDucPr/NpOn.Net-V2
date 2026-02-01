@@ -3,7 +3,7 @@ using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Services;
-using Common.Applications.NpOn.CommonGrpcApplication;
+using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
@@ -19,7 +19,7 @@ using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
 
-public sealed class Program : GrpcCommonProgram
+public sealed class Program : HttpCommonProgram
 {
     private Program(string[] args) : base(args)
     {
