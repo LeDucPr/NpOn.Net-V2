@@ -1,5 +1,5 @@
-using Definitions.NpOn.ProjectEnums.AccountEnums;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
+using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Service.NpOn.IAccountService;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;

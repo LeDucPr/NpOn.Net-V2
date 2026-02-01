@@ -1,4 +1,4 @@
-﻿using Definitions.NpOn.ProjectEnums.AccountEnums;
+﻿using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using ProtoBuf;
 
 namespace MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;

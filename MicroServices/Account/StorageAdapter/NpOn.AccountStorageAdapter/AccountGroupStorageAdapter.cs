@@ -1,11 +1,10 @@
-﻿using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
-using Common.Extensions.NpOn.CommonMode;
+﻿using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
-using Definitions.NpOn.ProjectConstant.AccountConstant;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Definitions.NpOn.AccountConstant;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
-using MicroServices.General.Contract.GeneralServiceContract.Queries;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.IGeneralService;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;

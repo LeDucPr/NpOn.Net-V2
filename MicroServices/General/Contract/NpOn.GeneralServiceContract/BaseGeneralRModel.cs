@@ -2,7 +2,7 @@
 using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.GeneralServiceContract;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceContract;
 
 [ProtoContract]
 [ProtoInclude(100, typeof(TblFldRModel))]

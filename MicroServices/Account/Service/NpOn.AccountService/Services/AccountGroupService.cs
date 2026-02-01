@@ -1,5 +1,4 @@
-﻿using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
-using Common.Applications.NpOn.CommonApplication.Services;
+﻿using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;

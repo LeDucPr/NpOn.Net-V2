@@ -26,6 +26,8 @@
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj" />
       <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectEnums\NpOn.ProjectEnums.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.AccountStorageAdapter\NpOn.AccountStorageAdapter.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.IAccountStorageAdapter\NpOn.IAccountStorageAdapter.csproj" />
       <ProjectReference Include="..\NpOn.IAccountService\NpOn.IAccountService.csproj" />

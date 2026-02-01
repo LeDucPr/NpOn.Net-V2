@@ -19,6 +19,7 @@
         <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj"/>
         <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj"/>
         <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj"/>
+        <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj" />
         <ProjectReference Include="..\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
     </ItemGroup>
     

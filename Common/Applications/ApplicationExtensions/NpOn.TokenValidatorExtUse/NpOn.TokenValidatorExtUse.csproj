@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse</RootNamespace>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\MicroServices\Account\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj" />
+      <ProjectReference Include="..\..\..\..\MicroServices\Account\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj" />
+      <ProjectReference Include="..\..\..\..\MicroServices\Account\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj" />
+      <ProjectReference Include="..\..\..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
+      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    </ItemGroup>
+
+</Project>

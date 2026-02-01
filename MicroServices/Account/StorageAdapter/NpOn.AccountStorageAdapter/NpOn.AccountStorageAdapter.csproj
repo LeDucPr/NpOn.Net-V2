@@ -18,6 +18,7 @@
         <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj"/>
         <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj"/>
         <ProjectReference Include="..\..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
+        <ProjectReference Include="..\..\Definitions\NpOn.AccountConstant\NpOn.AccountConstant.csproj" />
         <ProjectReference Include="..\NpOn.IAccountStorageAdapter\NpOn.IAccountStorageAdapter.csproj"/>
     </ItemGroup>
 </Project>

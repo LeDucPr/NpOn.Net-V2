@@ -1,4 +1,4 @@
-﻿using Definitions.NpOn.ProjectEnums.AccountEnums;
+﻿using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using ProtoBuf;
 
 namespace MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
@@ -43,7 +43,6 @@ public class AccountLogoutQuery : BaseAccountCommand
 public class AccountGetLogonInfoBySessionIdQuery : AccountLogoutQuery
 {
 }
-
 
 [ProtoContract]
 public class AccountPermissionExceptionCachingCheckValidQuery : BaseAccountCommand
