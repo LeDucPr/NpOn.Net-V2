@@ -6,7 +6,6 @@ namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class HostingApp(
     ILogger<HostingApp> logger,
-    // test
     IAuthenticationService authenticationService
 ) : IHostedService
 {
