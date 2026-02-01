@@ -12,6 +12,7 @@ namespace Common.Applications.NpOn.CommonApplication;
 public abstract class CommonProgram
 {
     protected readonly string[] Args;
+    protected virtual bool UseControllers => true;
 
     protected CommonProgram(string[] args)
     {
@@ -100,7 +101,10 @@ public abstract class CommonProgram
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapControllers();
+        if (UseControllers)
+        {
+            app.MapControllers();
+        }
 
         string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
         app.MapGet("/", () => appName);

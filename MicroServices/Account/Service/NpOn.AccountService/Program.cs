@@ -2,6 +2,7 @@ using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
+using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
@@ -36,6 +37,7 @@ public sealed class Program : HttpCommonProgram
     {
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
             services
+                .AddDefaultKestrelListenConfig()
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)

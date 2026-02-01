@@ -56,6 +56,7 @@ public static class InternalGrpcClientResolverExtensions
             EnableMultipleHttp2Connections = true, // allows channel to add additional HTTP/2 connections
             EnableMultipleHttp3Connections = true, // allows channel to add additional HTTP/3 connections
             MaxConnectionsPerServer = int.MaxValue,
+            SslOptions = { RemoteCertificateValidationCallback = delegate { return true; } }
         };
         var methodConfig = new MethodConfig
         {
@@ -76,6 +77,7 @@ public static class InternalGrpcClientResolverExtensions
             option.MaxReceiveMessageSize = int.MaxValue;
             option.MaxSendMessageSize = int.MaxValue;
             option.Credentials = ChannelCredentials.Insecure;
+            option.UnsafeUseInsecureChannelCallCredentials = true; // internal mode
             option.ServiceProvider = serviceProvider;
             option.ServiceConfig = new ServiceConfig
             {

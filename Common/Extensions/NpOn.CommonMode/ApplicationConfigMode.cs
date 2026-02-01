@@ -8,31 +8,16 @@ public static class ApplicationConfigMode
 {
     private static readonly IDictionary<Enum, string> Configs = new Dictionary<Enum, string>();
 
-    extension(IConfiguration configuration)
+    public static void InitConfigs(this IConfiguration configuration, params Type[] enumTypes)
     {
-        // public void InitAllConfigs()
-        // {
-        //     var enumTypes = AppDomain.CurrentDomain.GetAssemblies()
-        //         .SelectMany(a => a.GetTypes())
-        //         .Where(t => t.IsEnum && t.IsDefined(typeof(AppConfigAttribute), false));
-        //
-        //     foreach (var enumType in enumTypes)
-        //     {
-        //         InitInternal(configuration, enumType);
-        //     }
-        // }
-
-        public void InitConfigs(params Type[] enumTypes)
+        foreach (var type in enumTypes)
         {
-            foreach (var type in enumTypes)
-            {
-                if (!type.IsEnum) continue;
+            if (!type.IsEnum) continue;
 
-                if (!type.IsDefined(typeof(AppConfigAttribute), false))
-                    throw new InvalidOperationException($"{type.Name} need attribute [AppConfig] to init app config");
+            if (!type.IsDefined(typeof(AppConfigAttribute), false))
+                throw new InvalidOperationException($"{type.Name} need attribute [AppConfig] to init app config");
 
-                InitInternal(configuration, type);
-            }
+            InitInternal(configuration, type);
         }
     }
 
@@ -42,8 +27,16 @@ public static class ApplicationConfigMode
         {
             if (Configs.ContainsKey(key)) continue;
             string keyConfig = key.GetDisplayName();
-            var value = configuration.GetSection(keyConfig).Value;
 
+            var keyParts = keyConfig.Split(':');
+            IConfigurationSection section = configuration.GetSection(keyParts[0]);
+
+            for (int i = 1; i < keyParts.Length; i++)
+            {
+                section = section.GetSection(keyParts[i]);
+            }
+
+            var value = section.Value;
             Configs.Add(key, value ?? string.Empty);
         }
     }

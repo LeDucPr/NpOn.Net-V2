@@ -27,6 +27,7 @@ public enum EApplicationConfiguration
     [Display(Name = "IsUseGrpcStandardMode")] IsUseGrpcStandardMode, // - boolean
     [Display(Name = "CorsPolicy")] CorsPolicy, // - string
     [Display(Name = "AutoAddCredential")] AutoAddCredential, // - string
+    [Display(Name = "Kestrel:EndpointDefaults:Protocols")] KestrelServerOptions, // - int
     // ReSharper disable once InconsistentNaming
     [Display(Name = "CORS")] CORS, // - string
     [Display(Name = "IsUseResponseCompression")] IsUseResponseCompression, // - boolean
