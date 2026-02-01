@@ -1,5 +1,4 @@
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 

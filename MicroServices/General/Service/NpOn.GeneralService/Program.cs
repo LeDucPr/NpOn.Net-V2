@@ -1,3 +1,4 @@
+using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
@@ -5,6 +6,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
@@ -29,17 +31,8 @@ public sealed class Program : CommonProgram
         services.AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
         services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
         
-        // utils
-        services.AddSingleton<IDbFactoryWrapper>(_ =>
-        {
-            string connectionString =
-                EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
-            int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
-            IDbFactoryWrapper factoryWrapper =
-                new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
-            return factoryWrapper;
-        });
-
+        services.AddPostgres();
+        
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();
