@@ -8,16 +8,31 @@ public static class ApplicationConfigMode
 {
     private static readonly IDictionary<Enum, string> Configs = new Dictionary<Enum, string>();
 
-    public static void InitConfigs(this IConfiguration configuration, params Type[] enumTypes)
+    extension(IConfiguration configuration)
     {
-        foreach (var type in enumTypes)
+        // public void InitAllConfigs()
+        // {
+        //     var enumTypes = AppDomain.CurrentDomain.GetAssemblies()
+        //         .SelectMany(a => a.GetTypes())
+        //         .Where(t => t.IsEnum && t.IsDefined(typeof(AppConfigAttribute), false));
+        //
+        //     foreach (var enumType in enumTypes)
+        //     {
+        //         InitInternal(configuration, enumType);
+        //     }
+        // }
+
+        public void InitConfigs(params Type[] enumTypes)
         {
-            if (!type.IsEnum) continue;
+            foreach (var type in enumTypes)
+            {
+                if (!type.IsEnum) continue;
 
-            if (!type.IsDefined(typeof(AppConfigAttribute), false))
-                throw new InvalidOperationException($"{type.Name} need attribute [AppConfig] to init app config");
+                if (!type.IsDefined(typeof(AppConfigAttribute), false))
+                    throw new InvalidOperationException($"{type.Name} need attribute [AppConfig] to init app config");
 
-            InitInternal(configuration, type);
+                InitInternal(configuration, type);
+            }
         }
     }
 
@@ -27,27 +42,7 @@ public static class ApplicationConfigMode
         {
             if (Configs.ContainsKey(key)) continue;
             string keyConfig = key.GetDisplayName();
-            string value;
-
-            // The indexer `configuration[keyConfig]` can be unreliable for nested keys with some providers.
-            // The most robust way is to traverse the sections manually.
-            if (keyConfig.Contains(':'))
-            {
-                IConfigurationSection section = null;
-                foreach (var part in keyConfig.Split(':'))
-                {
-                    section = (section == null) ? configuration.GetSection(part) : section.GetSection(part);
-                }
-                value = section?.Value;
-                if (value?.Contains("Protocols") ?? false)
-                {
-                    var ccc = value;
-                }
-            }
-            else
-            {
-                value = configuration[keyConfig];
-            }
+            var value = configuration.GetSection(keyConfig).Value;
 
             Configs.Add(key, value ?? string.Empty);
         }
