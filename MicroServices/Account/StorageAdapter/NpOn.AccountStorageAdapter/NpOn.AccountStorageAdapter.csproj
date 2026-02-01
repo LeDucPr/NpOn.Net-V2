@@ -16,7 +16,7 @@
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseExecution\NpOn.BaseExecution.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
       <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj" />
       <ProjectReference Include="..\..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />

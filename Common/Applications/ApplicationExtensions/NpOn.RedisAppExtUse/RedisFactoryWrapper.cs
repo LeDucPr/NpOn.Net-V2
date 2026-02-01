@@ -1,6 +1,6 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
-using Common.Infrastructures.NpOn.DbFactory.Generics;
 using Common.Infrastructures.NpOn.RedisExtCm.Commands;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
 using StackExchange.Redis;

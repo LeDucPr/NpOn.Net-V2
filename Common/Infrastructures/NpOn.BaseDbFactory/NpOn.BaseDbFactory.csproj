@@ -4,14 +4,18 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Common.Infrastructures.NpOn.BaseExecution</RootNamespace>
+        <RootNamespace>Common.Infrastructures.DbFactories.NpOn.DbFactory</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
-      <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+    </ItemGroup>
 
 </Project>

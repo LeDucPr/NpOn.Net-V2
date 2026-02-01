@@ -1,5 +1,5 @@
-﻿using Common.Infrastructures.NpOn.CommonDb.DbResults;
-using Common.Infrastructures.NpOn.DbFactory.Generics;
+﻿using Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
+using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;

@@ -1,6 +1,7 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
+using Common.Infrastructures.DbFactories.NpOn.DbFactory.FactoryResults;
+using Common.Infrastructures.DbFactories.NpOn.GenericDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Connections;
@@ -8,12 +9,12 @@ using Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 using Common.Infrastructures.NpOn.RedisExtCm.Connections;
 
-namespace Common.Infrastructures.NpOn.DbFactory.FactoryResults;
+namespace Common.Infrastructures.DbFactories.NpOn.GenericDbFactory;
 
 /// <summary>
 /// khởi tạo cùng Starter
 /// </summary>
-public class DbDriverFactoryCreator
+public class GenericDbDriverFactoryCreator
 {
     public EDb DbType { get; set; }
     private List<EDbError>? DbErrors { get; set; }
@@ -32,7 +33,7 @@ public class DbDriverFactoryCreator
         _dbDriverFactory ??= null;
     }
 
-    public DbDriverFactoryCreator(EDb dbType, string connectString, int connectionNumber = 1)
+    public GenericDbDriverFactoryCreator(EDb dbType, string connectString, int connectionNumber = 1)
     {
         if (!dbType.IsValid())
         {
@@ -75,7 +76,7 @@ public class DbDriverFactoryCreator
         try
         {
             DbErrors ??= [];
-            IDbDriverFactory factory = new DbDriverFactory(dbType, _connectOptions!, _connectionNumber);
+            IDbDriverFactory factory = new GenericDbDriverFactory(dbType, _connectOptions!, _connectionNumber);
             if (factory.GetConnectionNumbers != 0)
             {
                 if (factory.FirstValidConnection == null)

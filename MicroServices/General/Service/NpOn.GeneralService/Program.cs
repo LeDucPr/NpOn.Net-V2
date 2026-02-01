@@ -4,7 +4,7 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication;
 using Common.Extensions.NpOn.HeaderConfig;
-using Common.Infrastructures.NpOn.DbFactory.Generics;
+using Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;

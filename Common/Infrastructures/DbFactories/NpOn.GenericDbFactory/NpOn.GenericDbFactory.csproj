@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>NpOn.GenericDbFactory</AssemblyName>
+        <RootNamespace>Common.Infrastructures.DbFactories.NpOn.GenericDbFactory</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
+      <ProjectReference Include="..\..\NpOn.CassandraExtCm\NpOn.CassandraExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.MongoDbExtCm\NpOn.MongoDbExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.MssqlExtCm\NpOn.MssqlExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
+    </ItemGroup>
+
+</Project>

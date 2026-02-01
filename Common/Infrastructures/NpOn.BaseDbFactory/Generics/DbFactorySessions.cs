@@ -1,9 +1,8 @@
-using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonInternalCache;
 using Common.Extensions.NpOn.CommonMode;
 
-namespace Common.Infrastructures.NpOn.DbFactory.Generics;
+namespace Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
 
 public static class DbFactorySessions // DbFactoryWrapperExtension
 {
@@ -40,7 +39,7 @@ public static class DbFactorySessions // DbFactoryWrapperExtension
 
     #region Internal
 
-    internal static void AddToDbFactoryWrapperCache(this IDbFactoryWrapper dbFactoryWrapper)
+    public static void AddToDbFactoryWrapperCache(this IDbFactoryWrapper dbFactoryWrapper)
     {
         string? key = dbFactoryWrapper.FactoryOptionCode;
         if (string.IsNullOrWhiteSpace(key))

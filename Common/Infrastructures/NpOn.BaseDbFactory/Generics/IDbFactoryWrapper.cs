@@ -1,14 +1,13 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 
-namespace Common.Infrastructures.NpOn.DbFactory.Generics;
+namespace Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
 
 public interface IDbFactoryWrapper
 {
     string? FactoryOptionCode { get; }
-    EDb DbType { get; }
+    EDb GetDbType();
     Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters);

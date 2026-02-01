@@ -100,7 +100,7 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
+    public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand)
     {
         if (!IsValidSession || _connection == null) // Check enabled connection 
             return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
@@ -143,7 +143,7 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecCommand? execCommand,
+    public override async Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
         List<INpOnDbCommandParam<TEnum>> parameters)
     {
         if (typeof(TEnum) != typeof(NpgsqlDbType))

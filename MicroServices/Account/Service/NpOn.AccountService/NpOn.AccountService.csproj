@@ -20,7 +20,7 @@
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseExecution\NpOn.BaseExecution.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj" />
       <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectEnums\NpOn.ProjectEnums.csproj" />

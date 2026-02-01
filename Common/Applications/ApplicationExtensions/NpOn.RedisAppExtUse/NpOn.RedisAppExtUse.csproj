@@ -10,7 +10,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-      <ProjectReference Include="..\..\..\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
+      <ProjectReference Include="..\..\..\Infrastructures\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
     </ItemGroup>
 
 </Project>
