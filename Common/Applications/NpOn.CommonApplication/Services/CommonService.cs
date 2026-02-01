@@ -3,26 +3,8 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 
 namespace Common.Applications.NpOn.CommonApplication.Services;
 
-public class CommonService(ILogger<CommonService> logger) //: RabbitMqEventHandler(logger)
+public class CommonService(ILogger<CommonService> logger)
 {
-    protected async Task<CommonResponse<T>> CommonProcessRbMqEvent<T>(Func<CommonResponse<T>, Task> processFunc)
-    {
-        CommonResponse<T> response = new CommonResponse<T>();
-        try
-        {
-            await processFunc(response);
-        }
-        catch (Exception e)
-        {
-            response.SetFail($"An unexpected error occurred: {e.Message}");
-            logger.LogError(e, "An error occurred in CommonProcessRbMqEvent: {ErrorMessage}", e.Message);
-        }
-
-        return response;
-    }
-
-    // private readonly RabbitMqConnectionPool _rabbitMqConnectionPool = contextService.RabbitMqConnectionPool;
-
     protected async Task<CommonResponse<T>> CommonProcess<T>(
         params Func<CommonResponse<T>, Task<(CommonResponse<T> response, EControlFlow flow)>>[] processFunctions)
     {
