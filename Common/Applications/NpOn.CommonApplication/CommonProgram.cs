@@ -58,15 +58,8 @@ public abstract class CommonProgram
 
         services
             .UseDefaultForwardHeaderOptionMode() // forward header options
-            .UseCorsDefaultMode() // cors
             .UserLoggerDefaultMode() // logger
             .UseDefaultCompressMode(); // compress response
-
-        // // authentication 
-        // services.AddTransient<AuthenticationToken>();
-        // services.AddTransient<ContextService>();
-        // services.AddTransient<AuthenService>();
-        // services.AddSingleton<PermissionService>();
 
         services
             .UseDefaultKeyGenerationMode() // key generation

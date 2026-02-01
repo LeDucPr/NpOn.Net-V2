@@ -23,9 +23,6 @@ public abstract class HttpCommonProgram : CommonProgram
                 System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
             options.JsonSerializerOptions.Converters.Add(new GuidEmptyAsNullConverter());
         });
-
-        if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
-            services.AddGrpcDefaultMode();
         return Task.CompletedTask;
     }
 

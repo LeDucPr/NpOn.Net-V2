@@ -1,15 +1,16 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Attributes;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication.Attributes;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Controllers.NpOn.SSO.Mappings.Account;
 using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.Validators;
-using Definitions.NpOn.ProjectEnums.AccountEnums;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
+using MicroServices.Account.Definitions.NpOn.AccountEnum;
+using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -352,7 +353,7 @@ public class AccountController(
             return string.Empty;
         if (isAddMd5)
             password = CreateMd5(password).ToLower();
-        byte[] salt = Encoding.UTF8.GetBytes(ContextService.DefaultSaltPassword);
+        byte[] salt = Encoding.UTF8.GetBytes(ContextServiceCode.DefaultSaltPassword);
         var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 369);
         byte[] hash = pbkdf2.GetBytes(20); // 160 bit
         return Convert.ToBase64String(hash);
@@ -385,12 +386,10 @@ public class AccountController(
     // for old system account
     private static string CreateMd5(string input)
     {
-        using (MD5 md5 = MD5.Create())
-        {
-            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-            byte[] hashBytes = md5.ComputeHash(inputBytes);
-            return Convert.ToHexString(hashBytes);
-        }
+        using MD5 md5 = MD5.Create();
+        byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+        byte[] hashBytes = md5.ComputeHash(inputBytes);
+        return Convert.ToHexString(hashBytes);
     }
 
     #endregion private func

@@ -6,6 +6,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.General.Service.NpOn.GeneralService;
@@ -25,11 +26,14 @@ public sealed class Program : HttpCommonProgram
     protected override Task ConfigureServices(IServiceCollection services)
     {
         // call load balancing services 
-        services.AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
-        services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
-        
+        if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+            services
+                .AddGrpcDefaultMode()
+                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
+                .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
+
         services.AddPostgres();
-        
+
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();

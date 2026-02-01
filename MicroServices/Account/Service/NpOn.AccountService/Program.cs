@@ -15,6 +15,7 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
@@ -33,10 +34,13 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        services.AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
-        services.AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
-        services.AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
-        
+        if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+            services
+                .AddGrpcDefaultMode()
+                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
+                .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
+                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+
         services
             .AddPostgres()
             .AddRedis();
@@ -45,7 +49,7 @@ public sealed class Program : HttpCommonProgram
         {
             services.AddHostedService<HostingApp>();
         }
-        
+
         // rabbitMq
         bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
         if (isUseRabbitMq)

@@ -14,7 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Common\Applications\NpOn.CommonRestApplication\NpOn.CommonRestApplication.csproj" />
+      <ProjectReference Include="..\..\Common\Applications\ApplicationExtensions\NpOn.TokenValidatorExtUse\NpOn.TokenValidatorExtUse.csproj" />
+      <ProjectReference Include="..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />

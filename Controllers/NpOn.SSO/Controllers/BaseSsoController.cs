@@ -1,6 +1,6 @@
-﻿using Common.Extensions.NpOn.CommonInternalCache;
-using Common.Extensions.NpOn.CommonWebApplication.Controllers;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
+﻿using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Controllers;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
+using Common.Extensions.NpOn.CommonInternalCache;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
