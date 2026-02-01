@@ -2,30 +2,23 @@ using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 using Npgsql;
 using NpgsqlTypes;
-using NpOn.PostgresDbFactory.FactoryResults;
 
-namespace NpOn.PostgresDbFactory;
+namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 
-public class PostgresFactoryWrapper : BaseDbFactoryWrapper
+public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrapper
 {
-    /// <summary>
-    /// Tạo ra cho kết nối chỉ dùng ConnectionString hoặc lấy tham số khi khởi động
-    /// </summary>
-    /// <param name="openConnectString">Tham sô kết nối được mặc định cho khởi động là 1</param>
-    /// <param name="dbType"></param>
-    /// <param name="connectionNumber"></param>
-    /// <param name="isUseCaching"></param>
     public PostgresFactoryWrapper(
-        string openConnectString, EDb dbType, int connectionNumber = 1, bool isUseCaching = true)
+        string openConnectString, int connectionNumber = 1, bool isUseCaching = true)
     {
-        DbType = dbType;
-        Factory = new PostgresDbDriverFactory(
+        DbType = EDb.Postgres;
+        Factory = new PostgresDriverFactory(
             new PostgresConnectOption()
                 .SetConnectionString(openConnectString),
             connectionNumber);
@@ -33,25 +26,19 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper
             this.AddToDbFactoryWrapperCache();
     }
 
-    /// <summary>
-    /// Generic initial
-    /// </summary>
-    /// <param name="connectOption"></param>
-    /// <param name="dbType"></param>
-    /// <param name="connectionNumber"></param>
-    /// <param name="isUseCaching"></param>
     public PostgresFactoryWrapper(
-        INpOnConnectOption connectOption, EDb dbType, int connectionNumber = 1, bool isUseCaching = true)
+        INpOnConnectOption connectOption, int connectionNumber = 1, bool isUseCaching = true)
     {
-        DbType = dbType;
+        DbType = EDb.Postgres;
+        ;
         if (connectOption is not PostgresConnectOption)
             throw new ArgumentException("connectOption must be a PostgresConnectOption");
-        Factory = new PostgresDbDriverFactory(connectOption, connectionNumber);
+        Factory = new PostgresDriverFactory(connectOption, connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
-    
-    
+
+
     // #region override
     //
     // public Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)

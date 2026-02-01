@@ -1,17 +1,40 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.FactoryResults;
+using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Commands;
+using Common.Infrastructures.NpOn.RedisExtCm.Connections;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
 using StackExchange.Redis;
 
-namespace Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
+namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory;
 
-public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
+public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 {
-    public RedisFactoryWrapper(string connectString, EDb dbType, int connectionNumber = 1, bool isAutoOpen = false)
-        : base(connectString, dbType, connectionNumber, isAutoOpen)
+    public RedisFactoryWrapper(
+        string openConnectString, int connectionNumber = 1, bool isUseCaching = true)
     {
+        DbType = EDb.Redis;
+        Factory = new RedisDriverFactory(
+            new RedisConnectOption()
+                .SetConnectionString(openConnectString),
+            connectionNumber);
+        if (isUseCaching)
+            this.AddToDbFactoryWrapperCache();
     }
+
+    public RedisFactoryWrapper(
+        INpOnConnectOption connectOption, int connectionNumber = 1, bool isUseCaching = true)
+    {
+        DbType = EDb.Redis;
+        if (connectOption is not RedisConnectOption)
+            throw new ArgumentException("connectOption must be a RedisConnectOption");
+        Factory = new RedisDriverFactory(connectOption, connectionNumber);
+        if (isUseCaching)
+            this.AddToDbFactoryWrapperCache();
+    }
+
 
     #region Single Operations
 
@@ -125,5 +148,5 @@ public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
 
     #endregion Redis Wrapper Type
 
-    #endregion
+    #endregion Bulk Operations
 }

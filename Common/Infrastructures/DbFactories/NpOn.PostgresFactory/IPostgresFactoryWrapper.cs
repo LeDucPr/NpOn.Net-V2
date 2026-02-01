@@ -3,7 +3,7 @@ using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 
-namespace NpOn.PostgresDbFactory;
+namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 
 public interface IPostgresFactoryWrapper : IDbFactoryWrapper
 {

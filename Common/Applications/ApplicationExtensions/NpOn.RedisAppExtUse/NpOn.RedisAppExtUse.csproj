@@ -9,8 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\Infrastructures\DbFactories\NpOn.RedisFactory\NpOn.RedisFactory.csproj" />
       <ProjectReference Include="..\..\..\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-      <ProjectReference Include="..\..\..\Infrastructures\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
     </ItemGroup>
 
 </Project>

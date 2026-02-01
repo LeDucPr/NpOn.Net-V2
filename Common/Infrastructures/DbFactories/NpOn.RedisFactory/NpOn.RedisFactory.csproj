@@ -4,13 +4,12 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory</RootNamespace>
+        <RootNamespace>Common.Infrastructures.DbFactories.NpOn.RedisFactory</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
       <ProjectReference Include="..\..\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
-      <ProjectReference Include="..\..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
     </ItemGroup>
 
 </Project>

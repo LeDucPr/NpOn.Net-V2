@@ -1,6 +1,6 @@
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 
@@ -15,7 +15,7 @@ public static class RedisServiceCollectionExtensions
                 EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
             connectionNumber ??= EApplicationConfiguration.RedisConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IRedisFactoryWrapper factoryWrapper =
-                new RedisFactoryWrapper(connectionString, EDb.Redis, (int)connectionNumber, true);
+                new RedisFactoryWrapper(connectionString, (int)connectionNumber, true);
             return (RedisFactoryWrapper)factoryWrapper;
         });
         return services;

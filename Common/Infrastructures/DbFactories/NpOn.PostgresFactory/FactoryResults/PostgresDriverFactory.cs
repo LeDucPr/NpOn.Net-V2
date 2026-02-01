@@ -3,11 +3,11 @@ using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 
-namespace NpOn.PostgresDbFactory.FactoryResults;
+namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory.FactoryResults;
 
-public class PostgresDbDriverFactory : BaseDbDriverFactory
+public class PostgresDriverFactory : BaseDbDriverFactory
 {
-    public PostgresDbDriverFactory(INpOnConnectOption option, int connectionNumber = 1) : base(EDb.Postgres,
+    public PostgresDriverFactory(INpOnConnectOption option, int connectionNumber = 1) : base(EDb.Postgres,
         option, connectionNumber)
     {
     }

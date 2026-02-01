@@ -2,7 +2,7 @@
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
 
-namespace Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
+namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory;
 
 public interface IRedisFactoryWrapper : IDbFactoryWrapper
 {

@@ -8,6 +8,7 @@ using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
@@ -20,7 +21,6 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using Microsoft.IdentityModel.Tokens;
-using NpOn.PostgresDbFactory;
 
 // using Common.Infrastructures.NpOn.KafkaExtCm.Events;
 // using Common.Infrastructures.NpOn.KafkaExtCm.Senders;

@@ -1,7 +1,7 @@
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
-using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
