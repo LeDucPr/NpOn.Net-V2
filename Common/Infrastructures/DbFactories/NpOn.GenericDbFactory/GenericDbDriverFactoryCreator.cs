@@ -1,6 +1,6 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.DbFactories.NpOn.DbFactory.FactoryResults;
+using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.DbFactories.NpOn.GenericDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 using Common.Infrastructures.NpOn.CommonDb.Connections;

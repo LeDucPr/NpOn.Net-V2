@@ -7,11 +7,12 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Contract.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AccountMenuStorageAdapter(
-    INpOnPostgresFactoryWrapper npOnPostgresFactoryWrapper,
+    IPostgresFactoryWrapper postgresFactoryWrapper,
     IFldMasterPgService fldMasterPgService) : IAccountMenuStorageAdapter
 {
     public async Task<AccountMenuRModel?> AccountMenuGetById(AccountMenuGetByIdQuery query)
@@ -31,7 +32,7 @@ public class AccountMenuStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToFirstOrDefault<AccountMenuRModel>();
     }
 
@@ -52,7 +53,7 @@ public class AccountMenuStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToFirstOrDefault<AccountMenuRModel>();
     }
 
@@ -83,7 +84,7 @@ public class AccountMenuStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountMenuRModel>();
     }
 
@@ -100,7 +101,7 @@ public class AccountMenuStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountMenuRModel>();
     }
 }

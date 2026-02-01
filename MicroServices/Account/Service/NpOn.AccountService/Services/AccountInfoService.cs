@@ -9,11 +9,12 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountInfoService(
-    INpOnPostgresFactoryWrapper baseRepository,
+    IPostgresFactoryWrapper baseRepository,
     IAccountInfoStorageAdapter accountInfoStorageAdapter,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAccountInfoService

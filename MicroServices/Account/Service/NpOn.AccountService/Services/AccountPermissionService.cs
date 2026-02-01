@@ -9,6 +9,7 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
@@ -17,7 +18,7 @@ public class AccountPermissionService(
     IAccountPermissionStorageAdapter accountPermissionStorageAdapter,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IAccountGroupStorageAdapter accountGroupStorageAdapter,
-    INpOnPostgresFactoryWrapper baseRepository,
+    IPostgresFactoryWrapper baseRepository,
     ILogger<AccountPermissionService> logger
 ) : CommonService(logger), IAccountPermissionService
 {

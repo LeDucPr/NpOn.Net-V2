@@ -1,10 +1,10 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.DbFactories.NpOn.DbFactory.FactoryResults;
+using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 
-namespace Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
+namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 
 public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
 {

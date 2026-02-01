@@ -6,11 +6,12 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Contract.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AccountPermissionStorageAdapter(
-    INpOnPostgresFactoryWrapper npOnPostgresFactoryWrapper,
+    IPostgresFactoryWrapper postgresFactoryWrapper,
     IFldMasterPgService fldMasterPgService
 ) : IAccountPermissionStorageAdapter
 {
@@ -32,7 +33,7 @@ public class AccountPermissionStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountPermissionExceptionRModel>();
     }
 
@@ -58,7 +59,7 @@ public class AccountPermissionStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return false;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result?.Status ?? false;
     }
 
@@ -86,7 +87,7 @@ public class AccountPermissionStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountPermissionExceptionRModel>();
     }
 
@@ -109,7 +110,7 @@ public class AccountPermissionStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountPermissionControllerRModel>();
     }
 }

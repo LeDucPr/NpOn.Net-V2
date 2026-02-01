@@ -1,4 +1,4 @@
-﻿using Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
+﻿using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
 

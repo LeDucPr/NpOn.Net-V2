@@ -20,13 +20,15 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using Microsoft.IdentityModel.Tokens;
+using NpOn.PostgresDbFactory;
+
 // using Common.Infrastructures.NpOn.KafkaExtCm.Events;
 // using Common.Infrastructures.NpOn.KafkaExtCm.Senders;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AuthenticationService(
-    INpOnPostgresFactoryWrapper baseRepository,
+    IPostgresFactoryWrapper baseRepository,
     IAuthenticationStorageAdapter authenticationStorageAdapter,
     IAccountInfoStorageAdapter accountInfoStorageAdapter,
     IAccountPermissionService accountPermissionService,

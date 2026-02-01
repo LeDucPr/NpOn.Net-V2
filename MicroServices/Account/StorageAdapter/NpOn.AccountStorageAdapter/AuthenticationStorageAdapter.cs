@@ -6,11 +6,12 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Contract.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AuthenticationStorageAdapter(
-    INpOnPostgresFactoryWrapper npOnPostgresFactoryWrapper,
+    IPostgresFactoryWrapper postgresFactoryWrapper,
     IFldMasterPgService fldMasterPgService
 ) : IAuthenticationStorageAdapter
 {
@@ -42,7 +43,7 @@ public class AuthenticationStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(checkExistExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountRModel>();
     }
 
@@ -68,7 +69,7 @@ public class AuthenticationStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToFirstOrDefault<AccountRModel>();
     }
 
@@ -89,7 +90,7 @@ public class AuthenticationStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountLoginRModel>();
     }
 
@@ -110,7 +111,7 @@ public class AuthenticationStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(accountExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToFirstOrDefault<AccountRModel>();
     }
 
@@ -131,7 +132,7 @@ public class AuthenticationStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(accountExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountRModel>();
     }
     public async Task<AccountLoginRModel?> AccountLoginInfoGetBySessionId(string sessionId)
@@ -151,7 +152,7 @@ public class AuthenticationStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(logoutExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToFirstOrDefault<AccountLoginRModel>();
     }
 }

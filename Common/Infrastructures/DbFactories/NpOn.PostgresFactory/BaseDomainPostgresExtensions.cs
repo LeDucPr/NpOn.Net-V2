@@ -7,7 +7,7 @@ using Common.Infrastructures.NpOn.PostgresExtCm.Results;
 using Npgsql;
 using NpgsqlTypes;
 
-namespace Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+namespace NpOn.PostgresDbFactory;
 
 public static class BaseDomainExtensions
 {

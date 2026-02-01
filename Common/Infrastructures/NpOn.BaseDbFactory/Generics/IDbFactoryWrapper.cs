@@ -2,7 +2,7 @@
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 
-namespace Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
+namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 
 public interface IDbFactoryWrapper
 {

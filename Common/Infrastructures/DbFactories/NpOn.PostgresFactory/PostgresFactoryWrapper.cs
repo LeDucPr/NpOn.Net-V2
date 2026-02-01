@@ -1,39 +1,73 @@
-﻿using Common.Extensions.NpOn.CommonBaseDomain;
+using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.NpOn.BaseExecution;
+using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
+using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
-using Common.Infrastructures.NpOn.DbFactory.Generics;
+using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 using Npgsql;
 using NpgsqlTypes;
+using NpOn.PostgresDbFactory.FactoryResults;
 
-namespace Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+namespace NpOn.PostgresDbFactory;
 
-/// <summary>
-/// Decorator class for IDbFactoryWrapper to add PostgresSQL-specific functionalities.
-/// </summary>
-public class NpOnPostgresFactoryWrapper(IDbFactoryWrapper dbFactoryWrapper) : INpOnPostgresFactoryWrapper
+public class PostgresFactoryWrapper : BaseDbFactoryWrapper
 {
-    #region override
+    /// <summary>
+    /// Tạo ra cho kết nối chỉ dùng ConnectionString hoặc lấy tham số khi khởi động
+    /// </summary>
+    /// <param name="openConnectString">Tham sô kết nối được mặc định cho khởi động là 1</param>
+    /// <param name="dbType"></param>
+    /// <param name="connectionNumber"></param>
+    /// <param name="isUseCaching"></param>
+    public PostgresFactoryWrapper(
+        string openConnectString, EDb dbType, int connectionNumber = 1, bool isUseCaching = true)
+    {
+        DbType = dbType;
+        Factory = new PostgresDbDriverFactory(
+            new PostgresConnectOption()
+                .SetConnectionString(openConnectString),
+            connectionNumber);
+        if (isUseCaching)
+            this.AddToDbFactoryWrapperCache();
+    }
 
-    public string? FactoryOptionCode => dbFactoryWrapper.FactoryOptionCode;
-    public EDb DbType => dbFactoryWrapper.DbType;
-
-    public Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)
-        => dbFactoryWrapper.ExecuteAsync(dbCommand);
-
-    public Task<INpOnWrapperResult?> ExecuteAsync(string queryString)
-        => dbFactoryWrapper.ExecuteAsync(queryString);
-
-    public Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters)
-        => dbFactoryWrapper.ExecuteAsync(queryString, parameters);
-
-    public Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
-        List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum
-        => dbFactoryWrapper.ExecuteFuncParams(funcName, parameters);
-
-    #endregion override
+    /// <summary>
+    /// Generic initial
+    /// </summary>
+    /// <param name="connectOption"></param>
+    /// <param name="dbType"></param>
+    /// <param name="connectionNumber"></param>
+    /// <param name="isUseCaching"></param>
+    public PostgresFactoryWrapper(
+        INpOnConnectOption connectOption, EDb dbType, int connectionNumber = 1, bool isUseCaching = true)
+    {
+        DbType = dbType;
+        if (connectOption is not PostgresConnectOption)
+            throw new ArgumentException("connectOption must be a PostgresConnectOption");
+        Factory = new PostgresDbDriverFactory(connectOption, connectionNumber);
+        if (isUseCaching)
+            this.AddToDbFactoryWrapperCache();
+    }
+    
+    
+    // #region override
+    //
+    // public Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)
+    //     => ExecuteAsync(dbCommand);
+    //
+    // public Task<INpOnWrapperResult?> ExecuteAsync(string queryString)
+    //     => ExecuteAsync(queryString);
+    //
+    // public Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters)
+    //     => ExecuteAsync(queryString, parameters);
+    //
+    // public Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
+    //     List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum
+    //     => ExecuteFuncParams(funcName, parameters);
+    //
+    // #endregion override
 
 
     #region Implement
@@ -113,7 +147,7 @@ public class NpOnPostgresFactoryWrapper(IDbFactoryWrapper dbFactoryWrapper) : IN
     /// <summary>
     /// Implements the specific Execute method for PostgreSQL commands.
     /// </summary>
-    public Task<INpOnWrapperResult?> Execute(NpOnExecuteCommand npOnRepositoryCommand)
+    public Task<INpOnWrapperResult?> Execute(NpOnDbExecuteCommand npOnRepositoryCommand)
     {
         if (npOnRepositoryCommand.ExecType == EExecType.ExecFunc)
         {

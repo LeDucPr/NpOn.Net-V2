@@ -6,11 +6,12 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Contract.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AccountInfoStorageAdapter(
-    INpOnPostgresFactoryWrapper npOnPostgresFactoryWrapper,
+    IPostgresFactoryWrapper postgresFactoryWrapper,
     IFldMasterPgService fldMasterPgService
 ) : IAccountInfoStorageAdapter
 {
@@ -32,7 +33,7 @@ public class AccountInfoStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToFirstOrDefault<AccountInfoRModel>();
     }
 
@@ -53,7 +54,7 @@ public class AccountInfoStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountInfoRModel>();
     }
 
@@ -76,7 +77,7 @@ public class AccountInfoStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountAddressRModel>();
     }
 
@@ -97,7 +98,7 @@ public class AccountInfoStorageAdapter(
         var commandResponse = await fldMasterPgService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await npOnPostgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
         return result.ToList<AccountAddressRModel>();
     }
 }

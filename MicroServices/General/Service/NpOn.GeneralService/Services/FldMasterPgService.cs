@@ -7,7 +7,7 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Common.Extensions.NpOn.HandleFlow;
-using Common.Infrastructures.DbFactories.NpOn.DbFactory.Generics;
+using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
@@ -18,6 +18,7 @@ using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using Npgsql;
 using NpgsqlTypes;
+using NpOn.PostgresDbFactory;
 
 namespace MicroServices.General.Service.NpOn.GeneralService.Services
 {

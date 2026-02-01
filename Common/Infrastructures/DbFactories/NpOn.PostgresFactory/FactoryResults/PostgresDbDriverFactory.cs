@@ -1,5 +1,5 @@
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.DbFactories.NpOn.DbFactory.FactoryResults;
+using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 
