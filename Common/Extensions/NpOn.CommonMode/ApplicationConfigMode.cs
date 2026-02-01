@@ -27,16 +27,28 @@ public static class ApplicationConfigMode
         {
             if (Configs.ContainsKey(key)) continue;
             string keyConfig = key.GetDisplayName();
+            string value;
 
-            var keyParts = keyConfig.Split(':');
-            IConfigurationSection section = configuration.GetSection(keyParts[0]);
-
-            for (int i = 1; i < keyParts.Length; i++)
+            // The indexer `configuration[keyConfig]` can be unreliable for nested keys with some providers.
+            // The most robust way is to traverse the sections manually.
+            if (keyConfig.Contains(':'))
             {
-                section = section.GetSection(keyParts[i]);
+                IConfigurationSection section = null;
+                foreach (var part in keyConfig.Split(':'))
+                {
+                    section = (section == null) ? configuration.GetSection(part) : section.GetSection(part);
+                }
+                value = section?.Value;
+                if (value?.Contains("Protocols") ?? false)
+                {
+                    var ccc = value;
+                }
+            }
+            else
+            {
+                value = configuration[keyConfig];
             }
 
-            var value = section.Value;
             Configs.Add(key, value ?? string.Empty);
         }
     }
