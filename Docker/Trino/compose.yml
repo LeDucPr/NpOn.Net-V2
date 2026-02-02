@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    ports:
+      - "8888:8080"
+    environment:
+      - TRINO_HEAP=2G
+      - TRINO_EXTRA_CONFIG=catalog.management=dynamic
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        rm -rf /etc/trino/catalog/*
+        printf "catalog.management=dynamic\n" >> /etc/trino/config.properties
+        /usr/lib/trino/bin/run-trino
+    volumes:
+      # - ./trino_etc/catalog:/etc/trino/catalog
+      - trino_data:/data/trino
+    restart: always
+
+volumes:
+  trino_data:
