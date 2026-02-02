@@ -1,32 +1,33 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Common.Applications.NpOn.CommonApplication.Parameters;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
-using Definitions.NpOn.ProjectEnums.AccountEnums;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Events;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Definitions.NpOn.AccountEnum;
+using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using Microsoft.IdentityModel.Tokens;
+
 // using Common.Infrastructures.NpOn.KafkaExtCm.Events;
 // using Common.Infrastructures.NpOn.KafkaExtCm.Senders;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AuthenticationService(
-    IPostgresBaseRepository baseRepository,
+    IPostgresFactoryWrapper baseRepository,
     IAuthenticationStorageAdapter authenticationStorageAdapter,
     IAccountInfoStorageAdapter accountInfoStorageAdapter,
     IAccountPermissionService accountPermissionService,

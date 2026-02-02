@@ -4,18 +4,18 @@ namespace Common.Infrastructures.NpOn.CommonDb.DbCommands.Extensions
 {
     public static class NpOnDbExecCommandExtensions
     {
-        public static INpOnDbExecCommand AsFullJsonBlock(this INpOnDbExecCommand execCommand)
+        public static INpOnDbExecFuncCommand AsFullJsonBlock(this INpOnDbExecFuncCommand execFuncCommand)
         {
-            if (execCommand.Params is not { Count: > 0 })
-                return execCommand;
-            if (execCommand.Params.Count == 1)
+            if (execFuncCommand.Params is not { Count: > 0 })
+                return execFuncCommand;
+            if (execFuncCommand.Params.Count == 1)
             {
-                var singleParamValue = execCommand.Params.Values.First();
+                var singleParamValue = execFuncCommand.Params.Values.First();
                 if (singleParamValue is JToken or System.Text.Json.JsonDocument)
-                    return execCommand;
+                    return execFuncCommand;
             }
 
-            var jsonObject = JObject.FromObject(execCommand.Params);
+            var jsonObject = JObject.FromObject(execFuncCommand.Params);
             var firstValue = jsonObject.Properties().First().Value.ToString();
             var innerObject = JObject.Parse(firstValue);
             var newParams = new Dictionary<string, object>
@@ -23,11 +23,11 @@ namespace Common.Infrastructures.NpOn.CommonDb.DbCommands.Extensions
                 { string.Empty, innerObject }
             };
 
-            return new NpOnDbExecCommand(
-                execCommand.DataBaseType,
-                execCommand.FuncName,
+            return new NpOnDbExecFuncCommand(
+                execFuncCommand.DataBaseType,
+                execFuncCommand.FuncName,
                 newParams,
-                execCommand.AliasForSingleColumnOutput
+                execFuncCommand.AliasForSingleColumnOutput
             );
         }
     }

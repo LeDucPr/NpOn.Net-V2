@@ -4,7 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>MicroServices.General.Contract.GeneralServiceContract</RootNamespace>
+        <RootNamespace>MicroServices.General.Contract.NpOn.GeneralServiceContract</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,7 +18,7 @@
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseRepository\NpOn.BaseRepository.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseExecution\NpOn.BaseExecution.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
     </ItemGroup>
 

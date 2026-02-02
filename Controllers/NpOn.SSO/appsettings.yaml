@@ -1,0 +1,31 @@
+Logging:
+  LogLevel:
+    Default: Information
+    Microsoft.AspNetCore: Warning
+
+Kestrel:
+  EndpointDefaults:
+    Protocols: Http2
+
+AppName: SSO
+
+CookieDomain: ".npon_v2"
+CookieAuthenName: NpOn
+JwtTokensKey: "h987HG&H&G$T*h*8Yo8Y!&iy8ttg*I$%U_YhKJ$#uG8Q7T_G^87!G@H9QN87*tyh&H$uM!iy$G7_68Rf&$*hY97^8Hu_iYG8!67GFtfG87TG*&^tKioGTK"
+IsStartAsync: true
+IsUseGrpcStandardMode: true
+IsUseEnableUnencryptedMode: true
+HostPort: 40000
+HostDomain: "http://0.0.0.0"
+CORS: "localhost:5000"
+CorsPolicy: NpOnCorsPolicy
+ConnectionNumber: 100000
+DnsResolverFactory: 60
+KeepAlivePingDelaySeconds: 60
+KeepAlivePingTimeoutSeconds: 30
+IsAutomaticKeyGeneration: true
+IsDevEnvironment: true
+
+IsUseMiddlewareLogger: true
+
+AccountServiceUrl: "http://localhost:40004"

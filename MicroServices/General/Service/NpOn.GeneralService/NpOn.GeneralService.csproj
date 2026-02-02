@@ -9,19 +9,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonWebApplication\NpOn.CommonWebApplication.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
-      <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj" />
-      <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj" />
-      <ProjectReference Include="..\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />
+        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj"/>
+        <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj"/>
+        <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj"/>
+        <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj" />
+        <ProjectReference Include="..\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
     </ItemGroup>
-
     
-
 </Project>

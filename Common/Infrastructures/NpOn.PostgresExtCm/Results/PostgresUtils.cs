@@ -189,7 +189,7 @@ public static class PostgresUtils
     /// <param name="raw">The raw input value.</param>
     /// <param name="memberType">The original type of the member.</param>
     /// <returns>A tuple containing the normalized value and its NpgsqlDbType.</returns>
-    public static (object? Value, NpgsqlDbType? DbType) NormalizeValueForNpgsql(object raw, Type memberType)
+    public static (object? Value, NpgsqlDbType? DbType) NormalizeValueForNpgsql(object? raw, Type memberType)
     {
         var t = Nullable.GetUnderlyingType(memberType) ?? memberType;
         if (t.IsEnum)
@@ -203,7 +203,6 @@ public static class PostgresUtils
                 return (Convert.ToInt32(raw), NpgsqlDbType.Integer);
             if (underlying == typeof(long))
                 return (Convert.ToInt64(raw), NpgsqlDbType.Bigint);
-            return (Convert.ToInt64(raw), NpgsqlDbType.Bigint);
         }
 
         if (t == typeof(Guid)) return (raw, NpgsqlDbType.Uuid);
@@ -216,7 +215,7 @@ public static class PostgresUtils
         if (t == typeof(double)) return (raw, NpgsqlDbType.Double);
         if (t == typeof(float)) return (raw, NpgsqlDbType.Real);
         if (NpgsqlTypeMap.TryGetValue(t, out var npgsqlDbType))
-            return (raw.ToString(), npgsqlDbType); // Serialize JSON objects to string for the parameter
+            return (raw?.ToString(), npgsqlDbType); // Serialize JSON objects to string for the parameter
 
         return (raw, null);
     }

@@ -1,4 +1,4 @@
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
 

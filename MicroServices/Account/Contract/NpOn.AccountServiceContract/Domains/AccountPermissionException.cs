@@ -1,7 +1,7 @@
 ﻿using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
 using Common.Extensions.NpOn.HandleFlow.Attributes;
-using Definitions.NpOn.ProjectEnums.AccountEnums;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
+using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using ProtoBuf;
 
 namespace MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;

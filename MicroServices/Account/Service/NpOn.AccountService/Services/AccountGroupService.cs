@@ -1,7 +1,7 @@
 ﻿using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
@@ -12,12 +12,11 @@ using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountGroupService(
-    IPostgresBaseRepository baseRepository,
+    IPostgresFactoryWrapper baseRepository,
     IAccountGroupStorageAdapter accountGroupStorageAdapter,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAccountGroupService
 {
-    private IPostgresBaseRepository _baseRepository = baseRepository;
     public async Task<CommonResponse> GroupAddOrChange(AccountGroupAddOrChangeCommand command)
     {
         return await CommonProcess(async (response) =>
@@ -50,7 +49,7 @@ public class AccountGroupService(
             }
 
             List<AccountGroup> accountGroups = command.FromCommand();
-            if (!(await _baseRepository.Merge(accountGroups, true))?.Status ?? false)
+            if (!(await baseRepository.Merge(accountGroups, true))?.Status ?? false)
             {
                 string err = "AccountGroup Add fail";
                 if (command.GroupId != null)
@@ -91,7 +90,7 @@ public class AccountGroupService(
                     return;
                 }
 
-                if (!(await _baseRepository.Merge(accountGroups, true))?.Status ?? false)
+                if (!(await baseRepository.Merge(accountGroups, true))?.Status ?? false)
                 {
                     response.SetFail("AccountGroup Copy fail");
                     return;
@@ -118,7 +117,7 @@ public class AccountGroupService(
             // member = null => delete all
             List<AccountGroup> accountGroups = command.FromCommand();
             // if (!(await baseRepository.Delete(accountGroups, command.Members is { Length : > 0 }))?.Status ?? false)
-            if (!(await _baseRepository.Delete(accountGroups))?.Status ?? false)
+            if (!(await baseRepository.Delete(accountGroups))?.Status ?? false)
             {
                 string err = "AccountGroup Delete fail";
                 if (command.Members is { Length : > 0 })

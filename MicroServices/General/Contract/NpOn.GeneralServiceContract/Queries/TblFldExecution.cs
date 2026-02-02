@@ -1,6 +1,7 @@
-﻿using ProtoBuf;
+﻿using MicroServices.General.Contract.GeneralServiceContract;
+using ProtoBuf;
 
-namespace MicroServices.General.Contract.GeneralServiceContract.Queries;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
 
 [ProtoContract]
 public class TblFldExecution : BaseGeneralCommand

@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse</RootNamespace>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Infrastructures\DbFactories\NpOn.RedisFactory\NpOn.RedisFactory.csproj" />
+      <ProjectReference Include="..\..\..\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+    </ItemGroup>
+
+</Project>

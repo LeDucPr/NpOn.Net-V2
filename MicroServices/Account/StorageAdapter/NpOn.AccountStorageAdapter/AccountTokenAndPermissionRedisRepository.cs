@@ -1,9 +1,8 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.DbFactory.Redis;
-using Definitions.NpOn.ProjectConstant.AccountConstant;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Definitions.NpOn.AccountConstant;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
@@ -97,7 +96,7 @@ public class AccountTokenAndPermissionRedisRepository
     public async Task<bool> DeleteCachingTokenStorageAndTokensByAccountIds(string[] accountIds)
     {
         string[] accountCachingTokenStorages = accountIds
-            .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountIds}").ToArray();
+            .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}").ToArray();
         string[]? existedAccountCachingTokenStorages = await GetCachingTokenStorageByAccountIds(accountIds);
         if (existedAccountCachingTokenStorages == null)
             return true;

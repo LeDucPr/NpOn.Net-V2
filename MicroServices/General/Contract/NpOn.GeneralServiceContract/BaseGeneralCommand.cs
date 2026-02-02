@@ -1,10 +1,10 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
-using MicroServices.General.Contract.GeneralServiceContract.Commands;
-using MicroServices.General.Contract.GeneralServiceContract.Queries;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.Commands;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.GeneralServiceContract;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceContract;
 
 [ProtoContract]
 [ProtoInclude(100, typeof(TblFldExecution))]

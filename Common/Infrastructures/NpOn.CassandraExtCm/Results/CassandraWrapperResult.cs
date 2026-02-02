@@ -1,5 +1,6 @@
 ﻿using Cassandra;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.PostgresExtCm.Results;

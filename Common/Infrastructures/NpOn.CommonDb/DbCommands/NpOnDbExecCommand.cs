@@ -1,10 +1,11 @@
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbCommands;
 
-public interface INpOnDbExecCommand
+public interface INpOnDbExecFuncCommand
 {
     string FuncName { get; }
 
@@ -16,7 +17,7 @@ public interface INpOnDbExecCommand
     EDbLanguage? DatabaseLanguage { get; }
 }
 
-public class NpOnDbExecCommand : INpOnDbExecCommand
+public class NpOnDbExecFuncCommand : INpOnDbExecFuncCommand
 {
     private readonly EDb _eDb;
     private readonly string? _funcName;
@@ -25,7 +26,7 @@ public class NpOnDbExecCommand : INpOnDbExecCommand
     private readonly ILogger<NpOnDbCommand> _logger = new Logger<NpOnDbCommand>(new NullLoggerFactory());
     private readonly string? _aliasForSingleColumnOutput;
 
-    public NpOnDbExecCommand(EDb eDb, string? funcName, Dictionary<string, object> parameters,
+    public NpOnDbExecFuncCommand(EDb eDb, string? funcName, Dictionary<string, object> parameters,
         string? aliasForSingleColumnOutput = null)
     {
         if (string.IsNullOrWhiteSpace(funcName))
@@ -48,7 +49,7 @@ public class NpOnDbExecCommand : INpOnDbExecCommand
         }
     }
 
-    public NpOnDbExecCommand(EDb eDb, string? funcName, params object[] parameters)
+    public NpOnDbExecFuncCommand(EDb eDb, string? funcName, params object[] parameters)
     {
         if (string.IsNullOrWhiteSpace(funcName))
             return; // funcName endpoint does not null or empty

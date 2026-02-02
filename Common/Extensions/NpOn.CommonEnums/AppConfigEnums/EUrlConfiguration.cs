@@ -1,4 +1,4 @@
-using Common.Extensions.NpOn.CommonEnums.MarkerAttributes;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums.MarkerAttributes;
 
 namespace Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 

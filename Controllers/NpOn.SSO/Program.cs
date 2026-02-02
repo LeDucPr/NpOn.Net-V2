@@ -1,11 +1,19 @@
-using Common.Applications.NpOn.CommonRestApplication;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Middlewares;
+using Common.Applications.NpOn.CommonApplication.Extensions;
+using Common.Applications.NpOn.CommonHttpApplication;
+using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
+using Common.Extensions.NpOn.HeaderConfig;
 using Controllers.NpOn.SSO.Controllers;
+using MicroServices.Account.Service.NpOn.IAccountService;
+using NpOn.AddGrpcAppExtUse;
+using NpOn.CommonGrpcCall;
 
 namespace Controllers.NpOn.SSO;
 
-public sealed class Program : RestCommonProgram
+public sealed class Program : HttpCommonProgram
 {
     private Program(string[] args) : base(args)
     {
@@ -19,6 +27,15 @@ public sealed class Program : RestCommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
+        if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+            services
+                .AddGrpcDefaultMode()
+                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
+                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl)
+                .UseTokenValidatorDefaultMode(); // valid custom logic for yours 
+
+        services.UseCorsDefaultMode(); // cors
+
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();
@@ -26,7 +43,7 @@ public sealed class Program : RestCommonProgram
 
         services.AddControllers();
         services.AddControllers()
-            .AddApplicationPart(typeof(RestCommonProgram).Assembly); // NpOn.CommonRest(Api)Application
+            .AddApplicationPart(typeof(HttpCommonProgram).Assembly); // NpOn.CommonRest(Api)Application
 
         return Task.CompletedTask;
     }
@@ -38,9 +55,8 @@ public sealed class Program : RestCommonProgram
             // app.UseRequestResponseLogging();
         }
 
-
-        // app.UseTokenValidation();
-        // app.UsePermissionValidation();
+        app.UseTokenValidation();
+        app.UsePermissionValidation();
 
         return Task.CompletedTask;
     }

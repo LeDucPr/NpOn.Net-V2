@@ -1,4 +1,4 @@
-﻿using Definitions.NpOn.ProjectEnums.AccountEnums;
+﻿using MicroServices.Account.Definitions.NpOn.AccountEnum;
 
 namespace Controllers.NpOn.SSO.Requests;
 

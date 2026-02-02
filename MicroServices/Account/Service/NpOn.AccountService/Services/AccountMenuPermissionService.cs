@@ -1,5 +1,5 @@
 using Common.Applications.NpOn.CommonApplication.Services;
-using Common.Infrastructures.NpOn.BaseRepository.Postgres;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 
@@ -7,7 +7,7 @@ namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public class AccountMenuPermissionService(
     IAccountMenuPermissionStorageAdapter accountMenuPermissionStorageAdapter,
-    IPostgresBaseRepository baseRepository,
+    IPostgresFactoryWrapper baseRepository,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAccountMenuPermissionService
 {

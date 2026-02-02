@@ -1,4 +1,4 @@
-using Common.Extensions.NpOn.CommonWebApplication.Services;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 
 namespace Controllers.NpOn.SSO.Controllers;
 
@@ -6,7 +6,7 @@ public class HostingApp(
     PermissionService permissionService,
     ILogger<HostingApp> logger) : IHostedService
 {
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
         _ = Task.Run(async () =>
         {
@@ -21,9 +21,11 @@ public class HostingApp(
                 {
                     logger.LogWarning($"Connect Error (Timeout): {ex.Message}");
                 }
+
                 if (!success) await Task.Delay(1000, cancellationToken); // delay has token to cancel
             }
         }, cancellationToken);
+        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

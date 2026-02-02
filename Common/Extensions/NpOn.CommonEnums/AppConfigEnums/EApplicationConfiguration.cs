@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Common.Extensions.NpOn.CommonEnums.MarkerAttributes;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums.MarkerAttributes;
 
 namespace Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 
@@ -24,8 +24,10 @@ public enum EApplicationConfiguration
     [Display(Name = "DnsRefreshInterval")] DnsRefreshInterval, // thời gian làm mới Dns service discovery (gRPC client-side load balancing) - int
     [Display(Name = "IsStartAsync")] IsStartAsync, // - boolean
     [Display(Name = "IsAutomaticKeyGeneration")] IsAutomaticKeyGeneration, // - boolean
+    [Display(Name = "IsUseGrpcStandardMode")] IsUseGrpcStandardMode, // - boolean
     [Display(Name = "CorsPolicy")] CorsPolicy, // - string
     [Display(Name = "AutoAddCredential")] AutoAddCredential, // - string
+    [Display(Name = "Kestrel:EndpointDefaults:Protocols")] KestrelServerOptions, // - int
     // ReSharper disable once InconsistentNaming
     [Display(Name = "CORS")] CORS, // - string
     [Display(Name = "IsUseResponseCompression")] IsUseResponseCompression, // - boolean

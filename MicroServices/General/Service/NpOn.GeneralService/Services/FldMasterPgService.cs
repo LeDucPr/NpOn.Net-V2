@@ -1,18 +1,19 @@
 ﻿using System.Collections;
+using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.CommonWebApplication.Services;
 using Common.Extensions.NpOn.HandleFlow;
+using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
 using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
-using Common.Infrastructures.NpOn.DbFactory.Generics;
-using Definitions.NpOn.ProjectConstant.GeneralConstant;
-using MicroServices.General.Contract.GeneralServiceContract.Commands;
-using MicroServices.General.Contract.GeneralServiceContract.Queries;
 using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.Commands;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
+using MicroServices.General.Definitions.NpOn.GeneralConstant;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using Npgsql;
 using NpgsqlTypes;
@@ -20,7 +21,7 @@ using NpgsqlTypes;
 namespace MicroServices.General.Service.NpOn.GeneralService.Services
 {
     public class FldMasterPgService(
-        IDbFactoryWrapper dbFactoryWrapper,
+        IPostgresFactoryWrapper postgresFactoryWrapper,
         ILogger<CommonService> logger
     ) : CommonService(logger), IFldMasterPgService
     {
@@ -52,7 +53,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     return;
                 }
 
-                (string commandText, List<NpgsqlParameter> npgsqlParameters) = command.ActionType switch
+                (string commandText, IEnumerable<NpgsqlParameter> npgsqlParameters) = command.ActionType switch
                 {
                     ERepositoryAction.Add => domainList.ToPostgresParamsInsert(),
                     ERepositoryAction.Update => domainList.ToPostgresParamsUpdate(),
@@ -72,8 +73,8 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     .ToList();
 
                 INpOnDbCommand dbCommand =
-                    new NpOnDbCommand(dbFactoryWrapper.DbType, commandText, parameters);
-                INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.ExecuteAsync(dbCommand);
+                    new NpOnDbCommand(postgresFactoryWrapper.GetDbType(), commandText, parameters);
+                INpOnWrapperResult? wrapperResult = await postgresFactoryWrapper.ExecuteAsync(dbCommand);
                 if (wrapperResult == null || !wrapperResult.Status)
                 {
                     response.SetFail($"Failed to {command.ActionType} domains.");
@@ -129,7 +130,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
 
                 var (queryBuilderString, _) = queryBuilder.Build();
 
-                INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.ExecuteAsync(queryBuilderString, parameters);
+                INpOnWrapperResult? wrapperResult = await postgresFactoryWrapper.ExecuteAsync(queryBuilderString, parameters);
                 if (wrapperResult == null)
                 {
                     response.SetFail("FldMaster not found");
@@ -266,7 +267,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
 
                     try
                     {
-                        wrapperResult = await dbFactoryWrapper.ExecuteFuncParams(
+                        wrapperResult = await postgresFactoryWrapper.ExecuteFuncParams(
                             funcName, parameters);
                     }
                     catch (Exception)
@@ -297,9 +298,9 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     try
                     {
                         if (parameters is { Count: > 0 })
-                            wrapperResult = await dbFactoryWrapper.ExecuteAsync(execString, parameters);
+                            wrapperResult = await postgresFactoryWrapper.ExecuteAsync(execString, parameters);
                         else
-                            wrapperResult = await dbFactoryWrapper.ExecuteAsync(execString);
+                            wrapperResult = await postgresFactoryWrapper.ExecuteAsync(execString);
                     }
                     catch (Exception)
                     {

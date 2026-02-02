@@ -1,5 +1,7 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract;
 using NpgsqlTypes;
 using ProtoBuf;
 

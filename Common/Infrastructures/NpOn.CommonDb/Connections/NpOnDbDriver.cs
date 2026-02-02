@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
@@ -14,9 +15,9 @@ public interface INpOnDbDriver
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnWrapperResult> Execute(INpOnDbCommand? command);
-    Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand);
+    Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand);
 
-    Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecCommand? execCommand,
+    Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
         List<INpOnDbCommandParam<TEnum>> parameters) where TEnum : Enum;
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
 }
@@ -36,12 +37,12 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
         throw new NotImplementedException("Need to override this method");
     }
 
-    public virtual Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
+    public virtual Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand)
     {
         throw new NotImplementedException("Need to override this method");
     }
 
-    public virtual Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecCommand? execCommand,
+    public virtual Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
         List<INpOnDbCommandParam<TEnum>> parameters) where TEnum : Enum
     {
         throw new NotImplementedException("Need to override this method");
