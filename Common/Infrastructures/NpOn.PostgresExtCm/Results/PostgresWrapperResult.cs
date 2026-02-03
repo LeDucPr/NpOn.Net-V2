@@ -191,12 +191,12 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     }
 }
 
-public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
+public class PostgresTableWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     public IReadOnlyDictionary<int, PostgresRowWrapper> Rows { get; }
     public PostgresColumnCollection Columns { get; }
 
-    public PostgresResultSetWrapper(NpgsqlDataReader? reader = null)
+    public PostgresTableWrapper(NpgsqlDataReader? reader = null)
     {
         // schema 
         if (reader == null)
