@@ -2,7 +2,6 @@ using Common.Applications.NpOn.CommonApplication;
 using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using NpOn.AddGrpcAppExtUse;
 
 namespace Common.Applications.NpOn.CommonHttpApplication;
 

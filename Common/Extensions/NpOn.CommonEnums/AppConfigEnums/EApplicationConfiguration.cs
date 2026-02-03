@@ -61,7 +61,7 @@ public enum EApplicationConfiguration
     [Display(Name = "CookieAuthenName")] CookieAuthenName, // - string
     [Display(Name = "CookieDomain")] CookieDomain, // - string
     [Display(Name = "IsUseDataProtectionAutomaticKeyGeneration")] IsUseDataProtectionAutomaticKeyGeneration, // - bool
-    [Display(Name = "LoginExpiresTime")] LoginExpiresTime, // int -- 480 default
+    [Display(Name = "LoginTokenExpiresTime")] LoginTokenExpiresTime, // int -- 480 default
     #endregion Authen + Token
     
     

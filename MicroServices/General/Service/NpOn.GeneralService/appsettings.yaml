@@ -22,17 +22,15 @@ HostDomain: "http://0.0.0.0"
 
 ConnectionString: "Host=localhost;Port=5432;Database=master;User Id=postgres;Password=12345"
 
-CORS: "localhost:5000"
-CorsPolicy: NpOnCorsPolicy
 ConnectionNumber: 100000
+
+#CORS: "localhost:5000"
+#CorsPolicy: NpOnCorsPolicy
 DnsResolverFactory: 60
 KeepAlivePingDelaySeconds: 60
 KeepAlivePingTimeoutSeconds: 30
 IsAutomaticKeyGeneration: true
 IsDevEnvironment: true
-
-IsUseRabbitMq: false
-RabbitMqConnection: "amqp://rabbitmq:password@localhost:5672/"
 
 IsUseMiddlewareLogger: true
 

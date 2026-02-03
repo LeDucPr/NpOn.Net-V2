@@ -53,7 +53,7 @@ public sealed class AccountLoginRModel : BaseAccountRModelFromGrpcTable
 
 public static class AccountLoginInfoObjectExtensions
 {
-    public static AccountSaveLoginEvent ToLoginEvent(this AccountLoginRModel loginRModel, string? oldSessionId = null)
+    public static AccountSaveLoginEvent ToLoginEvent(this AccountLoginRModel loginRModel)
     {
         return new AccountSaveLoginEvent()
         {
@@ -79,7 +79,7 @@ public static class AccountLoginInfoObjectExtensions
         };
     }
 
-    public static AccountSaveLogoutEvent ToLogoutEvent(this AccountLoginRModel loginRModel, string? oldSessionId = null)
+    public static AccountSaveLogoutEvent ToLogoutEvent(this AccountLoginRModel loginRModel)
     {
         return new AccountSaveLogoutEvent()
         {

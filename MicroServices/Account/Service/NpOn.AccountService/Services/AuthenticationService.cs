@@ -7,7 +7,6 @@ using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
-using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
@@ -29,7 +28,7 @@ namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 public class AuthenticationService(
     IPostgresFactoryWrapper baseRepository,
     IAuthenticationStorageAdapter authenticationStorageAdapter,
-    IAccountInfoStorageAdapter accountInfoStorageAdapter,
+    // IAccountInfoStorageAdapter accountInfoStorageAdapter,
     IAccountPermissionService accountPermissionService,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IRabbitMqProducer rabbitMqProducer,
@@ -38,9 +37,13 @@ public class AuthenticationService(
 ) : CommonService(logger), IAuthenticationService
 {
     private readonly int _expireTokenMinutes =
-        EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt() != 0
-            ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
+        EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt() != 0
+            ? EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : 480;
+
+    // khi đặt trong event -> cần thời gian handler
+    // (quá trình này có thể gây lỗi các request cần phản hồi ngay lập tức khi chưa kịp add token vào cacheDb)
+    private readonly bool _isReadTokenImmediate = true;
 
     #region Signup And Accept
 
@@ -197,6 +200,10 @@ public class AuthenticationService(
             //     MessageContent = accountLoginRModel.ToLoginEvent()
             // });
 
+
+            if (_isReadTokenImmediate)
+                await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
+
             rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
             {
                 MessageContent = accountLoginRModel.ToLoginEvent()
@@ -230,7 +237,7 @@ public class AuthenticationService(
             // logout for old session
             rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLogoutEvent>()
             {
-                MessageContent = accountRModel.ToLogoutEvent(query.SessionId),
+                MessageContent = accountRModel.ToLogoutEvent(),
             });
 
             // get account to sync for new session 
@@ -247,19 +254,16 @@ public class AuthenticationService(
             AccountLoginRModel accountLoginRModel = CreateToken(
                 accountObject, query.AuthType /*, ELoginType.Default*/);
 
+            if (_isReadTokenImmediate)
+                await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
             rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
             {
-                MessageContent = accountLoginRModel.ToLoginEvent(query.SessionId)
+                MessageContent = accountLoginRModel.ToLoginEvent()
             });
 
             response.Data = accountLoginRModel;
             response.SetSuccess();
         });
-    }
-
-    public Task<CommonResponse<INpOnGrpcObject>> LoginToken(CommonJsonQuery query)
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<CommonResponse<AccountLoginRModel>> GetLogonTokenBySessionId(
@@ -344,7 +348,7 @@ public class AuthenticationService(
 
                 rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLogoutEvent>()
                 {
-                    MessageContent = accountLoginInfoRModel.ToLogoutEvent(query.SessionId),
+                    MessageContent = accountLoginInfoRModel.ToLogoutEvent(),
                 });
                 response.SetFail("Invalid Token");
                 return;
@@ -370,7 +374,8 @@ public class AuthenticationService(
             string accountId = @event.AccountId.AsDefaultString();
             string sessionId = @event.SessionId;
 
-            await redisRepository.AddCachingToken(sessionId, accountLoginRModel);
+            if (!_isReadTokenImmediate)
+                await redisRepository.AddCachingToken(sessionId, accountLoginRModel);
             await redisRepository.AddToCachingTokenStorageByAccountId(accountId, sessionId);
             // permission exception cache
             var permissionExceptionResponse =
@@ -407,88 +412,6 @@ public class AuthenticationService(
             response.SetSuccess();
         });
     }
-
-
-    #region OldSystem
-
-    public async Task<CommonResponse> AccountSyncFromOldSystem(AccountSyncFromOldSystemCommand[] commands)
-    {
-        return await CommonProcess(async (response) =>
-        {
-            string[] accountIds = commands.Where(x => x.AccountId.AsDefaultGuid() != Guid.Empty)
-                .Select(x => x.AccountId.AsDefaultString()).ToArray();
-            if (accountIds.Length != commands.Length)
-            {
-                response.SetFail("Some AccountId is invalid");
-                return;
-            }
-
-            List<Contracts.NpOn.AccountServiceContract.Domains.Account> accounts = [];
-            List<AccountInfo> accountInfos = [];
-            List<AccountAddress> addresses = [];
-            var existedAccountInfos = await accountInfoStorageAdapter.AccountInfoActiveGetByAccountIds(accountIds);
-            var existedAddresses = await accountInfoStorageAdapter.AccountAddressesDefaultGetByAccountIds(accountIds);
-            foreach (AccountSyncFromOldSystemCommand command in commands)
-            {
-                // account
-                var account = new Contracts.NpOn.AccountServiceContract.Domains.Account(command);
-                accounts.Add(account);
-
-                // account info
-                AccountInfoRModel? existedAccountInfo =
-                    existedAccountInfos?.FirstOrDefault(x => x.AccountId == command.AccountId);
-                if (existedAccountInfo != null)
-                {
-                    AccountInfo accountInfo = new AccountInfo(existedAccountInfo);
-                    accountInfo.Change(command);
-                    accountInfos.Add(accountInfo);
-                }
-                else
-                {
-                    AccountInfo accountInfo = new AccountInfo(command);
-                    accountInfos.Add(accountInfo);
-                }
-
-                // account address
-                AccountAddressRModel? existedAddress =
-                    existedAddresses?.FirstOrDefault(x => x.AccountId == command.AccountId);
-
-                if (existedAddress != null)
-                {
-                    AccountAddress address = new AccountAddress(existedAddress);
-                    address.Change(command);
-                    addresses.Add(address);
-                }
-                else
-                {
-                    AccountAddress address = new AccountAddress(command);
-                    addresses.Add(address);
-                }
-            }
-            
-            if (accounts.Count > 0 && (!(await baseRepository.Merge(accounts))?.Status ?? false))
-            {
-                response.SetFail("Sync Account from Old System fail");
-                return;
-            }
-
-            if (accountInfos.Count > 0 && (!(await baseRepository.Merge(accountInfos))?.Status ?? false))
-            {
-                response.SetFail("Sync AccountInfo from Old System fail");
-                return;
-            }
-
-            if (addresses.Count > 0 && (!(await baseRepository.Merge(addresses))?.Status ?? false))
-            {
-                response.SetFail("Sync AccountAddress from Old System fail");
-                return;
-            }
-
-            response.SetSuccess();
-        });
-    }
-
-    #endregion OldSystem
 
     #region Private Method
 

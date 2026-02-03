@@ -16,6 +16,7 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using Microsoft.AspNetCore.DataProtection;
 using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 

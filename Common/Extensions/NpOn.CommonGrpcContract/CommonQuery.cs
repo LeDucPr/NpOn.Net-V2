@@ -11,7 +11,6 @@ public abstract class GrpcQuery
 }
 
 [ProtoContract]
-[ProtoInclude(2000, typeof(CommonJsonQuery))]
 [ProtoInclude(2000, typeof(CommonAbsQuery))]
 public class CommonQuery : GrpcQuery
 {
@@ -19,12 +18,6 @@ public class CommonQuery : GrpcQuery
     [ProtoMember(2)] public virtual EErrorCode? ErrorCode { get; set; }
     [ProtoMember(3)] public virtual string? Object { get; set; }
     [ProtoMember(4)] public override DateTime QueryUtcTime { get; init; } // = DateTime.UtcNow;
-}
-
-[ProtoContract]
-public class CommonJsonQuery : CommonQuery
-{
-    [ProtoMember(1)] public required string Json { get; set; }
 }
 
 #region Abstract Class

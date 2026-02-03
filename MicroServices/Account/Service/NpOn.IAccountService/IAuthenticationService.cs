@@ -34,15 +34,9 @@ public interface IAuthenticationService
         AccountPermissionExceptionCachingCheckValidQuery query);
 
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> LoginToken(CommonJsonQuery query);
-
-    [OperationContract]
     Task<CommonResponse<string>> LogOut(AccountLogoutQuery query);
 
     Task<CommonResponse> SaveLogin(AccountSaveLoginEvent @event);
 
     Task<CommonResponse> SaveLogout(AccountSaveLogoutEvent @event);
-
-    [OperationContract]
-    Task<CommonResponse> AccountSyncFromOldSystem(AccountSyncFromOldSystemCommand[] commands);
 }

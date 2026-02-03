@@ -23,11 +23,11 @@ ConnectionString: "Server=124.158.8.9;Port=5432;Database=postgres;User Id=postgr
 ConnectionNumber: 100000
 
 IsUseRedisCache: true
-RedisConnectString: "localhost:6379,user=default,password=redis"
-RedisConnectionNumber: 10000
+RedisConnectString: "localhost:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+RedisConnectionNumber: 100 #00
 
-CORS: "localhost:5000"
-CorsPolicy: NpOnCorsPolicy
+#CORS: "localhost:5000"
+#CorsPolicy: NpOnCorsPolicy
 AutoAddCredential: http
 DnsResolverFactory: 60
 KeepAlivePingDelaySeconds: 60
@@ -37,15 +37,16 @@ IsDevEnvironment: true
 
 IsUseKafka: false
 KafkaConnection: "localhost:19092"
-KafkaTopicName: NpOn.AccountService
+KafkaTopicName: NpOn_V2.AccountService
 SaslUsername: npon_admin
 SaslPassword: npon_admin_pass
 
 IsUseRabbitMq: true
 RabbitMqConnection: "amqp://rabbitmq:password@localhost:5672/"
-RabbitMqExchangeName: NpOn.AccountService
+RabbitMqExchangeName: NpOn_V2.AccountService
 
-LoginExpiresTime: 480
+LoginTokenExpiresTime: 30
+RefreshTokenExpiredTime: 30
 
 IsUseMiddlewareLogger: true
 GeneralServiceUrl: "http://localhost:40000"

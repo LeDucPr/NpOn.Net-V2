@@ -18,8 +18,8 @@ public class AccountTokenAndPermissionRedisRepository
     {
         _redisCachingFactoryWrapper = redisCachingFactoryWrapper;
         _expireTokenMinutes =
-            EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt() != 0
-                ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
+            EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt() != 0
+                ? EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt()
                 : 480;
         _expireTokenStorageMinutes = _expireTokenMinutes + 1;
     }
