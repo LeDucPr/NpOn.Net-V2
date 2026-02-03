@@ -59,6 +59,15 @@ public static class PostgresUtils
         [typeof(Newtonsoft.Json.Linq.JToken)] = NpgsqlDbType.Json,
     };
 
+    // INpOnResult
+    public static Type ToNullableType(this Type type)
+    {
+        if (!type.IsValueType) return type; // Reference Type (string, object, class, ...) ->  Nullable
+        if (Nullable.GetUnderlyingType(type) != null) return type; // Nullable<T> -> T (has value)
+        // ValueType (int, Guid, DateTime, bool, Enum...) -> Nullable<> (wrapper)
+        return typeof(Nullable<>).MakeGenericType(type);
+    }
+
     public static NpgsqlDbType? ToNpgsqlDbType(this Type type)
     {
         return NpgsqlTypeMap.GetValueOrDefault(type);
@@ -66,13 +75,10 @@ public static class PostgresUtils
 
     public static DbType ToDbType(this Type type)
     {
-        var nonNullableType = Nullable.GetUnderlyingType(type) ?? type;
-        if (nonNullableType.IsEnum)
-        {
-            return DbType.Int32;
-        }
-
-        return TypeMap.GetValueOrDefault(nonNullableType, DbType.Object);
+        var targetType = Nullable.GetUnderlyingType(type) ?? type;
+        if (targetType.IsEnum)
+            targetType = Enum.GetUnderlyingType(targetType); // enum 
+        return TypeMap.GetValueOrDefault(targetType, DbType.Object);
     }
 
     private static object? ConvertArrayElement(string elementString, NpgsqlDbType elementType)
@@ -88,10 +94,20 @@ public static class PostgresUtils
             NpgsqlDbType.Boolean => bool.TryParse(elementString, out var b)
                 ? b
                 : (elementString == "1" ? true : elementString == "0" ? false : null),
-            NpgsqlDbType.Date or NpgsqlDbType.Timestamp or NpgsqlDbType.TimestampTz => DateTime.TryParse(elementString,
-                out var dt)
-                ? dt
+
+            // Ngày giờ
+            NpgsqlDbType.Date or NpgsqlDbType.Timestamp =>
+                DateTime.TryParse(elementString, out var dt)
+                    ? (dt.Kind == DateTimeKind.Unspecified ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Unspecified))
+                    : null,
+
+            // Timestamp with Timezone (GMT/UTC)
+            NpgsqlDbType.TimestampTz => DateTime.TryParse(elementString, null,
+                System.Globalization.DateTimeStyles.AdjustToUniversal |
+                System.Globalization.DateTimeStyles.AssumeUniversal, out var dtUtc)
+                ? dtUtc
                 : null,
+
             NpgsqlDbType.Uuid => Guid.TryParse(elementString, out var g) ? g : null,
             // Thêm các kiểu khác nếu cần (Jsonb, Text, v.v.)
             _ => elementString
@@ -145,7 +161,10 @@ public static class PostgresUtils
                         : null,
 
             // Ngày giờ
-            NpgsqlDbType.Date or NpgsqlDbType.Timestamp => DateTime.TryParse(stringValue, out var dt) ? dt : null,
+            NpgsqlDbType.Date or NpgsqlDbType.Timestamp =>
+                DateTime.TryParse(stringValue, out var dt)
+                    ? (dt.Kind == DateTimeKind.Unspecified ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Unspecified))
+                    : null,
 
             // Timestamp with Timezone (GMT/UTC)
             NpgsqlDbType.TimestampTz => DateTime.TryParse(stringValue, null,

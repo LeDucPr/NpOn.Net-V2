@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
@@ -26,20 +25,14 @@ public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary
 
         foreach (var schemaInfo in _schemaMap.Values)
         {
-            object? cellValue = Parent[schemaInfo.ColumnName];
-            Type columnType = schemaInfo.DataType;
+            object cellValue = Parent[schemaInfo.ColumnName];
+            Type columnNullableType = schemaInfo.DataType.ToNullableType();
 
-            if (cellValue == DBNull.Value)
-                cellValue = null;
-
-            if (cellValue == null && columnType == typeof(Guid))
-                columnType = typeof(Guid?);
-
-            Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
+            Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnNullableType);
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 cellValue,
-                columnType.ToDbType(),
+                columnNullableType.ToDbType(),
                 schemaInfo.ProviderDataTypeName // THÔNG TIN CHÍNH XÁC SCHEMA
             )!;
             dictionary.Add(schemaInfo.ColumnName, cell);
@@ -70,9 +63,9 @@ public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDicti
     protected override IReadOnlyDictionary<int, INpOnCell> CreateResult()
     {
         var schemaInfo = _schemaMap[_columnName];
-        Type columnType = schemaInfo.DataType;
+        Type columnNullableType = schemaInfo.DataType.ToNullableType();
         
-        Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
+        Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnNullableType);
         var dictionary = new Dictionary<int, INpOnCell>(Parent.Rows.Count);
 
         for (int i = 0; i < Parent.Rows.Count; i++)
@@ -83,13 +76,10 @@ public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDicti
             if (cellValue == DBNull.Value)
                 cellValue = null;
             
-            if (cellValue == null && columnType == typeof(Guid))
-                columnType = typeof(Guid?);
-            
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 cellValue,
-                columnType.ToDbType(),
+                columnNullableType.ToDbType(),
                 schemaInfo.ProviderDataTypeName // SỬ DỤNG THÔNG TIN CHÍNH XÁC TỪ SCHEMA
             )!;
             dictionary.Add(i, cell);
@@ -246,45 +236,6 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         Columns = new PostgresColumnCollection(dataTable, schemaMap1); // schema -> Column
         SetSuccess();
     }
-
-    public PostgresResultSetWrapper(DataTable? dataTable)
-    {
-        if (dataTable == null)
-        {
-            SetFail(EDbError.PostgresDataTableNull);
-            return;
-        }
-
-        // Lấy schema từ DataTable
-        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
-        foreach (DataColumn col in dataTable.Columns)
-        {
-            var schemaInfo = new NpOnColumnSchemaInfo(
-                col.ColumnName,
-                col.DataType, // .NET type
-                col.DataType.Name // tên type (có thể map sang Postgres nếu cần)
-            );
-            schemaMap.Add(col.ColumnName, schemaInfo);
-        }
-
-        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap1 = schemaMap;
-
-        Rows = dataTable.Rows
-            .Cast<DataRow>()
-            .Select((row, index) => new
-            {
-                row,
-                index
-            })
-            .ToDictionary(
-                item => item.index,
-                item => new PostgresRowWrapper(item.row, schemaMap1)
-            );
-
-        Columns = new PostgresColumnCollection(dataTable, schemaMap1);
-        SetSuccess();
-    }
-
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
     {

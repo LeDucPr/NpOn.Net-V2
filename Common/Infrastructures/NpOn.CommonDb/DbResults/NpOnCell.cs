@@ -30,9 +30,16 @@ public class NpOnCell<T> : INpOnCell<T>
     public string SourceTypeName { get; }
     public object? ValueAsObject => Value;
 
-    public NpOnCell(T? value, DbType dbType, string sourceTypeName)
+    public NpOnCell(object? value, DbType dbType, string sourceTypeName)
     {
-        Value = value;
+        if (value == null || value == DBNull.Value)
+        {
+            Value = default;
+        }
+        else
+        {
+            Value = (T)value;
+        }
         DbType = dbType;
         SourceTypeName = sourceTypeName;
     }

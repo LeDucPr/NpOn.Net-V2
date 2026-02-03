@@ -99,7 +99,7 @@ public class CommonUtilityMode
             return !String.IsNullOrWhiteSpace(userAgent) &&
                    (b.IsMatch(userAgent) || v.IsMatch(userAgent.Substring(0, 4)));
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return false;
         }
@@ -118,11 +118,9 @@ public class CommonUtilityMode
                    RegexOptions.IgnoreCase | RegexOptions.Compiled);
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static string GetMethodName()
+    public static string GetMethodName([CallerMemberName] string methodName = "")
     {
-        var st = new StackTrace(new StackFrame(1));
-        return st.GetFrame(0).GetMethod().Name;
+        return methodName;
     }
 
     public static string GetFullMethodName(MethodBase? methodBase)
