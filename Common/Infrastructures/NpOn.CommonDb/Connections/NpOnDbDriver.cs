@@ -19,6 +19,7 @@ public interface INpOnDbDriver
 
     Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
         List<INpOnDbCommandParam<TEnum>> parameters) where TEnum : Enum;
+
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
 }
 
@@ -74,4 +75,19 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
 
     public virtual Task<bool> IsAliveAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(IsValidSession && !_disposed);
+
+    protected Task<INpOnWrapperResult> TransactionWrapper<T>(
+        Func<INpOnWrapperResult?, Task<T>> transactionProcess)
+    {
+        INpOnWrapperResult? response = null;
+        try
+        {
+            transactionProcess(response);
+            // commit
+        }
+        catch
+        {
+            // rollback
+        }
+    }
 }
