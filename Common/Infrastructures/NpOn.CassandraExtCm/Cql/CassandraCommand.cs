@@ -1,5 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Cql;

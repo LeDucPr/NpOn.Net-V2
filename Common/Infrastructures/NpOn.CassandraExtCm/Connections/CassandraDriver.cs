@@ -1,6 +1,5 @@
 ﻿using Cassandra;
-using Cassandra.Mapping;
-using Common.Extensions.NpOn.CommonEnums;
+// using Cassandra.Mapping;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CassandraExtCm.Results;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
@@ -14,7 +13,7 @@ public class CassandraDriver : NpOnDbDriver
     // DRIVER 
     private ICluster? _cluster;
     private ISession? _session;
-    private IMapper? _mapper;
+    // private IMapper? _mapper;
     public sealed override string Name { get; set; }
     public sealed override string Version { get; set; }
 
@@ -50,7 +49,7 @@ public class CassandraDriver : NpOnDbDriver
         }
         
         _session = await _cluster.ConnectAsync(Option.Keyspace).ConfigureAwait(false);
-        _mapper = new Mapper(_session);
+        // _mapper = new Mapper(_session);
     }
     
     public override async Task DisconnectAsync()
@@ -70,7 +69,7 @@ public class CassandraDriver : NpOnDbDriver
 
         _session = null;
         _cluster = null;
-        _mapper = null;
+        // _mapper = null;
     }
 
     public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)

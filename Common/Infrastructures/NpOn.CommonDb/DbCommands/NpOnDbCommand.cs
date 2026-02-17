@@ -17,19 +17,18 @@ public interface INpOnDbCommand
 public class NpOnDbCommand : INpOnDbCommand
 {
     private readonly EDb _eDb;
-    private readonly string? _commandText;
     private readonly EDbLanguage? _dbLanguage;
     private readonly ILogger<NpOnDbCommand> _logger = new Logger<NpOnDbCommand>(new NullLoggerFactory());
     private List<NpOnDbCommandParam>? _parameters;
 
     public NpOnDbCommand(EDb eDb, string? commandText)
     {
-        _commandText = commandText ?? string.Empty;
+        CommandText = commandText ?? string.Empty;
         try
         {
             _eDb = eDb;
             _dbLanguage = _eDb.ChooseLanguage();
-            _commandText = commandText;
+            CommandText = commandText;
         }
         catch (NotSupportedException ex)
         {
@@ -40,12 +39,12 @@ public class NpOnDbCommand : INpOnDbCommand
 
     public NpOnDbCommand(EDb eDb, string? commandText, List<NpOnDbCommandParam>? parameters)
     {
-        _commandText = commandText ?? string.Empty;
+        CommandText = commandText ?? string.Empty;
         try
         {
             _eDb = eDb;
             _dbLanguage = _eDb.ChooseLanguage();
-            _commandText = commandText;
+            CommandText = commandText;
             _parameters = parameters;
         }
         catch (NotSupportedException ex)
@@ -63,7 +62,7 @@ public class NpOnDbCommand : INpOnDbCommand
     // implements
     public bool IsValidCommandText => CheckValid();
 
-    public string CommandText => _commandText ?? string.Empty;
+    public string CommandText => field ?? string.Empty;
 
     public EDb DataBaseType => _eDb;
 
