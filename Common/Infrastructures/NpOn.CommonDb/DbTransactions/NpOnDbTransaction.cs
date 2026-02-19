@@ -1,62 +1,46 @@
-using System.Data;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands;
+using System.Data.Common;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbTransactions;
 
-public interface INpOnDbTransaction : IDisposable
+public interface INpOnDbTransaction : IAsyncDisposable, IDisposable
 {
-    void AddCommands(IEnumerable<INpOnDbCommand> commands);
-    void RemoveCommands(IEnumerable<INpOnDbCommand> commands);
-    void Commit();
-    void Rollback();
+    Task CommitAsync(CancellationToken cancellationToken = default);
+    Task RollbackAsync(CancellationToken cancellationToken = default);
 }
 
 public class NpOnDbTransaction : INpOnDbTransaction
 {
-    private readonly IDbTransaction _transaction;
-    private List<INpOnDbCommand>? _commands;
-    // private List<Action<>>
-    private bool _isStartedTransaction; // == false
+    private readonly DbTransaction _transaction;
+    private bool _isCommittedOrRolledBack;
 
-    public NpOnDbTransaction(IDbTransaction transaction)
+    public NpOnDbTransaction(DbTransaction transaction)
         => _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
 
-    public void AddCommands(IEnumerable<INpOnDbCommand> commands)
+    public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
-        if (_isStartedTransaction)
-            throw new InvalidOperationException("Cannot add commands to a transaction that has already started.");
-        _commands ??= [];
-        _commands.AddRange(commands);
-    }
-
-    public void RemoveCommands(IEnumerable<INpOnDbCommand> commands)
-    {
-        if (_isStartedTransaction)
-            throw new InvalidOperationException("Cannot remove commands to a transaction that has already started.");
-        if (_commands is not { Count: > 0 })
-            return;
-        commands.ToList().ForEach(c => _commands.Remove(c));
-    }
-
-    public void Commit()
-    {
-        if (_isStartedTransaction)
+        if (_isCommittedOrRolledBack)
             throw new InvalidOperationException("The transaction has already been committed or rolled back.");
-        _transaction.Commit();
-        _isStartedTransaction = true;
+        await _transaction.CommitAsync(cancellationToken);
+        _isCommittedOrRolledBack = true;
     }
 
-    public void Rollback()
+    public async Task RollbackAsync(CancellationToken cancellationToken = default)
     {
-        if (_isStartedTransaction)
+        if (_isCommittedOrRolledBack)
             throw new InvalidOperationException("The transaction has already been committed or rolled back.");
-        _transaction.Rollback();
-        _isStartedTransaction = true;
+        await _transaction.RollbackAsync(cancellationToken);
+        _isCommittedOrRolledBack = true;
     }
 
     public void Dispose()
     {
-        _isStartedTransaction = false;
         _transaction.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _transaction.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

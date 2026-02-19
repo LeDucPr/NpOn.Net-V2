@@ -4,6 +4,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
+using Common.Infrastructures.NpOn.CommonDb.DbTransactions;
 using Common.Infrastructures.NpOn.PostgresExtCm.Results;
 using Npgsql;
 using NpgsqlTypes;
@@ -49,15 +50,24 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
-    // public   async Task<>
-    
+    public override async Task<INpOnDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        if (_connection == null)
+        {
+            throw new InvalidOperationException("Connection is not open.");
+        }
+
+        var npgsqlTransaction = await _connection.BeginTransactionAsync(cancellationToken);
+        return new NpOnDbTransaction(npgsqlTransaction);
+    }
+
     public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         // Kiểm tra trạng thái kết nối hợp lệ.
         if (!IsValidSession || _connection == null)
-            return new PostgresTableWrapper().SetFail(EDbError.Connection);
+            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (command == null || string.IsNullOrWhiteSpace(command.CommandText))
-            return new PostgresTableWrapper().SetFail(EDbError.Command);
+            return new PostgresResultSetWrapper().SetFail(EDbError.Command);
         try
         {
             if (command.Parameters is not { Count : > 0 })
@@ -65,7 +75,7 @@ public class PostgresDriver : NpOnDbDriver
                 await using var pgCommand = _connection.CreateCommand();
                 pgCommand.CommandText = command.CommandText;
                 await using var readerCm = await pgCommand.ExecuteReaderAsync();
-                return new PostgresTableWrapper(readerCm);
+                return new PostgresResultSetWrapper(readerCm);
             }
 
             using (var pgCommandParam = new NpgsqlCommand(command.CommandText, _connection))
@@ -74,9 +84,9 @@ public class PostgresDriver : NpOnDbDriver
                 {
                     if (prm is not NpOnDbCommandParam<NpgsqlDbType> npgsqlParam)
                     {
-                        return new PostgresTableWrapper().SetFail(EDbError.CommandParam);
+                        return new PostgresResultSetWrapper().SetFail(EDbError.CommandParam);
                     }
-                    
+
                     string newKey = npgsqlParam.ParamName.AsDefaultString();
                     object? paramValue = prm.ParamValue;
 
@@ -90,21 +100,21 @@ public class PostgresDriver : NpOnDbDriver
                 }
 
                 await using var readerCmPrm = await pgCommandParam.ExecuteReaderAsync();
-                return new PostgresTableWrapper(readerCmPrm);
+                return new PostgresResultSetWrapper(readerCmPrm);
             }
         }
         catch (Exception ex)
         {
-            return new PostgresTableWrapper().SetFail(ex);
+            return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
 
     public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand)
     {
         if (!IsValidSession || _connection == null) // Check enabled connection 
-            return new PostgresTableWrapper().SetFail(EDbError.Connection);
+            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
-            return new PostgresTableWrapper().SetFail(EDbError.ExecFuncName);
+            return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
         try
         {
             await using var pgCommand = _connection.CreateCommand();
@@ -134,11 +144,11 @@ public class PostgresDriver : NpOnDbDriver
             if (string.IsNullOrWhiteSpace(execCommand.AliasForSingleColumnOutput))
                 pgCommand.CommandText += $" as {execCommand.AliasForSingleColumnOutput}";
             await using var reader = await pgCommand.ExecuteReaderAsync();
-            return new PostgresTableWrapper(reader);
+            return new PostgresResultSetWrapper(reader);
         }
         catch (Exception ex)
         {
-            return new PostgresTableWrapper().SetFail(ex);
+            return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
 
@@ -147,13 +157,13 @@ public class PostgresDriver : NpOnDbDriver
     {
         if (typeof(TEnum) != typeof(NpgsqlDbType))
         {
-            return new PostgresTableWrapper().SetFail(new Exception($"{typeof(TEnum).Name} is not NpgsqlDbType"));
+            return new PostgresResultSetWrapper().SetFail(new Exception($"{typeof(TEnum).Name} is not NpgsqlDbType"));
         }
 
         if (!IsValidSession || _connection == null) // Check enabled connection 
-            return new PostgresTableWrapper().SetFail(EDbError.Connection);
+            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
-            return new PostgresTableWrapper().SetFail(EDbError.ExecFuncName);
+            return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
         List<string> paramList = [];
         try
         {
@@ -176,11 +186,11 @@ public class PostgresDriver : NpOnDbDriver
                 funcName = $"select * from {funcName}({paramList.AsArrayJoin()})";
             pgCommand.CommandText = funcName;
             await using var reader = await pgCommand.ExecuteReaderAsync();
-            return new PostgresTableWrapper(reader);
+            return new PostgresResultSetWrapper(reader);
         }
         catch (Exception ex)
         {
-            return new PostgresTableWrapper().SetFail(ex);
+            return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
+using Common.Infrastructures.NpOn.CommonDb.DbTransactions;
 
 namespace Common.Infrastructures.NpOn.CommonDb.Connections;
 
@@ -21,6 +21,8 @@ public interface INpOnDbDriver
         List<INpOnDbCommandParam<TEnum>> parameters) where TEnum : Enum;
 
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
+    
+    Task<INpOnDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }
 
 public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
@@ -76,18 +78,26 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public virtual Task<bool> IsAliveAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(IsValidSession && !_disposed);
 
-    protected Task<INpOnWrapperResult> TransactionWrapper<T>(
-        Func<INpOnWrapperResult?, Task<T>> transactionProcess)
+    public virtual Task<INpOnDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
-        INpOnWrapperResult? response = null;
+        throw new NotImplementedException("Need to override this method");
+    }
+
+    protected async Task<INpOnWrapperResult> TransactionWrapper(
+        Func<INpOnDbTransaction, Task<INpOnWrapperResult>> transactionProcess,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await BeginTransactionAsync(cancellationToken);
         try
         {
-            transactionProcess(response);
-            // commit
+            var result = await transactionProcess(transaction);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
         }
         catch
         {
-            // rollback
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
     }
 }
