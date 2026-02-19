@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Microsoft.Extensions.Logging;
@@ -294,14 +293,12 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     #region KeyCode
 
-    private string? _code;
-
     public string Code
     {
         get
         {
-            if (_code != null)
-                return _code;
+            if (field != null)
+                return field;
 
             var sb = new StringBuilder();
 
@@ -326,8 +323,8 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
             if (!IsWaitNextTransaction) // Default is true
                 sb.Append($"WNT={IsWaitNextTransaction};");
 
-            _code = sb.ToString(); // lưu lại để lần sau dùng luôn
-            return _code;
+            field = sb.ToString(); // lưu lại để lần sau dùng luôn
+            return field;
         }
     }
 

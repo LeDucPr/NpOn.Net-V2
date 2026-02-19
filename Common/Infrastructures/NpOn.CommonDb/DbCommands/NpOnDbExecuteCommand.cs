@@ -8,5 +8,5 @@ public class NpOnDbExecuteCommand
 {
     public required string CommandText { get; set; }
     public required EExecType ExecType { get; set; }
-    public NpOnDbCommandParam[]? Parameters { get; set; }
+    public INpOnDbCommandParam[]? Parameters { get; set; }
 }

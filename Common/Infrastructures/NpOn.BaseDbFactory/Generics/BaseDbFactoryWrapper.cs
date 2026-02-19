@@ -71,7 +71,7 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         }
     }
 
-    public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters)
+    public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters)
     {
         if (Factory == null) return null;
         NpOnDbConnection? connection = null;

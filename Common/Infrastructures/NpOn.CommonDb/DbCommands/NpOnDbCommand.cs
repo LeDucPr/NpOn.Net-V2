@@ -1,5 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -11,7 +10,7 @@ public interface INpOnDbCommand
     bool IsValidCommandText { get; }
     EDb DataBaseType { get; }
     EDbLanguage? DatabaseLanguage { get; }
-    List<NpOnDbCommandParam> Parameters { get; }
+    List<INpOnDbCommandParam> Parameters { get; }
 }
 
 public class NpOnDbCommand : INpOnDbCommand
@@ -19,7 +18,7 @@ public class NpOnDbCommand : INpOnDbCommand
     private readonly EDb _eDb;
     private readonly EDbLanguage? _dbLanguage;
     private readonly ILogger<NpOnDbCommand> _logger = new Logger<NpOnDbCommand>(new NullLoggerFactory());
-    private List<NpOnDbCommandParam>? _parameters;
+    private List<INpOnDbCommandParam>? _parameters;
 
     public NpOnDbCommand(EDb eDb, string? commandText)
     {
@@ -37,7 +36,7 @@ public class NpOnDbCommand : INpOnDbCommand
     }
 
 
-    public NpOnDbCommand(EDb eDb, string? commandText, List<NpOnDbCommandParam>? parameters)
+    public NpOnDbCommand(EDb eDb, string? commandText, List<INpOnDbCommandParam>? parameters)
     {
         CommandText = commandText ?? string.Empty;
         try
@@ -68,5 +67,5 @@ public class NpOnDbCommand : INpOnDbCommand
 
     public EDbLanguage? DatabaseLanguage => _dbLanguage;
 
-    public List<NpOnDbCommandParam>? Parameters => _parameters;
+    public List<INpOnDbCommandParam>? Parameters => _parameters;
 }

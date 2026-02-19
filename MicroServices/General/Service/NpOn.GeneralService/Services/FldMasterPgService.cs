@@ -62,14 +62,14 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                List<NpOnDbCommandParam> parameters = npgsqlParameters
+                List<INpOnDbCommandParam> parameters = npgsqlParameters
                     .Select(p => new NpOnDbCommandParam<NpgsqlDbType>
                     {
                         ParamName = p.ParameterName,
                         ParamValue = p.Value ?? DBNull.Value,
                         ParamType = p.NpgsqlDbType
                     })
-                    .Cast<NpOnDbCommandParam>()
+                    .Cast<INpOnDbCommandParam>()
                     .ToList();
 
                 INpOnDbCommand dbCommand =
@@ -95,7 +95,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     return;
                 }
 
-                List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
+                List<INpOnDbCommandParam> parameters = new List<INpOnDbCommandParam>();
                 var queryBuilder = new TblFldMasterQueryBuilder();
                 if (execution.Code != null)
                 {
@@ -279,7 +279,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 else if (tblFldRModelFirst is { Query: not null, ExecType: EExecType.Query })
                 {
                     string execString = tblFldRModelFirst.Query;
-                    List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
+                    List<INpOnDbCommandParam> parameters = new List<INpOnDbCommandParam>();
                     foreach (var paramObj in tblFldObjects)
                     {
                         if (string.IsNullOrEmpty(paramObj.FieldName))

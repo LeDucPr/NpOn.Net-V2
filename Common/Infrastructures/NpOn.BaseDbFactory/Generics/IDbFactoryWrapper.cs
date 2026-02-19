@@ -10,7 +10,7 @@ public interface IDbFactoryWrapper
     EDb GetDbType();
     Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString);
-    Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters);
+    Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters);
 
     Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
         List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum;

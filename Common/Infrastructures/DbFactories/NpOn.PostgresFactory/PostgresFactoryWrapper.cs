@@ -30,7 +30,6 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
         INpOnConnectOption connectOption, int connectionNumber = 1, bool isUseCaching = true)
     {
         DbType = EDb.Postgres;
-        ;
         if (connectOption is not PostgresConnectOption)
             throw new ArgumentException("connectOption must be a PostgresConnectOption");
         Factory = new PostgresDriverFactory(connectOption, connectionNumber);
@@ -62,7 +61,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
     public async Task<INpOnWrapperResult?> Add<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false)
         where T : BaseDomain
     {
-        (string commandText, List<NpOnDbCommandParam> npgsqlParameters) =
+        (string commandText, List<INpOnDbCommandParam> npgsqlParameters) =
             GetParams(domains, ERepositoryAction.Add, isUseDefaultWhenNull);
 
         INpOnDbCommand dbCommand =
@@ -74,7 +73,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
     public async Task<INpOnWrapperResult?> Update<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false)
         where T : BaseDomain
     {
-        (string commandText, List<NpOnDbCommandParam> npgsqlParameters) =
+        (string commandText, List<INpOnDbCommandParam> npgsqlParameters) =
             GetParams(domains, ERepositoryAction.Update, isUseDefaultWhenNull);
 
         INpOnDbCommand dbCommand =
@@ -86,7 +85,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
     public async Task<INpOnWrapperResult?> Merge<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false)
         where T : BaseDomain
     {
-        (string commandText, List<NpOnDbCommandParam> npgsqlParameters) =
+        (string commandText, List<INpOnDbCommandParam> npgsqlParameters) =
             GetParams(domains, ERepositoryAction.Merge, isUseDefaultWhenNull);
 
         INpOnDbCommand dbCommand =
@@ -97,7 +96,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
 
     public async Task<INpOnWrapperResult?> Delete<T>(IEnumerable<T> domains) where T : BaseDomain
     {
-        (string commandText, List<NpOnDbCommandParam> npgsqlParameters) = GetParams(domains, ERepositoryAction.Delete);
+        (string commandText, List<INpOnDbCommandParam> npgsqlParameters) = GetParams(domains, ERepositoryAction.Delete);
 
         INpOnDbCommand dbCommand =
             new NpOnDbCommand(DbType, commandText, npgsqlParameters);
@@ -105,7 +104,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
         return wrapperResult;
     }
 
-    private (string commandText, List<NpOnDbCommandParam> npgsqlParameters) GetParams<T>(
+    private (string commandText, List<INpOnDbCommandParam> npgsqlParameters) GetParams<T>(
         IEnumerable<T> domains, ERepositoryAction actionType, bool isUseDefaultWhenNull = false) where T : BaseDomain
     {
         (string commandText, IEnumerable<NpgsqlParameter> npgsqlParameters) = actionType switch
@@ -119,14 +118,14 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
             _ => throw new ArgumentOutOfRangeException(nameof(actionType), actionType, null)
         };
 
-        List<NpOnDbCommandParam> parameters = npgsqlParameters
+        List<INpOnDbCommandParam> parameters = npgsqlParameters
             .Select(p => new NpOnDbCommandParam<NpgsqlDbType>
             {
                 ParamName = p.ParameterName,
                 ParamValue = p.Value ?? DBNull.Value,
                 ParamType = p.NpgsqlDbType
             })
-            .Cast<NpOnDbCommandParam>()
+            .Cast<INpOnDbCommandParam>()
             .ToList();
         return (commandText, parameters);
     }
