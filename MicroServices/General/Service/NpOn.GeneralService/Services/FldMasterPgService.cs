@@ -297,10 +297,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
 
                     try
                     {
-                        if (parameters is { Count: > 0 })
-                            wrapperResult = await postgresFactoryWrapper.ExecuteAsync(execString, parameters);
-                        else
-                            wrapperResult = await postgresFactoryWrapper.ExecuteAsync(execString);
+                        wrapperResult = await postgresFactoryWrapper.ExecuteAsync(execString, parameters);
                     }
                     catch (Exception)
                     {

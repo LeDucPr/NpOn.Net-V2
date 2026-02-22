@@ -9,7 +9,6 @@ public interface IDbFactoryWrapper
     string? FactoryOptionCode { get; }
     EDb GetDbType();
     Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand);
-    Task<INpOnWrapperResult?> ExecuteAsync(string queryString);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters);
 
     Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,

@@ -30,7 +30,7 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
 
     public string? FactoryOptionCode => Factory?.DriverOptionKey;
 
-    public async Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)
+    protected async Task<INpOnWrapperResult?> ExecuteWithConnectionAsync(Func<NpOnDbConnection, Task<INpOnWrapperResult?>> action)
     {
         if (Factory == null) return null;
         NpOnDbConnection? connection = null;
@@ -38,7 +38,7 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         {
             connection = await Factory.GetConnectionAsync();
             if (connection == null) return null; // Không có kết nối khả dụng
-            return await connection.Driver.Execute(dbCommand);
+            return await action(connection);
         }
         catch (Exception)
         {
@@ -50,68 +50,29 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         }
     }
 
-    public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString)
+    public async Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)
     {
-        if (Factory == null) return null;
-        NpOnDbConnection? connection = null;
-        try
-        {
-            connection = await Factory.GetConnectionAsync();
-            if (connection == null) return null;
-            INpOnDbCommand command = new NpOnDbCommand(DbType, queryString);
-            return await connection.Driver.Execute(command);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-        finally
-        {
-            if (connection != null) Factory.ReleaseConnection(connection);
-        }
+        return await ExecuteWithConnectionAsync(async connection => await connection.Driver.Execute(dbCommand));
     }
 
     public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters)
     {
-        if (Factory == null) return null;
-        NpOnDbConnection? connection = null;
-        try
+        return await ExecuteWithConnectionAsync(async connection =>
         {
-            connection = await Factory.GetConnectionAsync();
-            if (connection == null) return null;
             INpOnDbCommand command = new NpOnDbCommand(DbType, queryString, parameters);
             return await connection.Driver.Execute(command);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-        finally
-        {
-            if (connection != null) Factory.ReleaseConnection(connection);
-        }
+        });
     }
 
     public async Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
         List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum
     {
-        if (Factory == null) return null;
-        NpOnDbConnection? connection = null;
-        try
+        return await ExecuteWithConnectionAsync(async connection =>
         {
-            connection = await Factory.GetConnectionAsync();
-            if (connection == null) return null;
+            var safeParams = parameters ?? [];
             INpOnDbExecFuncCommand execFuncCommand =
-                new NpOnDbExecFuncCommand(DbType, funcName, parameters ?? []);
-            return await connection.Driver.ExecuteFuncParams(execFuncCommand, parameters ?? []);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-        finally
-        {
-            if (connection != null) Factory.ReleaseConnection(connection);
-        }
+                new NpOnDbExecFuncCommand(DbType, funcName, safeParams.ToDictionary(p => p.ParamName, p => p.ParamValue ?? DBNull.Value));
+            return await connection.Driver.ExecuteFuncParams(execFuncCommand, safeParams);
+        });
     }
 }
