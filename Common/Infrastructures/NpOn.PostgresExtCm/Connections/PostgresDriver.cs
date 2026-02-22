@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
@@ -63,93 +62,49 @@ public class PostgresDriver : NpOnDbDriver
 
     public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
-        // Kiểm tra trạng thái kết nối hợp lệ.
         if (!IsValidSession || _connection == null)
             return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (command == null || string.IsNullOrWhiteSpace(command.CommandText))
             return new PostgresResultSetWrapper().SetFail(EDbError.Command);
-        try
-        {
-            if (command.Parameters is not { Count : > 0 })
-            {
-                await using var pgCommand = _connection.CreateCommand();
-                pgCommand.CommandText = command.CommandText;
-                await using var readerCm = await pgCommand.ExecuteReaderAsync();
-                return new PostgresResultSetWrapper(readerCm);
-            }
 
-            using (var pgCommandParam = new NpgsqlCommand(command.CommandText, _connection))
-            {
-                foreach (var prm in command.Parameters)
-                {
-                    if (prm is not NpOnDbCommandParam<NpgsqlDbType> npgsqlParam)
-                    {
-                        return new PostgresResultSetWrapper().SetFail(EDbError.CommandParam);
-                    }
-
-                    string newKey = npgsqlParam.ParamName.AsDefaultString();
-                    object? paramValue = prm.ParamValue;
-
-                    if (paramValue == null)
-                    {
-                        pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, DBNull.Value);
-                        continue;
-                    }
-
-                    pgCommandParam.Parameters.Add(npgsqlParam.CreateNpgsqlParameter());
-                }
-
-                await using var readerCmPrm = await pgCommandParam.ExecuteReaderAsync();
-                return new PostgresResultSetWrapper(readerCmPrm);
-            }
-        }
-        catch (Exception ex)
-        {
-            return new PostgresResultSetWrapper().SetFail(ex);
-        }
+        return await ExecuteReaderInternalAsync(command.CommandText, command.Parameters);
     }
 
     public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand)
     {
-        if (!IsValidSession || _connection == null) // Check enabled connection 
+        if (!IsValidSession || _connection == null)
             return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
             return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
-        try
-        {
-            await using var pgCommand = _connection.CreateCommand();
-            List<object?> paramPlaceholderComponents = new List<object?>();
-            foreach (var param in execCommand.Params)
-            {
-                var value = param.Value;
-                var npgsqlParam = new NpgsqlParameter
-                {
-                    ParameterName = param.Key,
-                    Value = value
-                };
 
-                if (value != DBNull.Value)
-                {
-                    var valueType = value.GetType();
-                    var npgsqlDbType = valueType.ToNpgsqlDbType(); // ?? ưu tiên 
-                    if (npgsqlDbType.HasValue)
-                        npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
-                    paramPlaceholderComponents.Add(value);
-                }
+        var parameters = new List<INpOnDbCommandParam>();
+        var paramNames = new List<string>();
+
+        foreach (var param in execCommand.Params)
+        {
+            var npgsqlDbType = NpgsqlDbType.Unknown;
+            if (param.Value != DBNull.Value)
+            {
+                npgsqlDbType = param.Value.GetType().ToNpgsqlDbType() ?? NpgsqlDbType.Unknown;
             }
 
-            string paramPlaceholders = $"'{string.Join(",", paramPlaceholderComponents)}'";
-            pgCommand.CommandText = $"SELECT * FROM {execCommand.FuncName}({paramPlaceholders})";
-            pgCommand.CommandType = CommandType.Text;
-            if (string.IsNullOrWhiteSpace(execCommand.AliasForSingleColumnOutput))
-                pgCommand.CommandText += $" as {execCommand.AliasForSingleColumnOutput}";
-            await using var reader = await pgCommand.ExecuteReaderAsync();
-            return new PostgresResultSetWrapper(reader);
+            var dbParam = new NpOnDbCommandParam<NpgsqlDbType>
+            {
+                ParamName = param.Key,
+                ParamType = npgsqlDbType,
+                ParamValue = param.Value
+            };
+            parameters.Add(dbParam);
+            paramNames.Add($"@{param.Key}");
         }
-        catch (Exception ex)
+
+        string commandText = $"SELECT * FROM {execCommand.FuncName}({string.Join(",", paramNames)})";
+        if (!string.IsNullOrWhiteSpace(execCommand.AliasForSingleColumnOutput))
         {
-            return new PostgresResultSetWrapper().SetFail(ex);
+            commandText += $" AS {execCommand.AliasForSingleColumnOutput}";
         }
+
+        return await ExecuteReaderInternalAsync(commandText, parameters);
     }
 
     public override async Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
@@ -164,27 +119,40 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
             return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
-        List<string> paramList = [];
+
+        var paramNames = parameters.Select(p => $"@{p.ParamName}").ToList();
+        string funcName = execCommand.FuncName.Trim();
+        string commandText = $"SELECT * FROM {funcName}({string.Join(",", paramNames)})";
+
+        return await ExecuteReaderInternalAsync(commandText, parameters);
+    }
+
+
+    #region private
+
+    private async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(string commandText,
+        IEnumerable<INpOnDbCommandParam>? parameters)
+    {
         try
         {
-            await using var pgCommand = _connection.CreateCommand();
-            foreach (var param in parameters)
+            await using var pgCommand = new NpgsqlCommand(commandText, _connection);
+
+            if (parameters != null)
             {
-                var value = param.ParamValue ?? DBNull.Value;
-                var npgsqlParam = new NpgsqlParameter
+                foreach (var prm in parameters)
                 {
-                    ParameterName = param.ParamName,
-                    NpgsqlDbType = (NpgsqlDbType)Enum.ToObject(typeof(NpgsqlDbType), param.ParamType),
-                    Value = value
-                };
-                pgCommand.Parameters.Add(npgsqlParam);
-                paramList.Add($"@{param.ParamName}");
+                    if (prm is not NpOnDbCommandParam<NpgsqlDbType> npgsqlParam)
+                    {
+                        // Fallback for basic parameters if type is not specified
+                        var basicParam = new NpgsqlParameter(prm.ParamName, prm.ParamValue ?? DBNull.Value);
+                        pgCommand.Parameters.Add(basicParam);
+                        continue;
+                    }
+
+                    pgCommand.Parameters.Add(npgsqlParam.CreateNpgsqlParameter());
+                }
             }
 
-            string funcName = execCommand.FuncName.Trim().AsDefaultString();
-            if (funcName == execCommand.FuncName)
-                funcName = $"select * from {funcName}({paramList.AsArrayJoin()})";
-            pgCommand.CommandText = funcName;
             await using var reader = await pgCommand.ExecuteReaderAsync();
             return new PostgresResultSetWrapper(reader);
         }
@@ -193,4 +161,6 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
+
+    #endregion private
 }

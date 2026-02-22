@@ -12,6 +12,14 @@ public class HostingApp(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("NpOn.AccountService AppHostedService is starting multi-threaded");
+        
+        var loginResponse = await authenticationService.Login(new AccountLoginQuery
+        {
+            UserName = "KhaBanh",
+            Password = "GvN6GbQvBxyRiZ/oNsMW+Wwsa9o=",
+            AuthType = EAuthentication.WebApp,
+            ClientId = "WEB_TEST_C"
+        });
         // await LoginStressTest();
     }
 
