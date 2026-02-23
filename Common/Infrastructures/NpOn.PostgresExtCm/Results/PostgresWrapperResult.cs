@@ -21,20 +21,15 @@ public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary
 
     protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<string, INpOnCell>();
-
+        var dictionary = new Dictionary<string, INpOnCell>(_schemaMap.Count);
         foreach (var schemaInfo in _schemaMap.Values)
         {
             object cellValue = Parent[schemaInfo.ColumnName];
-            Type columnNullableType = schemaInfo.DataType.ToNullableType();
-
-            Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnNullableType);
-            INpOnCell cell = (INpOnCell)Activator.CreateInstance(
-                genericCellType,
+            INpOnCell cell = PostgresCellDynamicFactory.Create(
+                schemaInfo.DataType,
                 cellValue,
-                columnNullableType.ToDbType(),
-                schemaInfo.ProviderDataTypeName // THÔNG TIN CHÍNH XÁC SCHEMA
-            )!;
+                schemaInfo.ProviderDataTypeName
+            );
             dictionary.Add(schemaInfo.ColumnName, cell);
         }
 
@@ -63,25 +58,20 @@ public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDicti
     protected override IReadOnlyDictionary<int, INpOnCell> CreateResult()
     {
         var schemaInfo = _schemaMap[_columnName];
-        Type columnNullableType = schemaInfo.DataType.ToNullableType();
-        
-        Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnNullableType);
-        var dictionary = new Dictionary<int, INpOnCell>(Parent.Rows.Count);
-
-        for (int i = 0; i < Parent.Rows.Count; i++)
+        var rowCount = Parent.Rows.Count;
+        var dictionary = new Dictionary<int, INpOnCell>(rowCount);
+        Type columnType = schemaInfo.DataType;
+        for (int i = 0; i < rowCount; i++)
         {
-            DataRow row = Parent.Rows[i];
-            object? cellValue = row[_columnName];
+            object? cellValue = Parent.Rows[i][_columnName];
 
-            if (cellValue == DBNull.Value)
-                cellValue = null;
-            
-            INpOnCell cell = (INpOnCell)Activator.CreateInstance(
-                genericCellType,
+            if (cellValue == DBNull.Value) cellValue = null;
+            INpOnCell cell = PostgresCellDynamicFactory.Create(
+                columnType,
                 cellValue,
-                columnNullableType.ToDbType(),
-                schemaInfo.ProviderDataTypeName // SỬ DỤNG THÔNG TIN CHÍNH XÁC TỪ SCHEMA
-            )!;
+                schemaInfo.ProviderDataTypeName
+            );
+
             dictionary.Add(i, cell);
         }
 

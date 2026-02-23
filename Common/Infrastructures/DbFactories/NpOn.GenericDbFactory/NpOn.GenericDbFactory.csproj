@@ -13,6 +13,7 @@
       <ProjectReference Include="..\..\NpOn.CassandraExtCm\NpOn.CassandraExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.MongoDbExtCm\NpOn.MongoDbExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.MssqlExtCm\NpOn.MssqlExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
     </ItemGroup>
 

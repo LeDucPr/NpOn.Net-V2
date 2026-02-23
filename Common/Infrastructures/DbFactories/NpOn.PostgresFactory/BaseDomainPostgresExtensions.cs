@@ -46,7 +46,7 @@ public static class BaseDomainExtensions
                     continue;
                 }
 
-                var (paramValue, npgType) = NormalizeForNpgsql(raw, memberType);
+                var (paramValue, npgType) = NormalizeForNpgsql(raw);
                 string param = $"@p_{i}_{cols.Count}";
                 cols.Add(columnName);
                 paramNames.Add(param);
@@ -100,7 +100,7 @@ public static class BaseDomainExtensions
                     continue;
                 }
 
-                var (val, npgType) = NormalizeForNpgsql(raw, memberType);
+                var (val, npgType) = NormalizeForNpgsql(raw);
                 string param = $"@v_{i}_{colName}";
                 var p = new NpgsqlParameter(param, val ?? DBNull.Value);
                 if (npgType.HasValue) p.NpgsqlDbType = npgType.Value;
@@ -121,7 +121,7 @@ public static class BaseDomainExtensions
                     throw new Exception(
                         $"Primary key value for {pkMember.ColumnName} cannot be null in domain at index {i}");
 
-                var (pkValue, pkType) = NormalizeForNpgsql(pkVal, pkMember.MemberType);
+                var (pkValue, pkType) = NormalizeForNpgsql(pkVal);
                 var pkParamObj = new NpgsqlParameter(pkParam, pkValue);
                 if (pkType.HasValue) pkParamObj.NpgsqlDbType = pkType.Value;
                 parameters.Add(pkParamObj);
@@ -173,7 +173,7 @@ public static class BaseDomainExtensions
                     continue;
                 }
 
-                var (val, npgType) = NormalizeForNpgsql(raw, memberType);
+                var (val, npgType) = NormalizeForNpgsql(raw);
                 string param = $"@p_{i}_{colName}";
 
                 cols.Add(colName);
@@ -240,7 +240,6 @@ public static class BaseDomainExtensions
                         object defaultVal = pkMember.MemberType.IsValueType
                             ? Activator.CreateInstance(pkMember.MemberType)!
                             : string.Empty;
-
                         raw = defaultVal;
                     }
                     else
@@ -249,7 +248,7 @@ public static class BaseDomainExtensions
                     }
                 }
 
-                var (val, npgType) = NormalizeForNpgsql(raw, pkMember.MemberType);
+                var (val, npgType) = NormalizeForNpgsql(raw);
                 var p = new NpgsqlParameter(pkParam, val);
                 if (npgType.HasValue) p.NpgsqlDbType = npgType.Value;
                 parameters.Add(p);
@@ -338,9 +337,9 @@ public static class BaseDomainExtensions
     }
 
     // Convert enums and common types to safe Npgsql representations by using the centralized utility
-    private static (object? Value, NpgsqlDbType? DbType) NormalizeForNpgsql(object? raw, Type memberType)
+    private static (object? Value, NpgsqlDbType? DbType) NormalizeForNpgsql(object? raw)
     {
-        return PostgresUtils.NormalizeValueForNpgsql(raw, memberType);
+        return PostgresUtils.NormalizeForNpgsql(raw);
     }
 
     /// <summary>

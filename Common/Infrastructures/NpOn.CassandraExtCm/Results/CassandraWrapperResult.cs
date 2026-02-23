@@ -1,9 +1,7 @@
 ﻿using Cassandra;
-using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb;
 using Common.Infrastructures.NpOn.CommonDb.DbResults;
-using Common.Infrastructures.NpOn.PostgresExtCm.Results;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
@@ -34,7 +32,7 @@ public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<st
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 cellValue,
-                columnType.ToDbType(), // Chuyển đổi từ System.Type sang DbType
+                // columnType.ToDbType(), // error  // Chuyển đổi từ System.Type sang DbType
                 schemaInfo.ProviderDataTypeName // Tên kiểu dữ liệu gốc của Cassandra (ví dụ: "text", "int")
             )!;
 
@@ -76,7 +74,7 @@ public class CassandraColumnWrapper : NpOnWrapperResult<IReadOnlyList<Row>, IRea
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 row.GetValue(columnType, _columnName),
-                columnType.ToDbType(),
+                // columnType.ToDbType(),  // error
                 schemaInfo.ProviderDataTypeName
             )!;
             dictionary.Add(i, cell);

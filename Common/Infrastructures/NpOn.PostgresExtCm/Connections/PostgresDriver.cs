@@ -26,7 +26,7 @@ public class PostgresDriver : NpOnDbDriver
     {
         if (IsValidSession)
         {
-            return; // Đã kết nối rồi và option yêu cầu chờ.
+            return; // Already connected.
         }
 
         await DisconnectAsync();
@@ -82,18 +82,14 @@ public class PostgresDriver : NpOnDbDriver
 
         foreach (var param in execCommand.Params)
         {
-            var npgsqlDbType = NpgsqlDbType.Unknown;
-            if (param.Value != DBNull.Value)
-            {
-                npgsqlDbType = param.Value.GetType().ToNpgsqlDbType() ?? NpgsqlDbType.Unknown;
-            }
-
+            // Npgsql (auto)
             var dbParam = new NpOnDbCommandParam<NpgsqlDbType>
             {
                 ParamName = param.Key,
-                ParamType = npgsqlDbType,
+                ParamType = PostgresUtils.GetPostgresTypes(param.Value, param.Value.GetType()).NpgsqlDbType,
                 ParamValue = param.Value
             };
+
             parameters.Add(dbParam);
             paramNames.Add($"@{param.Key}");
         }
@@ -136,20 +132,19 @@ public class PostgresDriver : NpOnDbDriver
         try
         {
             await using var pgCommand = new NpgsqlCommand(commandText, _connection);
-
             if (parameters != null)
             {
                 foreach (var prm in parameters)
                 {
-                    if (prm is not NpOnDbCommandParam<NpgsqlDbType> npgsqlParam)
+                    // Npgsql (auto)
+                    var pgParam = new NpgsqlParameter(prm.ParamName, prm.ParamValue ?? DBNull.Value);
+                    if (prm is NpOnDbCommandParam<NpgsqlDbType> typedParam
+                        && typedParam.ParamType != NpgsqlDbType.Unknown)
                     {
-                        // Fallback for basic parameters if type is not specified
-                        var basicParam = new NpgsqlParameter(prm.ParamName, prm.ParamValue ?? DBNull.Value);
-                        pgCommand.Parameters.Add(basicParam);
-                        continue;
+                        pgParam.NpgsqlDbType = typedParam.ParamType;
                     }
 
-                    pgCommand.Parameters.Add(npgsqlParam.CreateNpgsqlParameter());
+                    pgCommand.Parameters.Add(pgParam);
                 }
             }
 

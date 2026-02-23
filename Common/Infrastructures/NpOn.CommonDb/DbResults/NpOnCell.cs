@@ -16,6 +16,7 @@ public interface INpOnCell
 public interface INpOnCell<out T> : INpOnCell
 {
     T? Value { get; }
+    void Create();
 }
 
 /// <summary>
@@ -42,5 +43,10 @@ public class NpOnCell<T> : INpOnCell<T>
         }
         DbType = dbType;
         SourceTypeName = sourceTypeName;
+    }
+
+    public virtual void Create()
+    {
+        
     }
 }
