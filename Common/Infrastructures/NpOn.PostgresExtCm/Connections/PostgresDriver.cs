@@ -72,55 +72,19 @@ public class PostgresDriver : NpOnDbDriver
 
     public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand)
     {
-        if (!IsValidSession || _connection == null)
-            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
-        if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
-            return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
-
-        var parameters = new List<INpOnDbCommandParam>();
-        var paramNames = new List<string>();
-
-        foreach (var param in execCommand.Params)
-        {
-            // Npgsql (auto)
-            var dbParam = new NpOnDbCommandParam<NpgsqlDbType>
-            {
-                ParamName = param.Key,
-                ParamType = PostgresUtils.GetPostgresTypes(param.Value, param.Value.GetType()).NpgsqlDbType,
-                ParamValue = param.Value
-            };
-
-            parameters.Add(dbParam);
-            paramNames.Add($"@{param.Key}");
-        }
-
-        string commandText = $"SELECT * FROM {execCommand.FuncName}({string.Join(",", paramNames)})";
-        if (!string.IsNullOrWhiteSpace(execCommand.AliasForSingleColumnOutput))
-        {
-            commandText += $" AS {execCommand.AliasForSingleColumnOutput}";
-        }
-
-        return await ExecuteReaderInternalAsync(commandText, parameters);
-    }
-
-    public override async Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
-        List<INpOnDbCommandParam<TEnum>> parameters)
-    {
-        if (typeof(TEnum) != typeof(NpgsqlDbType))
-        {
-            return new PostgresResultSetWrapper().SetFail(new Exception($"{typeof(TEnum).Name} is not NpgsqlDbType"));
-        }
-
         if (!IsValidSession || _connection == null) // Check enabled connection 
             return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
             return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
 
-        var paramNames = parameters.Select(p => $"@{p.ParamName}").ToList();
+        List<string>? paramNames = execCommand.Parameters?.Select(p => $"@{p.ParamName}").ToList();
+        string paramNamesJoin = (paramNames != null && paramNames.Any())
+            ? string.Join(",", paramNames)
+            : string.Empty;
         string funcName = execCommand.FuncName.Trim();
-        string commandText = $"SELECT * FROM {funcName}({string.Join(",", paramNames)})";
+        string commandText = $"SELECT * FROM {funcName}({paramNamesJoin})";
 
-        return await ExecuteReaderInternalAsync(commandText, parameters);
+        return await ExecuteReaderInternalAsync(commandText, execCommand.Parameters);
     }
 
 

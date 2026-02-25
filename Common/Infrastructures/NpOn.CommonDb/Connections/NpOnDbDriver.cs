@@ -15,10 +15,8 @@ public interface INpOnDbDriver
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnWrapperResult> Execute(INpOnDbCommand? command);
-    Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand);
 
-    Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
-        List<INpOnDbCommandParam<TEnum>> parameters) where TEnum : Enum;
+    Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand);
 
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
     
@@ -41,12 +39,6 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     }
 
     public virtual Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecFuncCommand? execCommand)
-    {
-        throw new NotImplementedException("Need to override this method");
-    }
-
-    public virtual Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecFuncCommand? execCommand,
-        List<INpOnDbCommandParam<TEnum>> parameters) where TEnum : Enum
     {
         throw new NotImplementedException("Need to override this method");
     }

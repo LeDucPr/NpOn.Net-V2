@@ -6,15 +6,13 @@ namespace Common.Infrastructures.NpOn.PostgresExtCm.Results;
 
 public static class PostgresUtils
 {
-    public static (DbType DbType, NpgsqlDbType NpgsqlDbType) GetPostgresTypes(object? value, Type type)
+    public static object? NormalizePostgresValue(this object? value) 
     {
-        // NpgsqlParameter Driver
-        var p = new NpgsqlParameter { Value = value ?? GetDefault(type) };
-        return (p.DbType, p.NpgsqlDbType);
+        if (value is DateTime { Kind: DateTimeKind.Utc } dt) // timestamptz (offset)
+            return dt.ToLocalTime();
+        return value;
     }
-
-    private static object? GetDefault(Type type) => type.IsValueType ? Activator.CreateInstance(type) : null;
-
+    
     public static (object? Value, NpgsqlDbType DbType) NormalizeForNpgsql(object? raw)
     {
         if (raw == null || raw == DBNull.Value)

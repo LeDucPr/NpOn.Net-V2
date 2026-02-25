@@ -1,10 +1,9 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using MicroServices.General.Contract.NpOn.GeneralServiceContract;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.GeneralServiceContract.ReadModels;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
 
 [ProtoContract]
 public class CommandRModel : BaseGeneralRModel
@@ -16,7 +15,8 @@ public class CommandRModel : BaseGeneralRModel
     [ProtoMember(5)] public required Type DeserializeParamType { get; set; }
 
     public NpOnDbCommandParam[]? Parameters =>
-        ((NpOnDbCommandParamGrpcList?)ProtoBufMode.ProtoBufDeserialize(ParamsPayload, typeof(NpOnDbCommandParamGrpcList)))
+        ((NpOnDbCommandParamGrpcList?)ProtoBufMode.ProtoBufDeserialize(ParamsPayload,
+            typeof(NpOnDbCommandParamGrpcList)))
         ?.Items.Select(x => x.ToDbParam()).ToArray();
 
     public NpOnDbExecuteCommand ToCommand()
@@ -24,7 +24,7 @@ public class CommandRModel : BaseGeneralRModel
         return new NpOnDbExecuteCommand
         {
             CommandText = CommandText,
-            ExecType = ExecType, 
+            ExecType = ExecType,
             Parameters = Parameters
         };
     }

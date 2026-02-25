@@ -187,23 +187,23 @@ public class AuthenticationService(
                 response.SetFail("Account not found");
                 return;
             }
-
+            
             AccountLoginRModel accountLoginRModel = CreateToken(
                 accountRModel, query.AuthType /*, ELoginType.Default*/);
-
+            
             if (query.IsEnableMultiDevice)
             {
             }
-
+            
             // kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
             // {
             //     MessageContent = accountLoginRModel.ToLoginEvent()
             // });
-
-
+            
+            
             if (_isReadTokenImmediate)
                 await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
-
+            
             rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
             {
                 MessageContent = accountLoginRModel.ToLoginEvent()

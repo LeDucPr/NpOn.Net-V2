@@ -71,8 +71,8 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         {
             var safeParams = parameters ?? [];
             INpOnDbExecFuncCommand execFuncCommand =
-                new NpOnDbExecFuncCommand(DbType, funcName, safeParams.ToDictionary(p => p.ParamName, p => p.ParamValue ?? DBNull.Value));
-            return await connection.Driver.ExecuteFuncParams(execFuncCommand, safeParams);
+                new NpOnDbExecFuncCommand(DbType, funcName, parameters);
+            return await connection.Driver.ExecuteFunc(execFuncCommand);
         });
     }
 }

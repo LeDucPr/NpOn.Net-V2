@@ -188,42 +188,61 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 
     public PostgresResultSetWrapper(NpgsqlDataReader? reader = null)
     {
-        // schema 
         if (reader == null)
         {
             SetFail(EDbError.PostgresDataTableNull);
             return;
         }
 
+        // Build schema
         var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
+        var dataTable = new DataTable();
+
         for (int i = 0; i < reader.FieldCount; i++)
         {
             var columnName = reader.GetName(i);
+            var fieldType = reader.GetFieldType(i);
+
             var schemaInfo = new NpOnColumnSchemaInfo(
                 columnName,
-                reader.GetFieldType(i), // LSystem.Type
-                reader.GetDataTypeName(i) // POSTGRES 
+                fieldType,
+                reader.GetDataTypeName(i)
             );
+
             schemaMap.Add(columnName, schemaInfo);
+
+            // Tạo column cho DataTable
+            dataTable.Columns.Add(columnName, fieldType);
         }
 
-        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap1 = schemaMap;
-        var dataTable = new DataTable();
-        dataTable.Load(reader);
+        // Read data
+        while (reader.Read())
+        {
+            var row = dataTable.NewRow();
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                if (reader.IsDBNull(i))
+                {
+                    row[i] = DBNull.Value;
+                    continue;
+                }
+                row[i] = reader.GetValue(i).NormalizePostgresValue();
+            }
 
+            dataTable.Rows.Add(row);
+        }
+
+        // Wrap
         Rows = dataTable.Rows
             .Cast<DataRow>()
-            .Select((row, index) => new
-            {
-                row,
-                index
-            })
+            .Select((row, index) => new { row, index })
             .ToDictionary(
                 item => item.index,
-                item => new PostgresRowWrapper(item.row, schemaMap1) // schema -> Row
+                item => new PostgresRowWrapper(item.row, schemaMap)
             );
 
-        Columns = new PostgresColumnCollection(dataTable, schemaMap1); // schema -> Column
+        Columns = new PostgresColumnCollection(dataTable, schemaMap);
+
         SetSuccess();
     }
 

@@ -4,6 +4,7 @@ using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
 using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
 using MicroServices.General.Contract.NpOn.GeneralServiceContract.Commands;
 using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
 
 namespace MicroServices.General.Service.NpOn.IGeneralService;
 

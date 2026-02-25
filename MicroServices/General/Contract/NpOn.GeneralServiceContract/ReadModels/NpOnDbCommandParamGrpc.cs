@@ -1,7 +1,8 @@
-﻿using NpgsqlTypes;
+﻿using Common.Infrastructures.NpOn.CommonDb.DbCommands;
+using NpgsqlTypes;
 using ProtoBuf;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbCommands;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
 
 [ProtoContract]
 [ProtoInclude(1000, typeof(NpOnDbCommandParamGrpc<NpgsqlDbType>))]
