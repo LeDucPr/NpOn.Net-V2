@@ -87,11 +87,9 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
         {
             var results = await transactionProcess(transaction);
             if (results.Any(result => !result.Value.Status))
-            {
                 await transaction.RollbackAsync(cancellationToken);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
+            else 
+                await transaction.CommitAsync(cancellationToken);
             return results;
         }
         catch
