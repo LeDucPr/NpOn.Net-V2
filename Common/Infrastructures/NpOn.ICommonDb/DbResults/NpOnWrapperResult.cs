@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics;
-using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbResults;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbResults;
 
 public interface INpOnWrapperResult
 {

@@ -8,7 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Connections\" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="protobuf-net.Core" Version="3.2.56" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbResults;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbResults;
 
 /// <summary>
 /// Primitive Data

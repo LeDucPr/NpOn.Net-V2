@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 
 public static class NpOnBaseGrpcObjectExtensions
 {

@@ -1,13 +1,9 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbCommands;
-
-public interface INpOnDbCommand : IBaseNpOnDbCommand
-{
-    string CommandText { get; }
-}
 
 public class NpOnDbCommand : INpOnDbCommand
 {

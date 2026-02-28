@@ -4,7 +4,7 @@ using System.Text;
 using Common.Extensions.NpOn.CommonMode;
 using ProtoBuf;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 
 [ProtoContract]
 public class NpOnGrpcCell : INpOnGrpcObject

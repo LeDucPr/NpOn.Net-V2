@@ -2,7 +2,8 @@
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.CommonDb.DbResults;
+using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Results;
 using MongoDB.Bson;
 using MongoDB.Driver;

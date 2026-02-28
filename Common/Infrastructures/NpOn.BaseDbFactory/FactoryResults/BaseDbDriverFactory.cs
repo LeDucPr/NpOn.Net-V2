@@ -2,6 +2,7 @@
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
+using Common.Infrastructures.NpOn.ICommonDb.Connections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

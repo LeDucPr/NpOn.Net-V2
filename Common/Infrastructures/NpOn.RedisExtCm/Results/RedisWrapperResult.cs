@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.NpOn.CommonDb.DbResults;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 using StackExchange.Redis;
 
 namespace Common.Infrastructures.NpOn.RedisExtCm.Results;

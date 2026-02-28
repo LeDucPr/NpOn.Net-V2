@@ -2,7 +2,8 @@
 using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.CommonDb.DbResults;
+using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 
 namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 

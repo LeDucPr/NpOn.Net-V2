@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 
 [ProtoContract]
 public class NpOnGrpcColumn : INpOnGrpcObject

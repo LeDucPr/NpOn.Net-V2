@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
-using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbResults;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbResults;
 
 public static class NpOnWrapperResultExtensions
 {

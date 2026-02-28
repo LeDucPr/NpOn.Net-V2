@@ -4,6 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Common.Infrastructures.NpOn.ElasticSearchExtCm</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

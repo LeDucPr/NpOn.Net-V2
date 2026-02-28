@@ -1,6 +1,5 @@
-﻿
-
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbCommands;
 

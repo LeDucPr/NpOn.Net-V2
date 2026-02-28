@@ -1,6 +1,6 @@
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
-namespace Common.Infrastructures.NpOn.CommonDb.DbCommands;
+namespace Common.Infrastructures.NpOn.ICommonDb.DbCommands;
 
 public interface IBaseNpOnDbCommand
 {

@@ -1,27 +1,11 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.CommonDb.DbResults;
-using Common.Infrastructures.NpOn.CommonDb.DbTransactions;
+using Common.Infrastructures.NpOn.ICommonDb.Connections;
+using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults;
+using Common.Infrastructures.NpOn.ICommonDb.Transactions;
 
 namespace Common.Infrastructures.NpOn.CommonDb.Connections;
-
-public interface INpOnDbDriver
-{
-    string Name { get; }
-    string Version { get; }
-    public bool IsValidSession { get; }
-    public INpOnConnectOption Option { get; }
-    Task ConnectAsync(CancellationToken cancellationToken);
-    Task DisconnectAsync();
-    Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command);
-
-    Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>> ExecuteWithTransaction(
-        IEnumerable<IBaseNpOnDbCommand> commands,
-        CancellationToken cancellationToken = default);
-
-    Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
-}
 
 public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
 {

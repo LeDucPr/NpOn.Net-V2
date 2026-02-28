@@ -1,17 +1,9 @@
 using System.Data.Common;
 using Common.Infrastructures.NpOn.CommonDb.DbCommands;
+using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
+using Common.Infrastructures.NpOn.ICommonDb.Transactions;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbTransactions;
-
-public interface INpOnDbTransaction : IAsyncDisposable, IDisposable
-{
-    DbTransaction DbTransaction { get; }
-    IEnumerable<IBaseNpOnDbCommand>? Commands { get; }
-    void AddCommands(IEnumerable<IBaseNpOnDbCommand> commands);
-    void RemoveCommands(IEnumerable<IBaseNpOnDbCommand> commands);
-    Task CommitAsync(CancellationToken cancellationToken = default);
-    Task RollbackAsync(CancellationToken cancellationToken = default);
-}
 
 public class NpOnDbTransaction : INpOnDbTransaction
 {

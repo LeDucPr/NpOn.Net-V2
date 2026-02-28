@@ -1,6 +1,6 @@
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 using ProtoBuf;
 
 namespace Common.Extensions.NpOn.CommonGrpcContract;

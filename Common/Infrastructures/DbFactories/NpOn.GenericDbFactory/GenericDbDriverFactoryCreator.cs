@@ -4,6 +4,7 @@ using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.DbFactories.NpOn.GenericDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
+using Common.Infrastructures.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Connections;
 using Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;

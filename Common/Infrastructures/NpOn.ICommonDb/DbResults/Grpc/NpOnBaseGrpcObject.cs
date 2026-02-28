@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+﻿namespace Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 
 public abstract class NpOnBaseGrpcObject
 {

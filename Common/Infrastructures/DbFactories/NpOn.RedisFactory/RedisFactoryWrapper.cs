@@ -2,7 +2,8 @@
 using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CommonDb.Connections;
-using Common.Infrastructures.NpOn.CommonDb.DbResults;
+using Common.Infrastructures.NpOn.ICommonDb.Connections;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Commands;
 using Common.Infrastructures.NpOn.RedisExtCm.Connections;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;

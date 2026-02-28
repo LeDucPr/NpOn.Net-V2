@@ -1,6 +1,6 @@
 ﻿using System.ServiceModel;
 using Common.Extensions.NpOn.CommonGrpcContract;
-using Common.Infrastructures.NpOn.CommonDb.DbResults.Grpc;
+using Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
 using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
 using MicroServices.General.Contract.NpOn.GeneralServiceContract.Commands;
 using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;

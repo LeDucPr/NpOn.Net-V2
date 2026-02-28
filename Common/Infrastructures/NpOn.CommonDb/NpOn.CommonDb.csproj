@@ -19,6 +19,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
       <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
     </ItemGroup>
 
 </Project>
