@@ -4,13 +4,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbCommands;
 
-public interface INpOnDbCommand
+public interface INpOnDbCommand : IBaseNpOnDbCommand
 {
     string CommandText { get; }
-    bool IsValidCommandText { get; }
-    EDb DataBaseType { get; }
-    EDbLanguage? DatabaseLanguage { get; }
-    List<INpOnDbCommandParam> Parameters { get; }
 }
 
 public class NpOnDbCommand : INpOnDbCommand

@@ -49,9 +49,9 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    public override async Task<INpOnDbTransaction> TransactionAsync(CancellationToken cancellationToken = default)
     {
-        if (_connection == null)
+        if (!IsValidSession || _connection == null)
         {
             throw new InvalidOperationException("Connection is not open.");
         }

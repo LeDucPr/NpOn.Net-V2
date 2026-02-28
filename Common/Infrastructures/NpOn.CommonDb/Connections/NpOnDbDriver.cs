@@ -20,7 +20,7 @@ public interface INpOnDbDriver
 
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
     
-    Task<INpOnDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+    Task<INpOnDbTransaction> TransactionAsync(CancellationToken cancellationToken = default);
 }
 
 public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
@@ -70,16 +70,16 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public virtual Task<bool> IsAliveAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(IsValidSession && !_disposed);
 
-    public virtual Task<INpOnDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    public virtual Task<INpOnDbTransaction> TransactionAsync(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException("Need to override this method");
     }
 
-    protected async Task<INpOnWrapperResult> TransactionWrapper(
-        Func<INpOnDbTransaction, Task<INpOnWrapperResult>> transactionProcess,
+    protected async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>> TransactionWrapper(
+        Func<INpOnDbTransaction, Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>>> transactionProcess,
         CancellationToken cancellationToken = default)
     {
-        await using var transaction = await BeginTransactionAsync(cancellationToken);
+        await using var transaction = await TransactionAsync(cancellationToken);
         try
         {
             var result = await transactionProcess(transaction);
