@@ -1,5 +1,40 @@
+#prerun
+  # docker volume create scylla_data_node1
+  # docker volume create scylla_data_node2
+  # docker volume create scylla_data_node3
+#tạo ghost container giữ lại  
+  # docker run -d --name keep-scylla-node1 -v scylla_data_node1:/data alpine tail -f /dev/null
+  # docker run -d --name keep-scylla-node2 -v scylla_data_node2:/data alpine tail -f /dev/null
+  # docker run -d --name keep-scylla-node3 -v scylla_data_node3:/data alpine tail -f /dev/null
+
 name: scylla-cluster
 services:
+  # keep data
+  keep-data-node1:
+    image: alpine
+    container_name: keep-scylla-node1
+    command: tail -f /dev/null
+    volumes:
+      - scylla_data_node1:/data
+    restart: always
+
+  keep-data-node2:
+    image: alpine
+    container_name: keep-scylla-node2
+    command: tail -f /dev/null
+    volumes:
+      - scylla_data_node2:/data
+    restart: always
+
+  keep-data-node3:
+    image: alpine
+    container_name: keep-scylla-node3
+    command: tail -f /dev/null
+    volumes:
+      - scylla_data_node3:/data
+    restart: always
+      
+  # scylladb
   scylla-node1:
     container_name: scylla-node1
     hostname: scylla-node1
@@ -7,7 +42,7 @@ services:
     restart: unless-stopped
     command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
     volumes:
-      - scylla1_data:/var/lib/scylla
+      - scylla_data_node1:/var/lib/scylla
       - ./config/node1/scylla.yaml:/etc/scylla/scylla.yaml
       - ./config/node1/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties
       - /etc/localtime:/etc/localtime:ro
@@ -30,7 +65,7 @@ services:
     restart: unless-stopped
     command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
     volumes:
-      - scylla2_data:/var/lib/scylla
+      - scylla_data_node2:/var/lib/scylla
       - ./config/node2/scylla.yaml:/etc/scylla/scylla.yaml
       - ./config/node2/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties
       - /etc/localtime:/etc/localtime:ro
@@ -54,7 +89,7 @@ services:
     restart: unless-stopped
     command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
     volumes:
-      - scylla3_data:/var/lib/scylla
+      - scylla_data_node3:/var/lib/scylla
       - ./config/node3/scylla.yaml:/etc/scylla/scylla.yaml
       - ./config/node3/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties
       - /etc/localtime:/etc/localtime:ro
@@ -77,6 +112,9 @@ networks:
     driver: bridge
 
 volumes:
-  scylla1_data:
-  scylla2_data:
-  scylla3_data:
+  scylla_data_node1:
+    external: true
+  scylla_data_node2:
+    external: true
+  scylla_data_node3:
+    external: true
