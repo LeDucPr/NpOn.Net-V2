@@ -121,6 +121,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.TokenValidatorExtUse",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ShareAccountConstant", "MicroServices\Account\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj", "{941A165E-90A8-4DDC-B4D7-8785C75A733A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ICommonDb", "Common\Infrastructures\NpOn.ICommonDb\NpOn.ICommonDb.csproj", "{FE2FABC6-CAA1-4118-AA65-92B1E7D00B34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -299,6 +301,10 @@ Global
 		{941A165E-90A8-4DDC-B4D7-8785C75A733A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{941A165E-90A8-4DDC-B4D7-8785C75A733A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{941A165E-90A8-4DDC-B4D7-8785C75A733A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE2FABC6-CAA1-4118-AA65-92B1E7D00B34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE2FABC6-CAA1-4118-AA65-92B1E7D00B34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE2FABC6-CAA1-4118-AA65-92B1E7D00B34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE2FABC6-CAA1-4118-AA65-92B1E7D00B34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -361,5 +367,6 @@ Global
 		{8F97B7DE-5032-4C7D-A4FE-B172B95E5108} = {0981D2BC-8812-4853-9BF4-BB06D07BEF67}
 		{D57C1890-A023-4DDE-8834-05D9C9F33280} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
 		{941A165E-90A8-4DDC-B4D7-8785C75A733A} = {E7D0F67A-DD58-4B3B-8781-9C43A42C5CC3}
+		{FE2FABC6-CAA1-4118-AA65-92B1E7D00B34} = {F18CA1AA-1C81-4D36-9AFE-463039E910C5}
 	EndGlobalSection
 EndGlobal

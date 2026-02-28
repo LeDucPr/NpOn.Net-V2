@@ -1,9 +1,14 @@
 using System.Data.Common;
+using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 
 namespace Common.Infrastructures.NpOn.CommonDb.DbTransactions;
 
 public interface INpOnDbTransaction : IAsyncDisposable, IDisposable
 {
+    DbTransaction DbTransaction { get; }
+    IEnumerable<IBaseNpOnDbCommand>? Commands { get; }
+    void AddCommands(IEnumerable<IBaseNpOnDbCommand> commands);
+    void RemoveCommands(IEnumerable<IBaseNpOnDbCommand> commands);
     Task CommitAsync(CancellationToken cancellationToken = default);
     Task RollbackAsync(CancellationToken cancellationToken = default);
 }
@@ -12,9 +17,27 @@ public class NpOnDbTransaction : INpOnDbTransaction
 {
     private readonly DbTransaction _transaction;
     private bool _isCommittedOrRolledBack;
-
+    private List<IBaseNpOnDbCommand>? _commands;
+    
     public NpOnDbTransaction(DbTransaction transaction)
         => _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
+
+    public DbTransaction DbTransaction => _transaction;
+    public IEnumerable<IBaseNpOnDbCommand>? Commands => _commands;
+    
+    public void AddCommands(IEnumerable<IBaseNpOnDbCommand> commands)
+    {
+        _commands ??= [];
+        _commands.AddRange(commands);
+    }
+
+    public void RemoveCommands(IEnumerable<IBaseNpOnDbCommand>? commands)
+    {
+        if (commands == null)
+            return;
+        _commands?.RemoveAll(commands.Contains);
+    }
+
 
     public async Task CommitAsync(CancellationToken cancellationToken = default)
     {

@@ -68,7 +68,7 @@ public class ElasticSearchDriver : NpOnDbDriver
         await Task.CompletedTask;
     }
 
-    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _client == null)
         {

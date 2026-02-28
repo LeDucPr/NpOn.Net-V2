@@ -50,7 +50,7 @@ public class RedisDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _connection == null)
         {

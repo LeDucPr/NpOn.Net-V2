@@ -71,19 +71,13 @@ public class MongoDbDriver : NpOnDbDriver
         return Task.CompletedTask;
     }
 
-    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _collection == null)
-        {
             return new MongoResultSetWrapper().SetFail(EDbError.Session);
-        }
-
-        if (command == null)
-        {
-            return new MongoResultSetWrapper().SetFail(EDbError.CommandText);
-        }
-
-        var filterText = string.IsNullOrWhiteSpace(command.CommandText) ? "{}" : command.CommandText;
+        if (command is not INpOnDbCommand execCommand)
+            return new MongoResultSetWrapper().SetFail(EDbError.Command);
+        var filterText = string.IsNullOrWhiteSpace(execCommand.CommandText) ? "{}" : execCommand.CommandText;
         try
         {
             CancellationToken cancellationToken = CancellationToken.None;

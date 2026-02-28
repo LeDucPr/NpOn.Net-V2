@@ -53,17 +53,19 @@ public class MssqlDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         // Check for a valid connection state.
         if (!IsValidSession || _connection == null)
             return new MssqlResultSetWrapper().SetFail(EDbError.Connection);
-        if (command == null || string.IsNullOrWhiteSpace(command.CommandText))
+        if (command is not INpOnDbCommand execCommand)
+            return new MssqlResultSetWrapper().SetFail(EDbError.Command);
+        if (string.IsNullOrWhiteSpace(execCommand.CommandText))
             return new MssqlResultSetWrapper().SetFail(EDbError.Command);
         try
         {
             await using var sqlCommand = _connection.CreateCommand();
-            sqlCommand.CommandText = command.CommandText;
+            sqlCommand.CommandText = execCommand.CommandText;
             await using var reader = await sqlCommand.ExecuteReaderAsync();
             return new MssqlResultSetWrapper(reader);
         }

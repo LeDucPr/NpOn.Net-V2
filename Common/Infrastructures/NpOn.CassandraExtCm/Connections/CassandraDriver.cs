@@ -72,18 +72,18 @@ public class CassandraDriver : NpOnDbDriver
         // _mapper = null;
     }
 
-    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         // 1. Guard Clauses: Kiểm tra trạng thái hợp lệ và đầu vào
         if (!IsValidSession || _session == null)
             return new CassandraResultSetWrapper().SetFail(EDbError.Session);
-        if (command == null)
+        if (command is not INpOnDbCommand execCommand)
             return new CassandraResultSetWrapper().SetFail(EDbError.Command);
-        if (string.IsNullOrWhiteSpace(command.CommandText))
+        if (string.IsNullOrWhiteSpace(execCommand.CommandText))
             return new CassandraResultSetWrapper().SetFail(EDbError.CommandText);
         try
         {
-            var statement = new SimpleStatement(command.CommandText);
+            var statement = new SimpleStatement(execCommand.CommandText);
             RowSet rowSet = await _session.ExecuteAsync(statement)
                 .ConfigureAwait(false);
             return new CassandraResultSetWrapper(rowSet);
