@@ -18,17 +18,20 @@ public static class NpOnWrapperResultExtensions
         properties = null;
         rowWrappers = null;
 
-        if (wrapperResult is not INpOnTableWrapper tableWrapper || tableWrapper.RowWrappers is not { Count: > 0 })
+        if (wrapperResult == null
+            || wrapperResult is not INpOnTableWrapper tableWrapper
+            || tableWrapper.RowWrappers is not { Count: > 0 }
+           )
         {
             return false;
         }
 
         rowWrappers = tableWrapper.RowWrappers;
-        
+
         var tempInstance = Activator.CreateInstance<T>();
         // This is the crucial fix: Initialize the FieldMap before trying to access it.
         tempInstance.CreateDefaultFieldMapper();
-        var fieldMapProp = typeof(T).GetProperty(nameof(NpOnBaseGrpcObject.FieldMap)); 
+        var fieldMapProp = typeof(T).GetProperty(nameof(NpOnBaseGrpcObject.FieldMap));
 
         if (tempInstance.FieldMap is { Count: > 0 } map)
         {
@@ -37,7 +40,7 @@ public static class NpOnWrapperResultExtensions
         else // Fallback: create default map property -> property
         {
             fieldMap = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                .ToDictionary(p => p.Name, p => p.Name);
+                .ToDictionary(p => p.Name, p => p.Name);
         }
 
         if (fieldMap is not { Count: > 0 })
@@ -62,7 +65,7 @@ public static class NpOnWrapperResultExtensions
         {
             if (properties.TryGetValue(propertyName, out var propInfo) &&
                 cells.TryGetValue(columnName, out var cell) &&
-                cell.ValueAsObject is { } value) 
+                cell.ValueAsObject is { } value)
             {
                 var targetType = Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType;
 
@@ -79,6 +82,7 @@ public static class NpOnWrapperResultExtensions
                 }
             }
         }
+
         return instance;
     }
 

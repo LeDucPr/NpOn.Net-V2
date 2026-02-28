@@ -1,0 +1,47 @@
+#prerun 
+#  docker volume create postgres_shared_data
+#  docker volume create pgadmin_shared_data
+
+name: postgres
+
+services:
+#  # Ghost container for Postgres data (copy ra file khác mà chạy)
+#  keep-postgres-data:
+#    image: alpine
+#    container_name: keep-postgres-data
+#    command: tail -f /dev/null
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    restart: always
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: np_on_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_shared_data:/var/lib/postgresql
+    restart: always
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_shared_data:/var/lib/pgadmin
+    restart: always
+
+volumes:
+  postgres_shared_data:
+    external: true
+  pgadmin_shared_data:
+    external: true

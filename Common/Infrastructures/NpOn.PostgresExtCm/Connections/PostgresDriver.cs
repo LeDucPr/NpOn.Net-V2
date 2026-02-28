@@ -100,14 +100,21 @@ public class PostgresDriver : NpOnDbDriver
             {
                 foreach (var prm in parameters)
                 {
-                    // Npgsql (auto)
-                    var pgParam = new NpgsqlParameter(prm.ParamName, prm.ParamValue ?? DBNull.Value);
-                    if (prm is NpOnDbCommandParam<NpgsqlDbType> typedParam
-                        && typedParam.ParamType != NpgsqlDbType.Unknown)
+                    var pgParam = new NpgsqlParameter
                     {
-                        pgParam.NpgsqlDbType = typedParam.ParamType;
-                    }
+                        ParameterName = prm.ParamName
+                    };
 
+                    var targetDbType = NpgsqlDbType.Unknown;
+                    if (prm is NpOnDbCommandParam<NpgsqlDbType> typedParam)
+                        targetDbType = typedParam.ParamType;
+                    
+                    var adoNetValue = PostgresUtils.ConvertStringToNpgsqlType(prm.ParamValue, targetDbType);
+
+                    if (targetDbType != NpgsqlDbType.Unknown)
+                        pgParam.NpgsqlDbType = targetDbType;
+                    
+                    pgParam.Value = adoNetValue ?? DBNull.Value;
                     pgCommand.Parameters.Add(pgParam);
                 }
             }

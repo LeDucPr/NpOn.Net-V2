@@ -19,8 +19,8 @@ IsUseEnableUnencryptedMode: true
 HostPort: 40000
 HostDomain: "http://0.0.0.0"
 
-ConnectionString: "Server=124.158.8.9;Port=5432;Database=dbfacare_general;User Id=postgres;Password=fAcar3@pAssW0rd"
-ConnectionNumber: 100000
+ConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=password;Database=general;"
+ConnectionNumber: 1000
 
 #CORS: "localhost:5000"
 #CorsPolicy: NpOnCorsPolicy

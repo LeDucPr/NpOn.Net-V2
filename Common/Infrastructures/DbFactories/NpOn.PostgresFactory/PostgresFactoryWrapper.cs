@@ -109,12 +109,14 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
     {
         (string commandText, IEnumerable<NpgsqlParameter> npgsqlParameters) = actionType switch
         {
-            ERepositoryAction.Add => domains.Cast<BaseDomain>().ToList().ToPostgresParamsInsert(isUseDefaultWhenNull),
+            ERepositoryAction.Add => domains.Cast<BaseDomain>().ToList()
+                .ToPostgresParamsInsert(isUseDefaultWhenNull),
             ERepositoryAction.Update => domains.Cast<BaseDomain>().ToList()
                 .ToPostgresParamsUpdate(isUseDefaultWhenNull),
             ERepositoryAction.Delete => domains.Cast<BaseDomain>().ToList()
                 .ToPostgresParamsDelete(isUseDefaultWhenNull),
-            ERepositoryAction.Merge => domains.Cast<BaseDomain>().ToList().ToPostgresParamsMerge(isUseDefaultWhenNull),
+            ERepositoryAction.Merge => domains.Cast<BaseDomain>().ToList()
+                .ToPostgresParamsMerge(isUseDefaultWhenNull),
             _ => throw new ArgumentOutOfRangeException(nameof(actionType), actionType, null)
         };
 

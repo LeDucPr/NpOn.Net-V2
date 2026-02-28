@@ -251,6 +251,8 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         get
         {
             Dictionary<int, INpOnRowWrapper?> result = new();
+            if (Rows is not { Count: > 0 })
+                return result;
             foreach (var row in Rows)
                 result.Add(row.Key, row.Value);
             return result;

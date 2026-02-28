@@ -9,30 +9,30 @@
 
 name: scylla-cluster
 services:
-  # keep data
-  keep-data-node1:
-    image: alpine
-    container_name: keep-scylla-node1
-    command: tail -f /dev/null
-    volumes:
-      - scylla_data_node1:/data
-    restart: always
-
-  keep-data-node2:
-    image: alpine
-    container_name: keep-scylla-node2
-    command: tail -f /dev/null
-    volumes:
-      - scylla_data_node2:/data
-    restart: always
-
-  keep-data-node3:
-    image: alpine
-    container_name: keep-scylla-node3
-    command: tail -f /dev/null
-    volumes:
-      - scylla_data_node3:/data
-    restart: always
+#  # keep data (tạo file khác chạy riêng)
+#  keep-data-node1:
+#    image: alpine
+#    container_name: keep-scylla-node1
+#    command: tail -f /dev/null
+#    volumes:
+#      - scylla_data_node1:/data
+#    restart: always
+#
+#  keep-data-node2:
+#    image: alpine
+#    container_name: keep-scylla-node2
+#    command: tail -f /dev/null
+#    volumes:
+#      - scylla_data_node2:/data
+#    restart: always
+#
+#  keep-data-node3:
+#    image: alpine
+#    container_name: keep-scylla-node3
+#    command: tail -f /dev/null
+#    volumes:
+#      - scylla_data_node3:/data
+#    restart: always
       
   # scylladb
   scylla-node1:
