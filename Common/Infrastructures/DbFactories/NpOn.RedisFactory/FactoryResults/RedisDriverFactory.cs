@@ -1,7 +1,7 @@
+using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
-using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Connections;
 
 namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory.FactoryResults;

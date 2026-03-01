@@ -1,3 +1,4 @@
+using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums;
@@ -5,7 +6,6 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 using Npgsql;

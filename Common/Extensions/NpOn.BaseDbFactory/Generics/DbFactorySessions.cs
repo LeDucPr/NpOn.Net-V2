@@ -2,7 +2,7 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonInternalCache;
 using Common.Extensions.NpOn.CommonMode;
 
-namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
+namespace Common.Extensions.NpOn.BaseDbFactory.Generics;
 
 public static class DbFactorySessions // DbFactoryWrapperExtension
 {

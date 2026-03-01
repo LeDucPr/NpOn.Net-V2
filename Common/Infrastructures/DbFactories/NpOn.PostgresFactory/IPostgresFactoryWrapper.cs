@@ -1,7 +1,7 @@
-﻿using Common.Extensions.NpOn.CommonBaseDomain;
+﻿using Common.Extensions.NpOn.BaseDbFactory.Generics;
+using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 
 namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 

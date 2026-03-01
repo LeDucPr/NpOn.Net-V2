@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
-      <ProjectReference Include="..\..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
+        <ProjectReference Include="..\..\..\Extensions\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
+        <ProjectReference Include="..\..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj"/>
     </ItemGroup>
 
 </Project>

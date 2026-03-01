@@ -8,9 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
-      <ProjectReference Include="..\..\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
-      <ProjectReference Include="..\..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
+        <ProjectReference Include="..\..\..\Extensions\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj"/>
+        <ProjectReference Include="..\..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj"/>
+        <ProjectReference Include="..\..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj"/>
     </ItemGroup>
 
 </Project>

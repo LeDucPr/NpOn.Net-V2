@@ -1,11 +1,11 @@
-﻿using Common.Extensions.NpOn.CommonDb.Connections;
+﻿using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 
-namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
+namespace Common.Extensions.NpOn.BaseDbFactory.Generics;
 
 public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
 {
@@ -51,7 +51,7 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         }
     }
 
-    public async Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)
+    public async Task<INpOnWrapperResult?> ExecuteAsync(IBaseNpOnDbCommand dbCommand)
     {
         return await ExecuteWithConnectionAsync(async connection => await connection.Driver.Execute(dbCommand));
     }

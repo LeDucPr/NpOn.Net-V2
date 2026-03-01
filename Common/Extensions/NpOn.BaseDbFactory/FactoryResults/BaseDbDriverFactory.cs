@@ -6,7 +6,7 @@ using Common.Extensions.NpOn.ICommonDb.Connections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
+namespace Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
 
 public interface IDbDriverFactory
 {

@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
+      <ProjectReference Include="..\..\..\Extensions\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
       <ProjectReference Include="..\..\NpOn.CassandraExtCm\NpOn.CassandraExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.MongoDbExtCm\NpOn.MongoDbExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.MssqlExtCm\NpOn.MssqlExtCm.csproj" />
