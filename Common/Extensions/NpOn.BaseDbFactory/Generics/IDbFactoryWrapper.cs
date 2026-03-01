@@ -11,6 +11,9 @@ public interface IDbFactoryWrapper
     Task<INpOnWrapperResult?> ExecuteAsync(IBaseNpOnDbCommand dbCommand);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters);
 
-    Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
-        List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum;
+    Task<INpOnWrapperResult?> ExecuteFuncParams(string funcName,
+        List<INpOnDbCommandParam>? parameters);
+
+    Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>?> ExecuteWithTransaction(
+        IEnumerable<IBaseNpOnDbCommand> commands);
 }

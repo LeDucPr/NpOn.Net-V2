@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
       <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
       <ProjectReference Include="..\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
     </ItemGroup>

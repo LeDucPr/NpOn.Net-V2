@@ -31,7 +31,29 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
 
     public string? FactoryOptionCode => Factory?.DriverOptionKey;
 
-    protected async Task<INpOnWrapperResult?> ExecuteWithConnectionAsync(Func<NpOnDbConnection, Task<INpOnWrapperResult?>> action)
+    protected async Task<INpOnWrapperResult?> ExecuteWithConnectionAsync(
+        Func<NpOnDbConnection, Task<INpOnWrapperResult?>> action)
+    {
+        if (Factory == null) return null;
+        NpOnDbConnection? connection = null;
+        try
+        {
+            connection = await Factory.GetConnectionAsync();
+            if (connection == null) return null; // Không có kết nối khả dụng
+            return await action(connection);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+        finally
+        {
+            if (connection != null) Factory.ReleaseConnection(connection);
+        }
+    }
+
+    protected async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>?> ExecuteWithConnectionAsync(
+        Func<NpOnDbConnection, Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>>> action)
     {
         if (Factory == null) return null;
         NpOnDbConnection? connection = null;
@@ -65,8 +87,8 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         });
     }
 
-    public async Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
-        List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum
+    public async Task<INpOnWrapperResult?> ExecuteFuncParams(string funcName,
+        List<INpOnDbCommandParam>? parameters)
     {
         return await ExecuteWithConnectionAsync(async connection =>
         {
@@ -75,5 +97,12 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
                 new NpOnDbExecFuncCommand(DbType, funcName, parameters);
             return await connection.Driver.Execute(execFuncCommand);
         });
+    }
+
+    public async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>?> ExecuteWithTransaction(
+        IEnumerable<IBaseNpOnDbCommand> commands)
+    {
+        return await ExecuteWithConnectionAsync(async connection =>
+            await connection.Driver.ExecuteWithTransaction(commands));
     }
 }

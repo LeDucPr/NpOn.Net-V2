@@ -59,6 +59,11 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
 
     #region Implement
 
+    public IBaseNpOnDbCommand Builder<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false) where T : BaseDomain
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<INpOnWrapperResult?> Add<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false)
         where T : BaseDomain
     {
@@ -141,7 +146,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
         if (npOnRepositoryCommand.ExecType == EExecType.ExecFunc)
         {
             var typedParameters =
-                npOnRepositoryCommand.Parameters?.OfType<INpOnDbCommandParam<NpgsqlDbType>>().ToList();
+                npOnRepositoryCommand.Parameters?.OfType<INpOnDbCommandParam /*<NpgsqlDbType>*/>().ToList();
             return ExecuteFuncParams(npOnRepositoryCommand.CommandText, typedParameters);
         }
 
@@ -149,4 +154,14 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
     }
 
     #endregion Implement
+
+    public IBaseNpOnDbCommand CommandBuilder<T>(IEnumerable<T> domains, ERepositoryAction actionType,
+        bool isUseDefaultWhenNull = false) where T : BaseDomain
+    {
+        (string commandText, List<INpOnDbCommandParam> npgsqlParameters) =
+            GetParams(domains, actionType, isUseDefaultWhenNull);
+        INpOnDbCommand dbCommand =
+            new NpOnDbCommand(DbType, commandText, npgsqlParameters);
+        return dbCommand;
+    }
 }

@@ -1,20 +1,47 @@
+using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.CommonScope.Interfaces;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 
 namespace Common.Extensions.NpOn.CommonScope;
 
-public class NpOnDbTransactionPipeline : INpOnDbTransactionPipeline, IAsyncDisposable
+public class NpOnDbTransactionPipeline : NpOnBaseTransactionPipeline, INpOnDbTransactionPipeline, IAsyncDisposable
 {
-    private readonly List<IBaseNpOnDbCommand> _commands = new();
+    // static 
     public static readonly NpOnDbTransactionPipeline Empty = new NpOnDbTransactionPipeline();
+
+    private readonly List<IBaseNpOnDbCommand> _commands = new();
+    private IDbFactoryWrapper? _dbFactoryWrapper;
+
 
     public IReadOnlyList<IBaseNpOnDbCommand> Commands => _commands;
 
-    public void Register(IBaseNpOnDbCommand command)
+    public NpOnDbTransactionPipeline Register(IDbFactoryWrapper dbFactoryWrapper)
+    {
+        _dbFactoryWrapper = dbFactoryWrapper;
+        return this;
+    }
+
+    public NpOnDbTransactionPipeline Register(IBaseNpOnDbCommand command)
     {
         if (this == Empty) // Do not register to the Empty scope
-            return;
+            return this;
+        // else 
         _commands.Add(command);
+        return this;
+    }
+
+    public override async Task<INpOnBaseTransactionPipeline> Begin()
+    {
+        await TransactionPipelineWrapper(
+            _dbFactoryWrapper,
+            _commands,
+            transactionProcess: async (_, _) =>
+            {
+                // with single transactions
+                // checked null on Wrapper task
+                await _dbFactoryWrapper!.ExecuteWithTransaction(_commands);
+            });
+        return this;
     }
 
     public async ValueTask DisposeAsync()
@@ -23,43 +50,10 @@ public class NpOnDbTransactionPipeline : INpOnDbTransactionPipeline, IAsyncDispo
         _commands.Clear();
         await Task.CompletedTask;
     }
-
-    public void Begin()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Break()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetFail()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetFail(string exMess)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetFail(Exception ex)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetSuccess()
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool IsCompleted { get; set; }
 }
-
 
 public static class NpOnTransactionPipelineExtensions
 {
-    public static void AddRegister(this NpOnDbTransactionPipeline scope, IBaseNpOnDbCommand command) 
+    public static void AddRegister(this NpOnDbTransactionPipeline scope, IBaseNpOnDbCommand command)
         => scope.Register(command);
 }

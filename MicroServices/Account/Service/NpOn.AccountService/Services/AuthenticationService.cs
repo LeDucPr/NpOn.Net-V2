@@ -6,6 +6,7 @@ using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
+using Common.Extensions.NpOn.CommonScope;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
@@ -124,6 +125,16 @@ public class AuthenticationService(
                 response.Data = false;
                 return;
             }
+
+            // NpOnDbTransactionPipeline transactionPipeline = (new NpOnDbTransactionPipeline())
+            //     .Register(baseRepository)
+            //     .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
+            // accountChangeStatus.Status = EAccountStatus.Unactive; 
+            // transactionPipeline.Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
+            // accountChangeStatus.Status = EAccountStatus.Active; 
+            // transactionPipeline.Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
+            // await transactionPipeline.Begin();
+            // var a = transactionPipeline.IsCompleted;
 
             if (command.AccountStatus != EAccountStatus.Active)
             {

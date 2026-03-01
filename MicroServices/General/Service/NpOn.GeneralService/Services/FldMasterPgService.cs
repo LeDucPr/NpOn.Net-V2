@@ -250,7 +250,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 if (tblFldRModelFirst is { ExecFunc: not null, ExecType: EExecType.ExecFunc })
                 {
                     string funcName = tblFldRModelFirst.ExecFunc;
-                    List<INpOnDbCommandParam<NpgsqlDbType>> parameters = [];
+                    List<INpOnDbCommandParam> parameters = [];
 
                     foreach (var paramObj in tblFldObjects)
                     {
