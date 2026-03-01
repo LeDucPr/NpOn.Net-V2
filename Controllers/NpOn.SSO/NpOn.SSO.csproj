@@ -20,7 +20,6 @@
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
-      <ProjectReference Include="..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
       <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj" />
       <ProjectReference Include="..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
     </ItemGroup>

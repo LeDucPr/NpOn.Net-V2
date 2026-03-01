@@ -12,7 +12,6 @@
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
       <ProjectReference Include="..\..\..\Infrastructures\DbFactories\NpOn.PostgresFactory\NpOn.PostgresFactory.csproj" />
-      <ProjectReference Include="..\..\..\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
     </ItemGroup>
 
 </Project>

@@ -58,7 +58,7 @@ public class NpOnDbTransactionPipeline : INpOnDbTransactionPipeline, IAsyncDispo
 }
 
 
-public static class NpOnTransactionScopeExtensions
+public static class NpOnTransactionPipelineExtensions
 {
     public static void AddRegister(this NpOnDbTransactionPipeline scope, IBaseNpOnDbCommand command) 
         => scope.Register(command);
