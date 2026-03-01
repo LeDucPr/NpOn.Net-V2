@@ -1,6 +1,6 @@
-﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonDb.DbCommands;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands;
 using ProtoBuf;
 
 namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;

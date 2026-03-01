@@ -1,7 +1,5 @@
-using System.Collections;
-using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Elastic.Clients.Elasticsearch;
 
 namespace Common.Infrastructures.NpOn.ElasticSearchExtCm.Results;
@@ -32,7 +30,9 @@ public class ElasticSearchContainer
 /// <summary>
 /// A generic wrapper for ElasticSearch results.
 /// </summary>
-public class ElasticSearchWrapperResult : NpOnWrapperResult<ElasticSearchContainer, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper, INpOnTableWrapper
+public class ElasticSearchWrapperResult :
+    NpOnWrapperResult<ElasticSearchContainer, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper,
+    INpOnTableWrapper
 {
     public ElasticSearchWrapperResult(ElasticSearchContainer parent) : base(parent)
     {
@@ -57,14 +57,14 @@ public class ElasticSearchWrapperResult : NpOnWrapperResult<ElasticSearchContain
     {
         var valueToUse = Parent.IsSingle ? Parent.SingleValue : (Parent.Values?.FirstOrDefault());
         if (valueToUse == null) return default;
-        
+
         if (valueToUse is T tValue) return tValue;
 
-        try 
+        try
         {
-             // Assuming JSON serialization/deserialization might be needed or simple casting
-             // For now, simple cast or convert
-             return (T)Convert.ChangeType(valueToUse, typeof(T));
+            // Assuming JSON serialization/deserialization might be needed or simple casting
+            // For now, simple cast or convert
+            return (T)Convert.ChangeType(valueToUse, typeof(T));
         }
         catch
         {
@@ -108,5 +108,6 @@ public class ElasticSearchWrapperResult : NpOnWrapperResult<ElasticSearchContain
                 item => (INpOnRowWrapper?)new ElasticSearchWrapperResult(new ElasticSearchContainer(item.value))
             ) ?? new Dictionary<int, INpOnRowWrapper?>();
 
-    public INpOnCollectionWrapper CollectionWrappers => throw new NotImplementedException("Collection wrapper is not supported for ElasticSearch results yet.");
+    public INpOnCollectionWrapper CollectionWrappers =>
+        throw new NotImplementedException("Collection wrapper is not supported for ElasticSearch results yet.");
 }

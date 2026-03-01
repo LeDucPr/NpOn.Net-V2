@@ -1,5 +1,5 @@
 ﻿using Common.Extensions.NpOn.HandleFlow.Raising;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 
 namespace Common.Extensions.NpOn.HandleFlow;
 

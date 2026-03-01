@@ -1,9 +1,7 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
+﻿using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.NpOn.CommonDb.Connections;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbCommands;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Results;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -47,7 +45,7 @@ public class MongoDbDriver : NpOnDbDriver
             var database = _client.GetDatabase(Option.DatabaseName); // database
             await database.RunCommandAsync((Command<BsonDocument>)"{ping: 1}", cancellationToken: cancellationToken);
 
-            if (!string.IsNullOrWhiteSpace(Option.CollectionName))  
+            if (!string.IsNullOrWhiteSpace(Option.CollectionName))
                 _collection = database.GetCollection<BsonDocument>(Option.CollectionName);
 
             // Get server version for display

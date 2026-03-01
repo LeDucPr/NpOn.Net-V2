@@ -1,4 +1,4 @@
-﻿using Common.Infrastructures.NpOn.CommonDb.DbCommands;
+﻿using Common.Extensions.NpOn.CommonDb.DbCommands;
 using NpgsqlTypes;
 using ProtoBuf;
 

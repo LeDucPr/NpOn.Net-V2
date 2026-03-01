@@ -2,7 +2,7 @@ using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
 using Common.Extensions.NpOn.CommonInternalCache;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Npgsql;
 
 namespace Common.Infrastructures.NpOn.PostgresExtCm.Results;

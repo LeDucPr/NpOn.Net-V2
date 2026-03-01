@@ -1,4 +1,4 @@
-﻿using Common.Infrastructures.NpOn.CommonDb.Connections;
+﻿using Common.Extensions.NpOn.CommonDb.Connections;
 using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.MongoDbExtCm.Connections;

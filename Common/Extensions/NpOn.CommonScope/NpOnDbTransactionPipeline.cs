@@ -1,5 +1,5 @@
 using Common.Extensions.NpOn.CommonScope.Interfaces;
-using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
+using Common.Extensions.NpOn.ICommonDb.DbCommands;
 
 namespace Common.Extensions.NpOn.CommonScope;
 

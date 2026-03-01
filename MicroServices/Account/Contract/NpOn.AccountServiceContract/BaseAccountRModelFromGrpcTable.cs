@@ -1,4 +1,4 @@
-using Common.Infrastructures.NpOn.ICommonDb.DbResults.Grpc;
+using Common.Extensions.NpOn.ICommonDb.DbResults.Grpc;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using ProtoBuf;
 

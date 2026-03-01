@@ -1,9 +1,8 @@
 ﻿using System.Collections;
 using System.Data;
-using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonDb;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
-using Common.Infrastructures.NpOn.CommonDb;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Microsoft.Data.SqlClient;
 
 namespace Common.Infrastructures.NpOn.MssqlExtCm.Results;

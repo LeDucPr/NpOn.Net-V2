@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Infrastructures\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
+      <ProjectReference Include="..\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
     </ItemGroup>
 
 </Project>

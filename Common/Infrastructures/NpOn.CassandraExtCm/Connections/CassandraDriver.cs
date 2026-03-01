@@ -1,11 +1,10 @@
 ﻿using Cassandra;
+using Common.Extensions.NpOn.CommonDb.Connections;
 // using Cassandra.Mapping;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.ICommonDb.DbCommands;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.CassandraExtCm.Results;
-using Common.Infrastructures.NpOn.CommonDb.Connections;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 

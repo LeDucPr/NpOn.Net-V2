@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
       <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
     </ItemGroup>
 </Project>

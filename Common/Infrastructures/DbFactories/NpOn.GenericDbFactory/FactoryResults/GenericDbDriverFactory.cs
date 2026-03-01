@@ -1,8 +1,8 @@
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
-using Common.Infrastructures.NpOn.CommonDb.Connections;
-using Common.Infrastructures.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Connections;
 using Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
@@ -24,6 +24,7 @@ public class GenericDbDriverFactory : BaseDbDriverFactory
             throw new InvalidOperationException(
                 "Connection options have not been set or are invalid. Call WithOptions() with valid options before creating connections.");
         }
+
         return DbType switch
         {
             EDb.Cassandra => CreateCassandraConnection(Option),
@@ -35,8 +36,8 @@ public class GenericDbDriverFactory : BaseDbDriverFactory
             _ => throw new NotSupportedException($"The database type '{DbType}' is not supported.")
         };
     }
-    
-    
+
+
     #region Cassandra
 
     private NpOnDbConnection CreateCassandraConnection(INpOnConnectOption option)

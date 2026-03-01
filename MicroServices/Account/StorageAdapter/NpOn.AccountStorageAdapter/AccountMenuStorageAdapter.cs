@@ -1,6 +1,6 @@
 ﻿using Common.Extensions.NpOn.CommonMode;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountConstant;

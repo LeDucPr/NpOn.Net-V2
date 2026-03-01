@@ -8,14 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="CassandraCSharpDriver" Version="3.22.0" />
-      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="CassandraCSharpDriver" Version="3.22.0"/>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4"/>
     </ItemGroup>
 
 </Project>

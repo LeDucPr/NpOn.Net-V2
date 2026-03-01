@@ -1,9 +1,9 @@
-﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonDb.Connections;
+using Common.Extensions.NpOn.CommonDb.DbCommands;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.ICommonDb.DbCommands;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.FactoryResults;
-using Common.Infrastructures.NpOn.CommonDb.Connections;
-using Common.Infrastructures.NpOn.CommonDb.DbCommands;
-using Common.Infrastructures.NpOn.ICommonDb.DbCommands;
-using Common.Infrastructures.NpOn.ICommonDb.DbResults;
 
 namespace Common.Infrastructures.DbFactories.NpOn.BaseDbFactory.Generics;
 
