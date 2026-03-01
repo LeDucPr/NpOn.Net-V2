@@ -1,6 +1,6 @@
 namespace Common.Extensions.NpOn.CommonScope.Interfaces;
 
-public interface INpOnTransactionPipeline
+public interface INpOnBaseTransactionPipeline
 {
     void Begin();
     void Break();

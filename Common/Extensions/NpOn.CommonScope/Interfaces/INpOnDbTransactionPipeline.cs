@@ -1,6 +1,6 @@
 namespace Common.Extensions.NpOn.CommonScope.Interfaces;
 
-public interface INpOnDbTransactionPipeline : INpOnTransactionPipeline
+public interface INpOnDbTransactionPipeline : INpOnBaseTransactionPipeline
 {
     
 }
