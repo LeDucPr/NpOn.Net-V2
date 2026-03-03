@@ -97,7 +97,7 @@ public class AuthenticationService(
 
     public async Task<CommonResponse<bool>> ChangeAccountStatus(AccountSetStatusCommand command)
     {
-        return await CommonProcess<bool>(async (response) =>
+        return await CommonProcess<bool>(async (response, pipelineScope) =>
         {
             string accountIdAsString = command.AccountId.AsDefaultString();
             AccountRModel? existAccounts =
@@ -119,22 +119,24 @@ public class AuthenticationService(
             Contracts.NpOn.AccountServiceContract.Domains.Account accountChangeStatus =
                 new Contracts.NpOn.AccountServiceContract.Domains.Account(existAccounts);
             accountChangeStatus.ChangeStatus(command);
-            if (!(await baseRepository.Update([accountChangeStatus]))?.Status ?? false)
-            {
-                response.SetFail($"Account Change Status {command.AccountStatus.AsDefaultString()} fail");
-                response.Data = false;
-                return;
-            }
+            // if (!(await baseRepository.Update([accountChangeStatus]))?.Status ?? false)
+            // {
+            //     response.SetFail($"Account Change Status {command.AccountStatus.AsDefaultString()} fail");
+            //     response.Data = false;
+            //     return;
+            // }
 
-            // NpOnDbTransactionPipeline transactionPipeline = (new NpOnDbTransactionPipeline())
-            //     .Register(baseRepository)
-            //     .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
-            // accountChangeStatus.Status = EAccountStatus.Unactive; 
-            // transactionPipeline.Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
-            // accountChangeStatus.Status = EAccountStatus.Active; 
-            // transactionPipeline.Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
-            // await transactionPipeline.Begin();
-            // var a = transactionPipeline.IsCompleted;
+            NpOnDbTransactionPipeline transactionPipeline = (new NpOnDbTransactionPipeline())
+                .Register(baseRepository)
+                .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
+            // if (!(await transactionPipeline.Invoke()).IsCompleted)
+            // {
+            //     response.SetFail($"Account Change Status {command.AccountStatus.AsDefaultString()} fail");
+            //     response.Data = false;
+            //     return;
+            // }
+            await pipelineScope.Next(transactionPipeline);
+            
 
             if (command.AccountStatus != EAccountStatus.Active)
             {
@@ -149,6 +151,36 @@ public class AuthenticationService(
                     return;
                 }
             }
+
+            // await pipelineScope.Next(
+            //     new NpOnServiceTransactionPipeline().Register(
+            //         Login(new AccountLoginQuery
+            //         {
+            //             UserName = "KhaBanh",
+            //             Password = "GvN6GbQvBxyRiZ/oNsMW+Wwsa9o=",
+            //             AuthType = EAuthentication.WebApp,
+            //             ClientId = "WEB_TEST_C"
+            //         }).ContinueWith(t => t.Result.Status) // giữ Task<bool>
+            //     )
+            // );
+            // hoặc 
+            await pipelineScope.Next(
+                new NpOnServiceTransactionPipeline().Register(
+                    Task.Run(async () =>
+                    {
+                        var resp = await Login(new AccountLoginQuery
+                        {
+                            UserName = "KhaBanh",
+                            Password = "GvN6GbQvBxyRiZ/oNsMW+Wwsa9o=",
+                            AuthType = EAuthentication.WebApp,
+                            ClientId = "WEB_TEST_C"
+                        });
+                        return resp.Status;
+                    })
+                )
+            );
+            await pipelineScope.Next(null);
+
 
             response.Data = true;
             response.SetSuccess();
@@ -198,23 +230,23 @@ public class AuthenticationService(
                 response.SetFail("Account not found");
                 return;
             }
-            
+
             AccountLoginRModel accountLoginRModel = CreateToken(
                 accountRModel, query.AuthType /*, ELoginType.Default*/);
-            
+
             if (query.IsEnableMultiDevice)
             {
             }
-            
+
             // kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
             // {
             //     MessageContent = accountLoginRModel.ToLoginEvent()
             // });
-            
-            
+
+
             if (_isReadTokenImmediate)
                 await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
-            
+
             rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
             {
                 MessageContent = accountLoginRModel.ToLoginEvent()

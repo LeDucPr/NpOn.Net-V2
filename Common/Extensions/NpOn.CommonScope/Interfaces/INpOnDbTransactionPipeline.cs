@@ -7,4 +7,5 @@ public interface INpOnDbTransactionPipeline : INpOnBaseTransactionPipeline
 {
     NpOnDbTransactionPipeline Register(IDbFactoryWrapper dbFactoryWrapper);
     NpOnDbTransactionPipeline Register(IBaseNpOnDbCommand command);
+    NpOnDbTransactionPipeline SetRefreshAfterInvoke(bool isRefreshAfterInvoke = true);
 }

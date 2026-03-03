@@ -11,7 +11,7 @@ public class NpOnDbTransactionPipeline : NpOnBaseTransactionPipeline, INpOnDbTra
 
     private readonly List<IBaseNpOnDbCommand> _commands = new();
     private IDbFactoryWrapper? _dbFactoryWrapper;
-
+    private bool _isRefreshAfterInvoke = true;
 
     public IReadOnlyList<IBaseNpOnDbCommand> Commands => _commands;
 
@@ -30,7 +30,13 @@ public class NpOnDbTransactionPipeline : NpOnBaseTransactionPipeline, INpOnDbTra
         return this;
     }
 
-    public override async Task<INpOnBaseTransactionPipeline> Begin()
+    public NpOnDbTransactionPipeline SetRefreshAfterInvoke(bool isRefreshAfterInvoke = true)
+    {
+        _isRefreshAfterInvoke = isRefreshAfterInvoke;
+        return this;
+    }
+
+    public override async Task<INpOnBaseTransactionPipeline> Invoke()
     {
         await TransactionPipelineWrapper(
             _dbFactoryWrapper,
@@ -41,7 +47,16 @@ public class NpOnDbTransactionPipeline : NpOnBaseTransactionPipeline, INpOnDbTra
                 // checked null on Wrapper task
                 await _dbFactoryWrapper!.ExecuteWithTransaction(_commands);
             });
+        if (!_isRefreshAfterInvoke)
+            return this;
+        Refresh();
         return this;
+    }
+
+    private void Refresh()
+    {
+        base.BaseRefresh();
+        _commands.Clear();
     }
 
     public async ValueTask DisposeAsync()
@@ -50,10 +65,4 @@ public class NpOnDbTransactionPipeline : NpOnBaseTransactionPipeline, INpOnDbTra
         _commands.Clear();
         await Task.CompletedTask;
     }
-}
-
-public static class NpOnTransactionPipelineExtensions
-{
-    public static void AddRegister(this NpOnDbTransactionPipeline scope, IBaseNpOnDbCommand command)
-        => scope.Register(command);
 }
