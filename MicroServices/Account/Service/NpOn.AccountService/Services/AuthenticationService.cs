@@ -126,16 +126,20 @@ public class AuthenticationService(
             //     return;
             // }
 
-            NpOnDbTransactionPipeline transactionPipeline = (new NpOnDbTransactionPipeline())
-                .Register(baseRepository)
-                .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
+            // NpOnDbTransactionPipeline transactionPipeline = (new NpOnDbTransactionPipeline())
+            //     .Register(baseRepository)
+            //     .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update));
             // if (!(await transactionPipeline.Invoke()).IsCompleted)
             // {
             //     response.SetFail($"Account Change Status {command.AccountStatus.AsDefaultString()} fail");
             //     response.Data = false;
             //     return;
             // }
-            await pipelineScope.Next(transactionPipeline);
+            
+            await pipelineScope.Next(
+                new NpOnDbTransactionPipeline()
+                .Register(baseRepository)
+                .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update)));
             
 
             if (command.AccountStatus != EAccountStatus.Active)
