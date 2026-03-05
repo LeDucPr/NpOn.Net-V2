@@ -1,5 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Grpc.Core;
 using Grpc.Net.Client.Configuration;

@@ -3,8 +3,10 @@ using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
+using Common.Extensions.NpOn.CommonInternalCache;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HandleFlow;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
@@ -23,6 +25,7 @@ using NpgsqlTypes;
 namespace MicroServices.General.Service.NpOn.GeneralService.Services
 {
     public class FldMasterPgService(
+        IWrapperCacheStore<TblFldExecution, List<TblFldRModel>> internalCache,
         IPostgresFactoryWrapper postgresFactoryWrapper,
         ILogger<CommonService> logger
     ) : CommonService(logger), IFldMasterPgService
@@ -159,7 +162,14 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
         {
             return await CommonProcess<CommandRModel?>(async (response) =>
             {
-                List<TblFldRModel>? tblFldObjects = (await GetExecution(execution)).Data;
+                List<TblFldRModel> tblFldObjects;
+                if (EApplicationConfiguration.IsUseCachingExecutionGeneralService.GetAppSettingConfig().AsDefaultBool())
+                    tblFldObjects = await internalCache.GetOrAddAsync(execution,
+                        async _ => (await GetExecution(execution)).Data ?? [],
+                        TimeSpan.FromSeconds(30));
+                else
+                    tblFldObjects = (await GetExecution(execution)).Data ?? [];
+
                 if (tblFldObjects is not { Count: > 0 })
                 {
                     response.SetFail("FldMasterObject not found");

@@ -8,9 +8,8 @@ namespace MicroServices.Account.Service.NpOn.AccountService.RabbitMqConsumers;
 public class AccountSaveLoginRabbitMqConsumer(
     IAuthenticationService authenticationService,
     IRabbitMqConnection rabbitMqConnection,
-    ILogger<AccountSaveLoginRabbitMqConsumer> logger,
-    bool autoAck = true
-) : RabbitMqConsumer<AccountSaveLoginEvent>(rabbitMqConnection, autoAck, logger)
+    ILogger<AccountSaveLoginRabbitMqConsumer> logger //, bool autoAck = true
+) : RabbitMqConsumer<AccountSaveLoginEvent>(rabbitMqConnection, logger)
 {
     public override void AddHandler()
     {
@@ -22,9 +21,8 @@ public class AccountSaveLoginRabbitMqConsumer(
 public class AccountSaveLogoutRabbitMqConsumer(
     IAuthenticationService authenticationService,
     IRabbitMqConnection rabbitMqConnection,
-    ILogger<AccountSaveLogoutRabbitMqConsumer> logger,
-    bool autoAck = true
-) : RabbitMqConsumer<AccountSaveLogoutEvent>(rabbitMqConnection, autoAck, logger)
+    ILogger<AccountSaveLogoutRabbitMqConsumer> logger
+) : RabbitMqConsumer<AccountSaveLogoutEvent>(rabbitMqConnection, logger)
 {
     public override void AddHandler()
     {

@@ -2,7 +2,7 @@
 
 namespace Common.Extensions.NpOn.CommonInternalCache;
 
-public class WrapperCacheStore<TKey, TValue> where TKey : notnull
+public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> where TKey : notnull
 {
     private readonly ConcurrentDictionary<TKey, WrapperCache<TValue>> _dict = new();
 
@@ -25,6 +25,25 @@ public class WrapperCacheStore<TKey, TValue> where TKey : notnull
         var wrapper = new WrapperCache<TValue>(newValue, expiresIn);
         return _dict.GetOrAdd(key, wrapper).Value;
     }
+    
+    public async Task<TValue> GetOrAddAsync(
+        TKey key,
+        Func<TKey, Task<TValue>> factory,
+        TimeSpan? expiresIn = null)
+    {
+        if (_dict.TryGetValue(key, out var existing))
+        {
+            if (!existing.IsExpired)
+                return existing.Value;
+
+            _dict.TryRemove(key, out _);
+        }
+
+        var newValue = await factory(key);
+        var wrapper = new WrapperCache<TValue>(newValue, expiresIn);
+        return _dict.GetOrAdd(key, wrapper).Value;
+    }
+
 
     public TValue AddOrUpdate(TKey key, TValue value, TimeSpan? expiresIn = null)
     {

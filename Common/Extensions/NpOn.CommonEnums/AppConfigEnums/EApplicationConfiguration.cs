@@ -36,6 +36,7 @@ public enum EApplicationConfiguration
     [Display(Name = "KeepAlivePingDelaySeconds")] KeepAlivePingDelaySeconds, // - int
     [Display(Name = "KeepAlivePingTimeoutSeconds")] KeepAlivePingTimeoutSeconds, // - int
     [Display(Name = "IsDevEnvironment")] IsDevEnvironment, // - boolean
+    [Display(Name = "IsUseCachingExecutionGeneralService")] IsUseCachingExecutionGeneralService, // - boolean
     
     
     #region RabbitMq

@@ -15,6 +15,7 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
     private readonly ILogger<RabbitMqConsumer<T>>? _logger;
     private readonly IRabbitMqConnection _rabbitMqConnection;
     private Type _typeT;
+    private readonly ushort _prefetchCount; // for concurrency level
     private ERabbitMqResponseType _responseType = ERabbitMqResponseType.BasicAck;
     protected Func<T, Task>? Handler;
     private readonly bool _autoAck; // = true;
@@ -26,8 +27,9 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
         set => _responseType = value;
     }
 
-    public RabbitMqConsumer(IRabbitMqConnection rabbitMqConnection, bool autoAck = true,
-        ILogger<RabbitMqConsumer<T>>? logger = null) // : base()
+    public RabbitMqConsumer(IRabbitMqConnection rabbitMqConnection, ILogger<RabbitMqConsumer<T>>? logger = null,
+        bool autoAck = true, ushort prefetchCount = 1024
+    ) // : base()
     {
         _rabbitMqConnection = rabbitMqConnection;
         _isExternalConnection = true; // Mark connection as external, do not dispose it
@@ -35,6 +37,8 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
         // _handler = handler;
         _logger = logger;
         _autoAck = autoAck;
+        _prefetchCount = prefetchCount;
+
 
         // Call the abstract method to ensure the handler is set by the derived class *before* listening starts.
         AddHandler();
@@ -53,16 +57,33 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
     {
         if (!IsEnableType)
             return;
-        var routingKey = await _rabbitMqConnection.AddDefaultQueue(_rabbitMqConnection.ExchangeName/* ?? ExchangeName*/, QueueName);
+        var routingKey =
+            await _rabbitMqConnection.AddDefaultQueue(_rabbitMqConnection.ExchangeName /* ?? ExchangeName*/, QueueName);
         IChannel channel = _rabbitMqConnection.Channel;
         var consumer = new AsyncEventingBasicConsumer(channel);
 
+        // Set QoS (Quality of Service) to control how many messages are delivered at once.
+        // Same as internal IEnumerabkle message
+        // This is the key to enabling concurrent processing.
+        await channel.BasicQosAsync(
+            prefetchSize: 0, // No specific size limit
+            prefetchCount: _prefetchCount, // Max number of unacknowledged messages
+            global: false); // Apply per-consumer
+
         consumer.ReceivedAsync += async (sender, ea) =>
         {
-            byte[] body = ea.Body.ToArray();
-            var fullEvent = ProtoBufMode.ProtoBufDeserialize<RabbitMqEvent<T>>(body, isDecompress);
-            if (Handler != null && fullEvent?.MessageContent != null)
+            _ = Task.Run(async () =>
             {
+                byte[] body = ea.Body.ToArray();
+                var fullEvent = ProtoBufMode.ProtoBufDeserialize<RabbitMqEvent<T>>(body, isDecompress);
+                if (Handler == null || fullEvent?.MessageContent == null)
+                {
+                    _logger?.LogWarning(
+                        $"Invalid message (DeliveryTag: {ea.DeliveryTag}) or no handler set. Rejecting message.");
+                    await channel.BasicRejectAsync(ea.DeliveryTag, requeue: false); // Don't requeue bad messages
+                    return;
+                }
+
                 if (_autoAck)
                 {
                     try
@@ -95,7 +116,8 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
                             throw new ArgumentOutOfRangeException();
                     }
                 }
-            }
+            });
+            await Task.CompletedTask;
         };
 
         await channel.BasicConsumeAsync(
