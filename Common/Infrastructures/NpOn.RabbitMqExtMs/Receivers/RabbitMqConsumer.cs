@@ -28,7 +28,7 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
     }
 
     public RabbitMqConsumer(IRabbitMqConnection rabbitMqConnection, ILogger<RabbitMqConsumer<T>>? logger = null,
-        bool autoAck = true, ushort prefetchCount = 1024
+        bool autoAck = true, ushort prefetchCount = 20
     ) // : base()
     {
         _rabbitMqConnection = rabbitMqConnection;

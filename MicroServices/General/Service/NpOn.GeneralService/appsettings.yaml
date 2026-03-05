@@ -21,7 +21,7 @@ HostDomain: "http://0.0.0.0"
 IsUseCachingExecutionGeneralService: true
 
 ConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=password;Database=general;"
-ConnectionNumber: 3000
+ConnectionNumber: 1000
 
 #CORS: "localhost:5000"
 #CorsPolicy: NpOnCorsPolicy
