@@ -3,14 +3,15 @@ using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
-using Common.Extensions.NpOn.CommonInternalCache;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
 using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
+// using Microsoft.AspNetCore.Server.Kestrel.Core;
 using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
@@ -48,6 +49,17 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton<IWrapperCacheStore<TblFldExecution, List<TblFldRModel>>>(
             _ => new WrapperCacheStore<TblFldExecution, List<TblFldRModel>>()
         );
+
+        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
+        services.AddSingleton<IObjectPoolStore>(sp =>
+        {
+            var store = new ObjectPoolStore();
+            store.PreAllocate(
+                () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(), 
+                100
+            );
+            return store;
+        });
         
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

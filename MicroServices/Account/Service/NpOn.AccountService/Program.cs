@@ -7,6 +7,7 @@ using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using MicroServices.Account.Service.NpOn.AccountService.KafkaConsumers;
@@ -16,7 +17,6 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
-using Microsoft.AspNetCore.DataProtection;
 using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
@@ -47,6 +47,18 @@ public sealed class Program : HttpCommonProgram
         services
             .AddPostgres()
             .AddRedis();
+            
+        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
+        services.AddSingleton<IObjectPoolStore>(sp =>
+        {
+            var store = new ObjectPoolStore();
+            // Pre-allocate 10 instances of PostgresResultSetWrapper
+            store.PreAllocate(
+                () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(), 
+                100
+            );
+            return store;
+        });
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

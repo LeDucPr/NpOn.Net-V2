@@ -1,4 +1,4 @@
-﻿namespace Common.Extensions.NpOn.CommonInternalCache;
+﻿namespace Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 
 public static class WrapperProcessers
 {

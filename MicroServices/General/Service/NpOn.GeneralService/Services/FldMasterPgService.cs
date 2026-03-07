@@ -6,7 +6,7 @@ using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
-using Common.Extensions.NpOn.CommonInternalCache;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HandleFlow;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;

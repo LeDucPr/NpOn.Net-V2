@@ -1,7 +1,6 @@
 ﻿using System.Data.Common;
 using System.Reflection;
 using System.Reflection.Emit;
-using Common.Extensions.NpOn.CommonDb;
 using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 
@@ -14,7 +13,7 @@ public static class PostgresMappingExtensions
         IReadOnlyDictionary<string, int> nameToIndexMap)
     {
         var dynamicMethod = new DynamicMethod(
-            "DynamicRowMapper",
+            nameof(CreateRowMapper),
             typeof(IReadOnlyDictionary<string, INpOnCell>),
             [typeof(object[])], // arg0: parent object[]
             typeof(PostgresMappingExtensions).Module,
@@ -26,9 +25,9 @@ public static class PostgresMappingExtensions
         var cell = il.DeclareLocal(typeof(INpOnCell));
 
         var dictCtor = typeof(Dictionary<string, INpOnCell>).GetConstructor([typeof(int)]);
-        var dictAdd = typeof(Dictionary<string, INpOnCell>).GetMethod("Add");
+        var dictAdd = typeof(Dictionary<string, INpOnCell>).GetMethod(nameof(Dictionary<,>.Add));
         var createCell = typeof(PostgresCellDynamicFactory).GetMethod(nameof(PostgresCellDynamicFactory.Create));
-        var getTypeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle", [typeof(RuntimeTypeHandle)]);
+        var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
 
         // var dictionary = new Dictionary<string, INpOnCell>(schemaMap.Count);
         il.Emit(OpCodes.Ldc_I4, schemaMap.Count);
@@ -70,7 +69,7 @@ public static class PostgresMappingExtensions
         IReadOnlyDictionary<string, int> nameToIndexMap)
     {
         var dynamicMethod = new DynamicMethod(
-            "DynamicColumnMapper_" + columnName,
+            $"{nameof(CreateColumnMapper)}_{columnName}",
             typeof(IReadOnlyDictionary<int, INpOnCell>),
             [typeof(List<object[]>)],
             typeof(PostgresMappingExtensions).Module,
@@ -86,12 +85,13 @@ public static class PostgresMappingExtensions
         var i = il.DeclareLocal(typeof(int));
         var cell = il.DeclareLocal(typeof(INpOnCell));
 
-        var listCountGetter = typeof(List<object[]>).GetProperty("Count")?.GetGetMethod();
-        var listIndexerGetter = typeof(List<object[]>).GetMethod("get_Item");
+        var listCountGetter = typeof(List<object[]>).GetProperty(nameof(List<object[]>.Count))?.GetGetMethod();
+        var listIndexerGetter =
+            typeof(List<object[]>).GetMethod("get_Item"); // Indexer property name is special get [index]
         var dictCtor = typeof(Dictionary<int, INpOnCell>).GetConstructor([typeof(int)]);
-        var dictAdd = typeof(Dictionary<int, INpOnCell>).GetMethod("Add");
+        var dictAdd = typeof(Dictionary<int, INpOnCell>).GetMethod(nameof(Dictionary<int, INpOnCell>.Add));
         var createCell = typeof(PostgresCellDynamicFactory).GetMethod(nameof(PostgresCellDynamicFactory.Create));
-        var getTypeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle", [typeof(RuntimeTypeHandle)]);
+        var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
         // Load Argument 0
         il.Emit(OpCodes.Ldarg_0);
         if (listCountGetter != null) il.Emit(OpCodes.Callvirt, listCountGetter); // interface ??
@@ -149,7 +149,7 @@ public static class PostgresMappingExtensions
         MethodInfo? normalizerMethod = null)
     {
         var dynamicMethod = new DynamicMethod(
-            "DynamicArrayRowMapper",
+            nameof(CreateArrayRowMapper),
             typeof(object[]),
             [typeof(DbDataReader)],
             typeof(PostgresMappingExtensions).Module,
@@ -157,7 +157,7 @@ public static class PostgresMappingExtensions
 
         var il = dynamicMethod.GetILGenerator();
 
-        var getValueMethod = typeof(DbDataReader).GetMethod("GetValue", [typeof(int)]);
+        var getValueMethod = typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetValue), [typeof(int)]);
 
         // var values = new object[reader.FieldCount];
         il.Emit(OpCodes.Ldc_I4, reader.FieldCount);

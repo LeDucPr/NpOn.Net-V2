@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 
-namespace Common.Extensions.NpOn.CommonInternalCache;
+namespace Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 
 /// <summary>
 /// A thread-safe, in-memory cache store that provides protection against cache stampede (thundering herd) issues.

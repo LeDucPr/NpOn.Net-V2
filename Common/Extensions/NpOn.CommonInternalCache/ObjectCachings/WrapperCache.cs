@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Common.Extensions.NpOn.CommonInternalCache;
+namespace Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 
 public class WrapperCache<TValue>
 {

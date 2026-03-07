@@ -22,10 +22,10 @@ public static class DbDataReaderExtensions
             var fieldType = reader.GetFieldType(i);
 
             // reader.IsDBNull(i)
-            var isDbNullCall = Expression.Call(readerParam, "IsDBNull", null, Expression.Constant(i));
+            var isDbNullCall = Expression.Call(readerParam, nameof(DbDataReader.IsDBNull), null, Expression.Constant(i));
             // (object)reader.GetFieldValue<T>(i)
             var getFieldValueMethod =
-                typeof(DbDataReader).GetMethod("GetFieldValue", [typeof(int)])!.MakeGenericMethod(fieldType);
+                typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetFieldValue), [typeof(int)])!.MakeGenericMethod(fieldType);
             var getFieldValueCall = Expression.Call(readerParam, getFieldValueMethod, Expression.Constant(i));
             var castToObject = Expression.Convert(getFieldValueCall, typeof(object));
             // DBNull.Value
@@ -33,7 +33,7 @@ public static class DbDataReaderExtensions
             // reader.IsDBNull(i) ? DBNull.Value : (object)reader.GetFieldValue<T>(i)
             var conditionalExpression = Expression.Condition(isDbNullCall, dbNullValue, castToObject);
             // Add to dictionary initializer
-            var addMethod = typeof(Dictionary<string, object>).GetMethod("Add", [typeof(string), typeof(object)]);
+            var addMethod = typeof(Dictionary<string, object>).GetMethod(nameof(Dictionary<string, object>.Add), [typeof(string), typeof(object)]);
             if (addMethod != null)
                 elementInits.Add(Expression.ElementInit(addMethod, Expression.Constant(columnName),
                     conditionalExpression));
@@ -51,22 +51,25 @@ public static class DbDataReaderExtensions
     /// </summary>
     /// <param name="reader">The data reader.</param>
     /// <param name="normalizerMethod">Optional static method info to normalize values (signature: object -> object).</param>
-    public static Func<DbDataReader, object[]> CreateArrayRowMapper(this DbDataReader reader, MethodInfo? normalizerMethod = null)
+    public static Func<DbDataReader, object[]> CreateArrayRowMapper(this DbDataReader reader,
+        MethodInfo? normalizerMethod = null)
     {
         var readerParam = Expression.Parameter(typeof(DbDataReader), "reader");
-        
+
         var initializers = new List<Expression>();
         for (int i = 0; i < reader.FieldCount; i++)
         {
             var fieldType = reader.GetFieldType(i);
 
             // reader.IsDBNull(i)
-            var isDbNullCall = Expression.Call(readerParam, "IsDBNull", null, Expression.Constant(i));
+            var isDbNullCall = Expression.Call(readerParam, nameof(DbDataReader.IsDBNull), null, Expression.Constant(i));
 
             // (object)reader.GetFieldValue<T>(i)
-            var getFieldValueMethod = typeof(DbDataReader).GetMethod("GetFieldValue", new[] { typeof(int) })!.MakeGenericMethod(fieldType);
+            var getFieldValueMethod =
+                typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetFieldValue), [typeof(int)])!
+                    .MakeGenericMethod(fieldType);
             var getFieldValueCall = Expression.Call(readerParam, getFieldValueMethod, Expression.Constant(i));
-            
+
             Expression valueExpression = Expression.Convert(getFieldValueCall, typeof(object));
 
             // Apply Normalizer if provided

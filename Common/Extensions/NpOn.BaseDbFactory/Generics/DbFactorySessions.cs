@@ -1,5 +1,6 @@
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonInternalCache;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Common.Extensions.NpOn.CommonMode;
 
 namespace Common.Extensions.NpOn.BaseDbFactory.Generics;

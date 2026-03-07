@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonInternalCache;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 
 namespace Common.Applications.NpOn.CommonApplication.Builders;
 
