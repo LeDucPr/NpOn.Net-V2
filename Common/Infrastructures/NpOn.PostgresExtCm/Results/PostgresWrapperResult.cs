@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.NpOn.CommonDb;
+using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Npgsql;
@@ -34,7 +35,8 @@ public class PostgresColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnly
 {
     private readonly Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> _mapper;
 
-    public PostgresColumnWrapper(List<object[]> parent, Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
+    public PostgresColumnWrapper(List<object[]> parent,
+        Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
     {
         _mapper = mapper;
     }
@@ -56,7 +58,8 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     private readonly List<PostgresColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap, IReadOnlyDictionary<string, int> nameToIndexMap)
+    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
     {
         _nameToIndexMap = nameToIndexMap;
         _columnWrappers = new List<PostgresColumnWrapper>(schemaMap.Count);
@@ -183,12 +186,13 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         }
 
         // 2. Create high-performance mapper using Extension Method
-        var normalizeMethod = typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), new[] { typeof(object) });
-        var mapper = reader.CreateArrayRowMapper(normalizeMethod);
-        
+        var normalizeMethod =
+            typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), [typeof(object)]);
+        var mapper = reader.CreateArrayRowMapper(normalizeMethod); // ILCode
+
         var data = new List<object[]>();
 
-        // 3. Read data
+        // Read data
         while (reader.Read())
         {
             data.Add(mapper(reader));
@@ -201,6 +205,7 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         {
             rows.Add(i, new PostgresRowWrapper(data[i], rowMapper));
         }
+
         Rows = rows;
 
         Columns = new PostgresColumnCollection(data, schemaMap, nameToIndexMap);

@@ -1,7 +1,7 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 
-namespace Common.Extensions.NpOn.CommonDb;
+namespace Common.Extensions.NpOn.CommonDb.Results;
 
 public class NpOnSuperTableWrapper : INpOnSuperTableWrapper
 {

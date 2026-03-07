@@ -1,4 +1,4 @@
-﻿namespace Common.Extensions.NpOn.CommonDb;
+﻿namespace Common.Extensions.NpOn.CommonDb.Results;
 
 public class NpOnColumnSchemaInfo
 {

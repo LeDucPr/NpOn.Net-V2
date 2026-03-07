@@ -2,47 +2,10 @@ using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Common.Extensions.NpOn.CommonDb;
+namespace Common.Extensions.NpOn.CommonDb.Extensions;
 
 public static class DbDataReaderExtensions
 {
-    /// <summary>
-    /// Asynchronously converts a DbDataReader to a list of dictionaries, with high performance.
-    /// This method avoids the overhead of DataTable.
-    /// </summary>
-    public static async Task<(List<Dictionary<string, object>> Rows, Dictionary<string, NpOnColumnSchemaInfo> Schema)>
-        ToInMemoryResultsAsync(this DbDataReader? reader)
-    {
-        if (reader == null || !reader.HasRows)
-        {
-            return (new List<Dictionary<string, object>>(), new Dictionary<string, NpOnColumnSchemaInfo>());
-        }
-
-        var results = new List<Dictionary<string, object>>();
-        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>(reader.FieldCount);
-
-        // Build schema map first
-        for (int i = 0; i < reader.FieldCount; i++)
-        {
-            var columnName = reader.GetName(i);
-            schemaMap[columnName] = new NpOnColumnSchemaInfo(
-                columnName,
-                reader.GetFieldType(i),
-                reader.GetDataTypeName(i)
-            );
-        }
-
-        // Create a dynamic mapper function using Expression Trees for high performance
-        var mapper = CreateRowMapper(reader);
-
-        while (await reader.ReadAsync())
-        {
-            results.Add(mapper(reader));
-        }
-
-        return (results, schemaMap);
-    }
-
     private static Func<DbDataReader, Dictionary<string, object>> CreateRowMapper(DbDataReader reader)
     {
         var readerParam = Expression.Parameter(typeof(DbDataReader), "reader");
