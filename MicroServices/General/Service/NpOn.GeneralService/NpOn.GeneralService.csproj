@@ -3,24 +3,31 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
+        <RollForward>LatestMajor</RollForward>
+        <RuntimeFrameworkVersion>10.0.0-preview.7.25380.108</RuntimeFrameworkVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <RootNamespace>MicroServices.General.Service.NpOn.GeneralService</RootNamespace>
+
+        <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
+        <ContainerImageName>facare-aiot-backend-accountservice</ContainerImageName>
+        <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0-preview-noble-chiseled</ContainerBaseImage>
+        <ContainerImageTag>latest</ContainerImageTag>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
+        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj"/>
         <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj"/>
-        <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj" />
+        <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj"/>
         <ProjectReference Include="..\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
     </ItemGroup>
-    
+
 </Project>
