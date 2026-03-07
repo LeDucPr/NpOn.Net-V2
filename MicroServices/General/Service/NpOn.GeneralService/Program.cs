@@ -35,7 +35,6 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        
         // call load balancing services 
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
             services
@@ -44,23 +43,20 @@ public sealed class Program : HttpCommonProgram
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
 
-        services.AddPostgres();
+        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
+        IObjectPoolStore store = new ObjectPoolStore();
+        store.PreAllocate(
+            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
+            EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt()
+        );
+        services.AddSingleton(store);
+        services.AddPostgres(poolStore: store);
 
-        services.AddSingleton<IWrapperCacheStore<TblFldExecution, List<TblFldRModel>>>(
-            _ => new WrapperCacheStore<TblFldExecution, List<TblFldRModel>>()
+        services.AddSingleton<IWrapperCacheStore<TblFldExecution, List<TblFldRModel>>>(_ =>
+            new WrapperCacheStore<TblFldExecution, List<TblFldRModel>>()
         );
 
-        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
-        services.AddSingleton<IObjectPoolStore>(sp =>
-        {
-            var store = new ObjectPoolStore();
-            store.PreAllocate(
-                () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(), 
-                100
-            );
-            return store;
-        });
-        
+
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();

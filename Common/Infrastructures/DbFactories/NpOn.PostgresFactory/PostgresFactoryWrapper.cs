@@ -3,6 +3,7 @@ using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -16,24 +17,25 @@ namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrapper
 {
     public PostgresFactoryWrapper(
-        string openConnectString, int connectionNumber = 1, bool isUseCaching = true)
+        string openConnectString, IObjectPoolStore? poolStore = null, int connectionNumber = 1, bool isUseCaching = true)
     {
         DbType = EDb.Postgres;
         Factory = new PostgresDriverFactory(
             new PostgresConnectOption()
                 .SetConnectionString(openConnectString),
+            poolStore,
             connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
 
     public PostgresFactoryWrapper(
-        INpOnConnectOption connectOption, int connectionNumber = 1, bool isUseCaching = true)
+        INpOnConnectOption connectOption, IObjectPoolStore? poolStore = null, int connectionNumber = 1, bool isUseCaching = true)
     {
         DbType = EDb.Postgres;
         if (connectOption is not PostgresConnectOption)
             throw new ArgumentException("connectOption must be a PostgresConnectOption");
-        Factory = new PostgresDriverFactory(connectOption, connectionNumber);
+        Factory = new PostgresDriverFactory(connectOption, poolStore, connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
@@ -58,11 +60,6 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
 
 
     #region Implement
-
-    public IBaseNpOnDbCommand Builder<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false) where T : BaseDomain
-    {
-        throw new NotImplementedException();
-    }
 
     public async Task<INpOnWrapperResult?> Add<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false)
         where T : BaseDomain

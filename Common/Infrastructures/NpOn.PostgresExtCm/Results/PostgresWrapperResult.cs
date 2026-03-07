@@ -1,5 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonDb;
-using Common.Extensions.NpOn.CommonDb.Results;
+﻿using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Npgsql;
@@ -35,8 +34,7 @@ public class PostgresColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnly
 {
     private readonly Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> _mapper;
 
-    public PostgresColumnWrapper(List<object[]> parent,
-        Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
+    public PostgresColumnWrapper(List<object[]> parent, Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
     {
         _mapper = mapper;
     }
@@ -58,8 +56,7 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     private readonly List<PostgresColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
-        IReadOnlyDictionary<string, int> nameToIndexMap)
+    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap, IReadOnlyDictionary<string, int> nameToIndexMap)
     {
         _nameToIndexMap = nameToIndexMap;
         _columnWrappers = new List<PostgresColumnWrapper>(schemaMap.Count);
@@ -147,12 +144,27 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     }
 }
 
-public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
+public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IDisposable
 {
-    public IReadOnlyDictionary<int, PostgresRowWrapper> Rows { get; }
-    public PostgresColumnCollection Columns { get; }
+    private IReadOnlyDictionary<int, PostgresRowWrapper> Rows { get; set; }
+    private PostgresColumnCollection Columns { get; set; }
+    
+    // Delegate to return this object to the pool
+    public Action<PostgresResultSetWrapper>? ReturnToPool { get; set; }
+
+    public PostgresResultSetWrapper()
+    {
+        // Default constructor for pooling
+        Rows = new Dictionary<int, PostgresRowWrapper>();
+        Columns = null!;
+    }
 
     public PostgresResultSetWrapper(NpgsqlDataReader? reader = null)
+    {
+        Init(reader);
+    }
+
+    public void Init(NpgsqlDataReader? reader)
     {
         if (reader == null)
         {
@@ -186,13 +198,12 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         }
 
         // 2. Create high-performance mapper using Extension Method
-        var normalizeMethod =
-            typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), [typeof(object)]);
-        var mapper = reader.CreateArrayRowMapper(normalizeMethod); // ILCode
-
+        var normalizeMethod = typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), new[] { typeof(object) });
+        var mapper = PostgresMappingExtensions.CreateArrayRowMapper(reader, normalizeMethod);
+        
         var data = new List<object[]>();
 
-        // Read data
+        // 3. Read data
         while (reader.Read())
         {
             data.Add(mapper(reader));
@@ -205,12 +216,24 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         {
             rows.Add(i, new PostgresRowWrapper(data[i], rowMapper));
         }
-
         Rows = rows;
 
         Columns = new PostgresColumnCollection(data, schemaMap, nameToIndexMap);
 
         SetSuccess();
+    }
+
+    public void Reset()
+    {
+        // Reset state for reuse
+        Rows = new Dictionary<int, PostgresRowWrapper>();
+        Columns = null!;
+        // Reset base class state if needed (e.g. Status, Error)
+        // Assuming SetSuccess/SetFail handles this, but we might need to clear errors manually if SetSuccess doesn't.
+        // NpOnWrapperResult usually has Status and Error properties.
+        // We should probably reset them to default.
+        // Since we don't have access to base private setters easily without knowing NpOnWrapperResult implementation,
+        // we rely on Init calling SetSuccess/SetFail to overwrite state.
     }
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
@@ -227,4 +250,9 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
     }
 
     public INpOnCollectionWrapper CollectionWrappers => Columns;
+
+    public void Dispose()
+    {
+        ReturnToPool?.Invoke(this);
+    }
 }

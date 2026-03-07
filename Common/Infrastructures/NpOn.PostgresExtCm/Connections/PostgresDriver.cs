@@ -3,6 +3,7 @@ using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonDb.DbTransactions;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -16,13 +17,20 @@ namespace Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 public class PostgresDriver : NpOnDbDriver
 {
     private NpgsqlConnection? _connection;
+    private readonly IObjectPool<PostgresResultSetWrapper>? _resultSetPool;
+
     public sealed override string Name { get; set; }
     public sealed override string Version { get; set; }
 
     public override bool IsValidSession => _connection is { State: ConnectionState.Open };
 
-    public PostgresDriver(INpOnConnectOption option) : base(option)
+    public PostgresDriver(INpOnConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
+        // Get the pool for PostgresResultSetWrapper if store is provided.
+        if (objectPoolStore != null)
+        {
+            _resultSetPool = objectPoolStore.GetPool(() => new PostgresResultSetWrapper());
+        }
     }
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
@@ -66,10 +74,15 @@ public class PostgresDriver : NpOnDbDriver
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _connection == null)
-            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
+        {
+            return CreateFailResult(EDbError.Connection);
+        }
+
         var commandBuilder = CommandCustomBuilder(command);
         if (command == null || string.IsNullOrWhiteSpace(commandBuilder.CommandText))
-            return new PostgresResultSetWrapper().SetFail(EDbError.Command);
+        {
+            return CreateFailResult(EDbError.Command);
+        }
 
         return await ExecuteReaderInternalAsync(commandBuilder.CommandText, commandBuilder.Parameters);
     }
@@ -102,6 +115,34 @@ public class PostgresDriver : NpOnDbDriver
 
 
     #region private
+
+    private INpOnWrapperResult CreateFailResult(EDbError error)
+    {
+        if (_resultSetPool != null)
+        {
+            var wrapper = _resultSetPool.Get();
+            wrapper.Reset();
+            wrapper.SetFail(error);
+            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            return wrapper;
+        }
+        
+        return new PostgresResultSetWrapper().SetFail(error);
+    }
+    
+    private INpOnWrapperResult CreateFailResult(Exception ex)
+    {
+        if (_resultSetPool != null)
+        {
+            var wrapper = _resultSetPool.Get();
+            wrapper.Reset();
+            wrapper.SetFail(ex);
+            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            return wrapper;
+        }
+        
+        return new PostgresResultSetWrapper().SetFail(ex);
+    }
 
     private async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(
         string commandText,
@@ -136,14 +177,23 @@ public class PostgresDriver : NpOnDbDriver
                 }
             }
 
-            // Note: If using a Transaction, CommandBehavior.Default is typically used 
-            // because the Transaction manages the connection lifecycle.
+            // Transaction (using)
             await using var reader = await pgCommand.ExecuteReaderAsync();
+            
+            if (_resultSetPool != null)
+            {
+                var wrapper = _resultSetPool.Get();
+                wrapper.Reset();
+                wrapper.Init(reader);
+                wrapper.ReturnToPool = w => _resultSetPool.Return(w); // Set return action
+                return wrapper;
+            }
+
             return new PostgresResultSetWrapper(reader);
         }
         catch (Exception ex)
         {
-            return new PostgresResultSetWrapper().SetFail(ex);
+            return CreateFailResult(ex);
         }
     }
 

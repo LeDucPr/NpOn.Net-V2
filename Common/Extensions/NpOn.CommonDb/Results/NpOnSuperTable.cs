@@ -36,4 +36,9 @@ public class NpOnSuperTableWrapper : INpOnSuperTableWrapper
 
     public long QueryTimeMilliseconds { get; }
     public bool Status { get; }
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
+    }
 }

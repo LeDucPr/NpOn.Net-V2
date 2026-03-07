@@ -1,6 +1,7 @@
 using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 
@@ -8,9 +9,12 @@ namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory.FactoryResul
 
 public class PostgresDriverFactory : BaseDbDriverFactory
 {
-    public PostgresDriverFactory(INpOnConnectOption option, int connectionNumber = 1) : base(EDb.Postgres,
+    private readonly IObjectPoolStore? _poolStore;
+
+    public PostgresDriverFactory(INpOnConnectOption option, IObjectPoolStore? poolStore = null, int connectionNumber = 1) : base(EDb.Postgres,
         option, connectionNumber)
     {
+        _poolStore = poolStore;
     }
 
     protected override NpOnDbConnection InitConnection() => CreatePostgresConnection(Option);
@@ -29,7 +33,7 @@ public class PostgresDriverFactory : BaseDbDriverFactory
                 nameof(option));
         }
 
-        INpOnDbDriver driver = new PostgresDriver(postgresOptions);
+        INpOnDbDriver driver = new PostgresDriver(postgresOptions, _poolStore);
         return new NpOnDbConnection<PostgresDriver>(driver);
     }
 }

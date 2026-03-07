@@ -3,7 +3,7 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 namespace Common.Extensions.NpOn.ICommonDb.DbResults;
 
-public interface INpOnWrapperResult
+public interface INpOnWrapperResult : IDisposable // for pooling
 {
     void SetSuccess();
     INpOnWrapperResult SetFail(EDbError error);
@@ -76,6 +76,12 @@ public abstract class NpOnWrapperResult : INpOnWrapperResult
     public long QueryTimeMilliseconds => _queryTimeMilliseconds;
 
     public bool Status => _isSuccess;
+
+    public virtual void Dispose()
+    {
+        // Default implementation does nothing.
+        // Derived classes can override to return to pool or release resources.
+    }
 }
 
 /// <summary>

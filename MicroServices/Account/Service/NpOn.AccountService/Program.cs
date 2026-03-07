@@ -44,21 +44,17 @@ public sealed class Program : HttpCommonProgram
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
+        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
+        IObjectPoolStore store = new ObjectPoolStore();
+        store.PreAllocate(
+            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(), 
+            100
+        );
+        services.AddSingleton(store);
         services
-            .AddPostgres()
+            .AddPostgres(poolStore: store)
             .AddRedis();
             
-        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
-        services.AddSingleton<IObjectPoolStore>(sp =>
-        {
-            var store = new ObjectPoolStore();
-            // Pre-allocate 10 instances of PostgresResultSetWrapper
-            store.PreAllocate(
-                () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(), 
-                100
-            );
-            return store;
-        });
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
