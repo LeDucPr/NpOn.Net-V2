@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using Common.Extensions.NpOn.CommonDb;
+﻿using Common.Extensions.NpOn.CommonDb;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Npgsql;
@@ -11,33 +10,17 @@ namespace Common.Infrastructures.NpOn.PostgresExtCm.Results;
 /// </summary>
 public class PostgresRowWrapper : NpOnWrapperResult<object[], IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
-    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
-    private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
+    private readonly Func<object[], IReadOnlyDictionary<string, INpOnCell>> _mapper;
 
-    public PostgresRowWrapper(object[] parent, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
-        IReadOnlyDictionary<string, int> nameToIndexMap) :
+    public PostgresRowWrapper(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper) :
         base(parent)
     {
-        _schemaMap = schemaMap;
-        _nameToIndexMap = nameToIndexMap;
+        _mapper = mapper;
     }
 
     protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<string, INpOnCell>(_schemaMap.Count);
-        foreach (var schemaInfo in _schemaMap.Values)
-        {
-            var columnIndex = _nameToIndexMap[schemaInfo.ColumnName];
-            object cellValue = Parent[columnIndex];
-            INpOnCell cell = PostgresCellDynamicFactory.Create(
-                schemaInfo.DataType,
-                cellValue,
-                schemaInfo.ProviderDataTypeName
-            );
-            dictionary.Add(schemaInfo.ColumnName, cell);
-        }
-
-        return dictionary;
+        return _mapper(Parent);
     }
 
     public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
@@ -49,42 +32,16 @@ public class PostgresRowWrapper : NpOnWrapperResult<object[], IReadOnlyDictionar
 public class PostgresColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>,
     INpOnColumnWrapper
 {
-    private readonly string _columnName;
-    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
-    private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
+    private readonly Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> _mapper;
 
-    public PostgresColumnWrapper(List<object[]> parent, string columnName,
-        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
-        IReadOnlyDictionary<string, int> nameToIndexMap) : base(parent)
+    public PostgresColumnWrapper(List<object[]> parent, Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
     {
-        _columnName = columnName;
-        _schemaMap = schemaMap;
-        _nameToIndexMap = nameToIndexMap;
+        _mapper = mapper;
     }
 
     protected override IReadOnlyDictionary<int, INpOnCell> CreateResult()
     {
-        var schemaInfo = _schemaMap[_columnName];
-        var rowCount = Parent.Count;
-        var dictionary = new Dictionary<int, INpOnCell>(rowCount);
-        Type columnType = schemaInfo.DataType;
-        var columnIndex = _nameToIndexMap[_columnName];
-
-        for (int i = 0; i < rowCount; i++)
-        {
-            object? cellValue = Parent[i][columnIndex];
-
-            if (cellValue == DBNull.Value) cellValue = null;
-            INpOnCell cell = PostgresCellDynamicFactory.Create(
-                columnType,
-                cellValue,
-                schemaInfo.ProviderDataTypeName
-            );
-
-            dictionary.Add(i, cell);
-        }
-
-        return dictionary;
+        return _mapper(Parent);
     }
 
     public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
@@ -99,15 +56,15 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     private readonly List<PostgresColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
-        IReadOnlyDictionary<string, int> nameToIndexMap)
+    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap, IReadOnlyDictionary<string, int> nameToIndexMap)
     {
         _nameToIndexMap = nameToIndexMap;
         _columnWrappers = new List<PostgresColumnWrapper>(schemaMap.Count);
 
         foreach (var schemaInfo in schemaMap.Values)
         {
-            _columnWrappers.Add(new PostgresColumnWrapper(data, schemaInfo.ColumnName, schemaMap, nameToIndexMap));
+            var mapper = PostgresMappingExtensions.CreateColumnMapper(schemaInfo.ColumnName, schemaMap, nameToIndexMap);
+            _columnWrappers.Add(new PostgresColumnWrapper(data, mapper));
         }
     }
 
@@ -225,8 +182,10 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
             nameToIndexMap.Add(columnName, i);
         }
 
-        // 2. Create high-performance mapper
-        var mapper = CreateRowMapper(reader);
+        // 2. Create high-performance mapper using Extension Method
+        var normalizeMethod = typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), new[] { typeof(object) });
+        var mapper = reader.CreateArrayRowMapper(normalizeMethod);
+        
         var data = new List<object[]>();
 
         // 3. Read data
@@ -236,51 +195,18 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         }
 
         // 4. Wrap data
+        var rowMapper = PostgresMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
         var rows = new Dictionary<int, PostgresRowWrapper>(data.Count);
         for (int i = 0; i < data.Count; i++)
         {
-            rows.Add(i, new PostgresRowWrapper(data[i], schemaMap, nameToIndexMap));
+            rows.Add(i, new PostgresRowWrapper(data[i], rowMapper));
         }
-
         Rows = rows;
 
         Columns = new PostgresColumnCollection(data, schemaMap, nameToIndexMap);
 
         SetSuccess();
     }
-
-    private static Func<NpgsqlDataReader, object[]> CreateRowMapper(NpgsqlDataReader reader)
-    {
-        var readerParam = Expression.Parameter(typeof(NpgsqlDataReader), "reader");
-        // var newArray = Expression.NewArrayBounds(typeof(object), Expression.Constant(reader.FieldCount));
-
-        var initializers = new List<Expression>();
-        for (int i = 0; i < reader.FieldCount; i++)
-        {
-            var fieldType = reader.GetFieldType(i);
-            // reader.IsDBNull(i)
-            var isDbNullCall = Expression.Call(readerParam, "IsDBNull", null, Expression.Constant(i));
-            // (object)reader.GetFieldValue<T>(i)
-            var getFieldValueMethod =
-                typeof(NpgsqlDataReader).GetMethod("GetFieldValue", [typeof(int)])!.MakeGenericMethod(fieldType);
-            var getFieldValueCall = Expression.Call(readerParam, getFieldValueMethod, Expression.Constant(i));
-            // PostgresUtils.NormalizePostgresValue
-            var normalizeMethod = typeof(PostgresUtils)
-                .GetMethod(nameof(PostgresUtils.NormalizePostgresValue), [typeof(object)]);
-            var normalizeCall =
-                Expression.Call(normalizeMethod!, Expression.Convert(getFieldValueCall, typeof(object)));
-            var castToObject = Expression.Convert(normalizeCall, typeof(object));
-            var dbNullValue = Expression.Constant(DBNull.Value, typeof(object));
-            var conditionalExpression = Expression.Condition(isDbNullCall, dbNullValue, castToObject);
-            initializers.Add(conditionalExpression);
-        }
-
-        var arrayInit = Expression.NewArrayInit(typeof(object), initializers);
-        var lambda = Expression.Lambda<Func<NpgsqlDataReader, object[]>>(arrayInit, readerParam);
-
-        return lambda.Compile();
-    }
-
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
     {
