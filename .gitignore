@@ -46,3 +46,6 @@ NpOn.sln.DotSettings.user
 
 ## Logs
 **/logs/
+
+# Bỏ qua các file image nén của Rancher/K8s
+*.tar.gz
