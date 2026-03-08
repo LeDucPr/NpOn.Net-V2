@@ -10,12 +10,13 @@
         <RootNamespace>MicroServices.General.Service.NpOn.GeneralService</RootNamespace>
 
         <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
-        <ContainerImageName>facare-aiot-backend-accountservice</ContainerImageName>
+        <ContainerImageName>npon-v2-aiot-backend-generalservice</ContainerImageName>
         <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0-preview-noble-chiseled</ContainerBaseImage>
         <ContainerImageTag>latest</ContainerImageTag>
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj"/>
@@ -28,6 +29,15 @@
         <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj"/>
         <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj"/>
         <ProjectReference Include="..\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\..\..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+        <Content Include="appsettings.yaml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>

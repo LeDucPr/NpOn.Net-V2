@@ -1,0 +1,101 @@
+﻿services:
+
+  #####region SSO Controller
+  sso:
+    container_name: sso
+    image: npon-v2-aiot-backend-sso:latest
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:14023
+      - AccountServiceUrl=http://accountservice:40004
+      - Cors:http://localhost:5500,http://localhost:5501
+    ports:
+      - "14023:14023"
+    networks:
+      - npon-v2-backend-net
+    # depends_on:
+    #   - accountservice
+    #   - generalservice
+    volumes:
+      - ./keys/sso:/home/app/.aspnet/DataProtection-Keys
+  #####endregion SSO Controller
+
+
+  #####region Account Service
+  accountservice:
+    container_name: accountservice
+    image: npon-v2-aiot-backend-accountservice:latest
+    environment:
+      - ASPNETCORE_URLS=http://+:40004
+      - GeneralServiceUrl=http://generalservice:40000
+      - ConnectionString=Host=172.28.48.1;Port=5432;Username=postgres;Password=password;Database=account;
+      - ConnectionNumber=1000
+      - RedisConnectString=172.28.48.1:6379,user=default,password=NpOn.Net-V2_Dragonfly
+      - RabbitMqConnection=amqp://rabbitmq:password@172.28.48.1:5672/
+      - RedisConnectionNumber=1000
+      - RabbitMqExchangeName=NpOn.AccountService
+    ports:
+      - "40004:40004"
+    networks:
+      - npon-v2-backend-net
+    # depends_on:
+    #   - generalservice
+    volumes:
+      - ./keys/accountservice:/home/app/.aspnet/DataProtection-Keys
+  #####endregion Account Service
+
+
+  #####region General Service
+  generalservice:
+    container_name: generalservice
+    image: npon-v2-aiot-backend-generalservice:latest
+    ports:
+      - "40000:40000"
+    environment:
+      - ASPNETCORE_URLS=http://+:40000
+      - AccountServiceUrl=http://accountservice:40004
+      - ConnectionString=Server=172.28.48.1;Port=5432;Username=postgres;Password=password;Database=general;
+      - ConnectionNumber=2000
+      - RabbitMqConnection=amqp://rabbitmq:password@172.28.48.1:5672/
+      - RabbitMqExchangeName=NpOn.MedicalService
+      - IsUseCachingExecutionGeneralService=false
+    networks:
+      - npon-v2-backend-net
+    volumes:
+      - ./keys/generalservice:/home/app/.aspnet/DataProtection-Keys
+  
+  # generalservice:
+  #   #    container_name: generalservice
+  #   # We remove the 'ports' section because Nginx will handle external traffic.
+  #   # ports:
+  #   #   - "40000:40000"
+  #   environment:
+  #     - ASPNETCORE_URLS=http://+:40000
+  #     - AccountServiceUrl=http://accountservice:40004
+  #     - ConnectionString=Host=localhost;Port=5432;Username=postgres;Password=password;Database=general;
+  #     - RabbitMqConnection=amqp://rabbitmq:password@172.28.48.1:5672/
+  #     - RabbitMqExchangeName=NpOn.MedicalService
+  #   networks:
+  #     - npon-v2-backend-net
+  #   volumes:
+  #     - ./keys/generalservice:/home/app/.aspnet/DataProtection-Keys
+  #   deploy:
+  #     replicas: 3 # Scale generalservice to n.. instances
+
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   container_name: nginx-proxy
+  #   ports:
+  #     - "40000:80" # Expose port 40000 on host, mapping to port 80 in Nginx container
+  #   volumes:
+  #     - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+  #   networks:
+  #     - npon-v2-backend-net
+  #   depends_on:
+  #     - generalservice
+  
+  #####endregion General Service
+
+
+networks:
+  npon-v2-backend-net:
+    driver: bridge

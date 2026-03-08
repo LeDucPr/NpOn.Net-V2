@@ -5,7 +5,7 @@ Logging:
 
 Kestrel:
   EndpointDefaults:
-    Protocols: Http2
+    Protocols: Http1AndHttp2
 
 AppName: SSO
 

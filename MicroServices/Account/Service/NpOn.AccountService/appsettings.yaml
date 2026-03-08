@@ -46,7 +46,7 @@ IsUseRabbitMq: true
 RabbitMqConnection: "amqp://rabbitmq:password@localhost:5672/"
 RabbitMqExchangeName: NpOn_V2.AccountService
 
-LoginTokenExpiresTime: 30
+LoginTokenExpiresTime: 15
 RefreshTokenExpiredTime: 30
 
 IsUseMiddlewareLogger: true
