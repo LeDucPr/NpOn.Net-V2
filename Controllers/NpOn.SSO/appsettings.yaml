@@ -15,11 +15,10 @@ JwtTokensKey: "h987HG&H&G$T*h*8Yo8Y!&iy8ttg*I$%U_YhKJ$#uG8Q7T_G^87!G@H9QN87*tyh&
 IsStartAsync: true
 IsUseGrpcStandardMode: true
 IsUseEnableUnencryptedMode: true
-HostPort: 40000
+HostPort: 14023
 HostDomain: "http://0.0.0.0"
 CORS: "localhost:5000"
 CorsPolicy: NpOnCorsPolicy
-ConnectionNumber: 100000
 DnsResolverFactory: 60
 KeepAlivePingDelaySeconds: 60
 KeepAlivePingTimeoutSeconds: 30

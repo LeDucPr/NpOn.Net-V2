@@ -34,7 +34,8 @@ public class PostgresColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnly
 {
     private readonly Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> _mapper;
 
-    public PostgresColumnWrapper(List<object[]> parent, Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
+    public PostgresColumnWrapper(List<object[]> parent,
+        Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
     {
         _mapper = mapper;
     }
@@ -56,7 +57,8 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     private readonly List<PostgresColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap, IReadOnlyDictionary<string, int> nameToIndexMap)
+    public PostgresColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
     {
         _nameToIndexMap = nameToIndexMap;
         _columnWrappers = new List<PostgresColumnWrapper>(schemaMap.Count);
@@ -144,11 +146,11 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     }
 }
 
-public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IDisposable
+public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     private IReadOnlyDictionary<int, PostgresRowWrapper> Rows { get; set; }
     private PostgresColumnCollection Columns { get; set; }
-    
+
     // Delegate to return this object to the pool
     public Action<PostgresResultSetWrapper>? ReturnToPool { get; set; }
 
@@ -198,9 +200,10 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, ID
         }
 
         // 2. Create high-performance mapper using Extension Method
-        var normalizeMethod = typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), new[] { typeof(object) });
+        var normalizeMethod =
+            typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.NormalizePostgresValue), new[] { typeof(object) });
         var mapper = PostgresMappingExtensions.CreateArrayRowMapper(reader, normalizeMethod);
-        
+
         var data = new List<object[]>();
 
         // 3. Read data
@@ -216,6 +219,7 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, ID
         {
             rows.Add(i, new PostgresRowWrapper(data[i], rowMapper));
         }
+
         Rows = rows;
 
         Columns = new PostgresColumnCollection(data, schemaMap, nameToIndexMap);
@@ -223,9 +227,8 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, ID
         SetSuccess();
     }
 
-    public void Reset()
+    public void Reset() // for objectPooling // Reset state for reuse
     {
-        // Reset state for reuse
         Rows = new Dictionary<int, PostgresRowWrapper>();
         Columns = null!;
         // Reset base class state if needed (e.g. Status, Error)
@@ -251,7 +254,7 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, ID
 
     public INpOnCollectionWrapper CollectionWrappers => Columns;
 
-    public void Dispose()
+    public override void Dispose()
     {
         ReturnToPool?.Invoke(this);
     }

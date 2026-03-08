@@ -21,6 +21,7 @@ public sealed class Program : HttpCommonProgram
 
     public static async Task Main(string[] args)
     {
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         Program program = new Program(args);
         await program.RunAsync();
     }
@@ -29,6 +30,7 @@ public sealed class Program : HttpCommonProgram
     {
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
             services
+                .AddDefaultKestrelListenConfig()
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl)

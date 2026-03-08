@@ -1,5 +1,6 @@
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse;
 
@@ -11,7 +12,8 @@ public static class UseTokenValidatorExtensions
         services.AddTransient<AuthenticationToken>();
         services.AddTransient<ContextService>();
         services.AddTransient<AuthenService>();
-        services.AddSingleton<PermissionService>();
+        services.AddTransient<PermissionService>();
+        services.TryAddTransient<ILogAction, LogAction>();
         return services;
     }
 }
