@@ -17,8 +17,10 @@ IsUseGrpcStandardMode: true
 IsUseEnableUnencryptedMode: true
 HostPort: 14023
 HostDomain: "http://0.0.0.0"
+
 CORS: "localhost:5000"
 CorsPolicy: NpOnCorsPolicy
+
 DnsResolverFactory: 60
 KeepAlivePingDelaySeconds: 60
 KeepAlivePingTimeoutSeconds: 30

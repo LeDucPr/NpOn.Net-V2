@@ -66,7 +66,7 @@ public abstract class CommonProgram
             .UseDefaultKeyGenerationMode() // key generation
             .UseDefaultAuthorizationMode() // authorization 
             .UseDefaultAuthenticationMode(); // authentication
-        services.UseCorsDefaultMode(); // cors
+
 #if DEBUG
         if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
             IdentityModelEventSource.ShowPII = true;

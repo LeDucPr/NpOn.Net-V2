@@ -33,9 +33,9 @@ public sealed class Program : HttpCommonProgram
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer))
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
-
-
-        services.UseTokenValidatorDefaultMode(); // valid custom logic for yours 
+        
+        services.UseCorsDefaultMode() // cors
+            .UseTokenValidatorDefaultMode(); // valid custom logic for yours 
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
