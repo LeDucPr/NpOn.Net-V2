@@ -2,7 +2,10 @@
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 
 # hoặc không cần set để chạy lệnh .\run.sp1 all
 # powershell -ExecutionPolicy Bypass -File .\run.ps1 all
-
+#-- nếu cần
+### taskkill /F /IM VBCSCompiler.exe
+### taskkill /F /IM dotnet.exe
+### taskkill /F /IM MSBuild.exe
 
 
 # Danh sách các folder chứa project

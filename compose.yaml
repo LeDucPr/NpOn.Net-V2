@@ -27,11 +27,11 @@
     environment:
       - ASPNETCORE_URLS=http://+:40004
       - GeneralServiceUrl=http://generalservice:40000
-      - ConnectionString=Host=172.28.48.1;Port=5432;Username=postgres;Password=password;Database=account;
+      - ConnectionString=Host=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=account;
       - ConnectionNumber=1000
-      - RedisConnectString=172.28.48.1:6379,user=default,password=NpOn.Net-V2_Dragonfly
-      - RabbitMqConnection=amqp://rabbitmq:password@172.28.48.1:5672/
+      - RedisConnectString=host.docker.internal:6379,user=default,password=NpOn.Net-V2_Dragonfly
       - RedisConnectionNumber=1000
+      - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
       - RabbitMqExchangeName=NpOn.AccountService
     ports:
       - "40004:40004"
@@ -53,9 +53,9 @@
     environment:
       - ASPNETCORE_URLS=http://+:40000
       - AccountServiceUrl=http://accountservice:40004
-      - ConnectionString=Server=172.28.48.1;Port=5432;Username=postgres;Password=password;Database=general;
+      - ConnectionString=Server=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=general;
       - ConnectionNumber=2000
-      - RabbitMqConnection=amqp://rabbitmq:password@172.28.48.1:5672/
+      - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
       - RabbitMqExchangeName=NpOn.MedicalService
       - IsUseCachingExecutionGeneralService=false
     networks:

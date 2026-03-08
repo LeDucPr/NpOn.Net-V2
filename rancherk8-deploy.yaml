@@ -1,0 +1,165 @@
+apiVersion: v1
+kind: List
+items:
+# ==========================================
+# --- 1. SSO SERVICE ---
+# ==========================================
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: sso
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: sso
+    template:
+      metadata:
+        labels:
+          app: sso
+      spec:
+        containers:
+        - name: sso
+          image: npon-v2-aiot-backend-sso:latest
+          imagePullPolicy: Never
+          ports:
+          - containerPort: 14023
+          env:
+          - name: ASPNETCORE_URLS
+            value: "http://+:14023" # Fix lỗi IPv6
+          - name: AccountServiceUrl
+            value: "http://accountservice:40004" # Gọi qua K8s DNS
+          - name: CORS
+            value: "localhost:5000"
+          # Cấp quyền ghi file tạm cho Data Protection
+          volumeMounts:
+          - name: dp-keys
+            mountPath: /home/app/.aspnet
+        volumes:
+        - name: dp-keys
+          emptyDir: {}
+
+# ==========================================
+# --- 2. ACCOUNT SERVICE ---
+# ==========================================
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: accountservice
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: accountservice
+    template:
+      metadata:
+        labels:
+          app: accountservice
+      spec:
+        containers:
+        - name: accountservice
+          image: npon-v2-aiot-backend-accountservice:latest
+          imagePullPolicy: Never
+          ports:
+          - containerPort: 40004
+          env:
+          - name: ASPNETCORE_URLS
+            value: "http://+:40004" # Fix lỗi IPv6
+          # Ghi đè Service URLs
+          - name: GeneralServiceUrl
+            value: "http://generalservice:40000"
+          - name: AccountServiceUrl
+            value: "http://accountservice:40004"
+          # Ghi đè Hạ tầng (DB, Redis, Kafka, RabbitMQ) trỏ ra Host Windows
+          - name: ConnectionString
+            value: "Host=172.24.48.1;Port=5432;Username=postgres;Password=password;Database=account;"
+          - name: RedisConnectString
+            value: "172.24.48.1:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+          - name: KafkaConnection
+            value: "172.24.48.1:19092"
+          - name: RabbitMqConnection
+            value: "amqp://rabbitmq:password@172.24.48.1:5672/"
+          # Cấp quyền ghi file tạm cho Data Protection
+          volumeMounts:
+          - name: dp-keys
+            mountPath: /home/app/.aspnet
+        volumes:
+        - name: dp-keys
+          emptyDir: {}
+
+# ==========================================
+# --- 3. GENERAL SERVICE ---
+# ==========================================
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: generalservice
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: generalservice
+    template:
+      metadata:
+        labels:
+          app: generalservice
+      spec:
+        containers:
+        - name: generalservice
+          image: npon-v2-aiot-backend-generalservice:latest
+          imagePullPolicy: Never
+          ports:
+          - containerPort: 40000
+          env:
+          - name: ASPNETCORE_URLS
+            value: "http://+:40000" # Fix lỗi IPv6
+          - name: AccountServiceUrl
+            value: "http://accountservice:40004"
+          - name: ConnectionString
+            value: "Host=172.24.48.1;Port=5432;Username=postgres;Password=password;Database=general;"
+          # Cấp quyền ghi file tạm cho Data Protection
+          volumeMounts:
+          - name: dp-keys
+            mountPath: /home/app/.aspnet
+        volumes:
+        - name: dp-keys
+          emptyDir: {}
+
+# ==========================================
+# --- SERVICES NETWORK (K8S DNS) ---
+# ==========================================
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: sso
+  spec:
+    selector:
+      app: sso
+    ports:
+    - port: 14023
+      targetPort: 14023
+    type: NodePort
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: accountservice
+  spec:
+    selector:
+      app: accountservice
+    ports:
+    - port: 40004
+      targetPort: 40004
+    type: NodePort
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: generalservice
+  spec:
+    selector:
+      app: generalservice
+    ports:
+    - port: 40000
+      targetPort: 40000
+    type: NodePort
