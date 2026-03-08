@@ -23,8 +23,9 @@ IsUseCachingExecutionGeneralService: true
 ConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=password;Database=general;"
 ConnectionNumber: 1000
 
-#CORS: "localhost:5000"
-#CorsPolicy: NpOnCorsPolicy
+CORS: "*"
+CorsPolicy: NpOnCorsPolicy
+
 DnsResolverFactory: 60
 KeepAlivePingDelaySeconds: 60
 KeepAlivePingTimeoutSeconds: 30

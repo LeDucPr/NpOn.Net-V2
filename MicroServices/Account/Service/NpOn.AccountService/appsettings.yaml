@@ -26,8 +26,10 @@ IsUseRedisCache: true
 RedisConnectString: "localhost:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 1000 #00
 
-#CORS: "localhost:5000"
 #CorsPolicy: NpOnCorsPolicy
+CORS: "*"
+CorsPolicy: NpOnCorsPolicy
+
 AutoAddCredential: http
 DnsResolverFactory: 60
 KeepAlivePingDelaySeconds: 60

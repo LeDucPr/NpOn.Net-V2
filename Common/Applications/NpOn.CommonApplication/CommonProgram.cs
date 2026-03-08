@@ -58,7 +58,7 @@ public abstract class CommonProgram
         services.AddHttpContextAccessor(); // accessor 
 
         services
-            .UseDefaultForwardHeaderOptionMode() // forward header options
+            .UseDefaultForwardHeaderOptionMode() // forward header options /// Obsolete
             .UserLoggerDefaultMode() // logger
             .UseDefaultCompressMode(); // compress response
 
@@ -66,6 +66,7 @@ public abstract class CommonProgram
             .UseDefaultKeyGenerationMode() // key generation
             .UseDefaultAuthorizationMode() // authorization 
             .UseDefaultAuthenticationMode(); // authentication
+        services.UseCorsDefaultMode(); // cors
 #if DEBUG
         if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
             IdentityModelEventSource.ShowPII = true;

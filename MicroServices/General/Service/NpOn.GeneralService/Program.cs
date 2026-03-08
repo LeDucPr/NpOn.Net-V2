@@ -28,7 +28,6 @@ public sealed class Program : HttpCommonProgram
     public static async Task Main(string[] args)
     {
         // Allow HTTP/2 over insecure (http) connection for Client
-        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         Program program = new Program(args);
         await program.RunAsync();
     }

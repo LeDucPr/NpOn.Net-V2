@@ -18,6 +18,7 @@ public static class CorsExtensions
                     .ToArray();
                 string autoAddCredential =
                     EApplicationConfiguration.AutoAddCredential.GetAppSettingConfig().AsDefaultString();
+                bool isAllowAll = configs.Contains("*");
                 if (autoAddCredential is { Length : > 0 })
                     configs = configs.Select(p => p.StartsWith(autoAddCredential) ? p : $"{autoAddCredential}://" + p)
                         .ToArray();
@@ -27,7 +28,7 @@ public static class CorsExtensions
                     {
                         // If config contains "*" -> Allow all Origins (including file://) + Credentials
                         //  Use SetIsOriginAllowed to allow 'null' origin (local file) and others dynamically
-                        if (configs.Contains("*"))
+                        if (isAllowAll)
                             policyBuilder.SetIsOriginAllowed(_ => true);
                         else
                             policyBuilder.WithOrigins(configs);

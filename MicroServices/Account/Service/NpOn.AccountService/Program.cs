@@ -24,6 +24,8 @@ namespace MicroServices.Account.Service.NpOn.AccountService;
 
 public sealed class Program : HttpCommonProgram
 {
+    protected override bool UseControllers => false;
+
     private Program(string[] args) : base(args)
     {
     }
@@ -47,14 +49,14 @@ public sealed class Program : HttpCommonProgram
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore();
         store.PreAllocate(
-            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(), 
+            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
             100
         );
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)
             .AddRedis();
-            
+
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
