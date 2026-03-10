@@ -17,7 +17,7 @@ IsUseGrpcStandardMode: true
 IsUseEnableUnencryptedMode: true
 HostPort: 40004
 HostDomain: "http://0.0.0.0"
-WorkerThreadMin: 10000
+WorkerThreadMin: 2500
 
 
 ConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=password;Database=account;"
