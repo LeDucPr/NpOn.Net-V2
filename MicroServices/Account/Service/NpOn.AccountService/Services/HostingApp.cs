@@ -46,7 +46,7 @@ public class HostingApp(
                 var loginResponse = await authenticationService.Login(new AccountLoginQuery
                 {
                     UserName = "KhaBanh",
-                    Password = "GvN6GbQvBxyRiZ/oNsMW+Wwsa9o=",
+                    Password = "jyGimGTAj2niJMgxijU7x7iR1RA=",
                     AuthType = EAuthentication.WebApp,
                     ClientId = "WEB_TEST_C"
                 });
@@ -107,7 +107,7 @@ public class HostingApp(
     //                 var loginResponse = await authenticationService.Login(new AccountLoginQuery
     //                 {
     //                     UserName = "KhaBanh",
-    //                     Password = "GvN6GbQvBxyRiZ/oNsMW+Wwsa9o=",
+    //                     Password = "jyGimGTAj2niJMgxijU7x7iR1RA=",
     //                     AuthType = EAuthentication.WebApp,
     //                     ClientId = "WEB_TEST_C"
     //                 });

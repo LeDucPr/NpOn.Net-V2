@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums.MarkerAttributes;
 using Microsoft.Extensions.Configuration;
@@ -38,12 +40,14 @@ public static class ApplicationConfigMode
 
     private static void InitInternal(IConfiguration configuration, Type enumType)
     {
-        foreach (Enum key in Enum.GetValues(enumType))
+        foreach (var field in enumType.GetFields(BindingFlags.Public | BindingFlags.Static))
         {
+            var key = (Enum)field.GetValue(null)!;
+        
             if (Configs.ContainsKey(key)) continue;
-            string keyConfig = key.GetDisplayName();
-            var value = configuration.GetSection(keyConfig).Value;
-
+            var displayAttr = field.GetCustomAttribute<DisplayAttribute>();
+            string keyConfig = displayAttr?.GetName() ?? field.Name;
+            var value = configuration[keyConfig]; // "Parent:Child:Constant"
             Configs.Add(key, value ?? string.Empty);
         }
     }
