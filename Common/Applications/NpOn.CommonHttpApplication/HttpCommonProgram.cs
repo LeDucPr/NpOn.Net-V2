@@ -12,6 +12,9 @@ public abstract class HttpCommonProgram : CommonProgram
     protected HttpCommonProgram(string[] args) : base(args)
     {
         Args = args;
+        int workerThreads = EApplicationConfiguration.WorkerThreadMin.GetAppSettingConfig().AsDefaultInt();
+        if (workerThreads != 0)
+            ThreadPool.SetMinThreads(workerThreads: workerThreads, completionPortThreads: workerThreads);
     }
 
     protected override Task ConfigureServices(IServiceCollection services)

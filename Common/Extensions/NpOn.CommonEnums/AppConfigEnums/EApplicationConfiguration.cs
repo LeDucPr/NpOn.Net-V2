@@ -25,6 +25,7 @@ public enum EApplicationConfiguration
     [Display(Name = "IsStartAsync")] IsStartAsync, // - boolean
     [Display(Name = "IsAutomaticKeyGeneration")] IsAutomaticKeyGeneration, // - boolean
     [Display(Name = "IsUseGrpcStandardMode")] IsUseGrpcStandardMode, // - boolean
+    [Display(Name = "WorkerThreadMin")] WorkerThreadMin, // - int 
     [Display(Name = "CorsPolicy")] CorsPolicy, // - string
     [Display(Name = "AutoAddCredential")] AutoAddCredential, // - string
     [Display(Name = "Kestrel:EndpointDefaults:Protocols")] KestrelServerOptions, // - int

@@ -72,35 +72,40 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
 
         consumer.ReceivedAsync += async (sender, ea) =>
         {
-            _ = Task.Run(async () =>
+            // BỎ HẲN _ = Task.Run(...) VÀ AWAIT TRỰC TIẾP
+            byte[] body = ea.Body.ToArray();
+            RabbitMqEvent<T>? fullEvent = null;
+            
+            try
             {
-                byte[] body = ea.Body.ToArray();
-                var fullEvent = ProtoBufMode.ProtoBufDeserialize<RabbitMqEvent<T>>(body, isDecompress);
-                if (Handler == null || fullEvent?.MessageContent == null)
-                {
-                    _logger?.LogWarning(
-                        $"Invalid message (DeliveryTag: {ea.DeliveryTag}) or no handler set. Rejecting message.");
-                    await channel.BasicRejectAsync(ea.DeliveryTag, requeue: false); // Don't requeue bad messages
-                    return;
-                }
+                fullEvent = ProtoBufMode.ProtoBufDeserialize<RabbitMqEvent<T>>(body, isDecompress);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, $"Deserialize error: {ex.Message}");
+                // Lỗi Format thì reject thẳng tay, không Requeue để tránh lặp vô tận
+                await channel.BasicRejectAsync(ea.DeliveryTag, requeue: false);
+                return;
+            }
+
+            if (Handler == null || fullEvent?.MessageContent == null)
+            {
+                _logger?.LogWarning($"Invalid message (DeliveryTag: {ea.DeliveryTag}) or no handler set. Rejecting message.");
+                await channel.BasicRejectAsync(ea.DeliveryTag, requeue: false);
+                return;
+            }
+
+            try
+            {
+                // Await trực tiếp Handler, nếu Handler treo thì Timeout (cần handle trong Handler)
+                await Handler(fullEvent.MessageContent);
 
                 if (_autoAck)
                 {
-                    try
-                    {
-                        await Handler(fullEvent.MessageContent);
-                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false); // ack when done (clear)
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError($"Handler error: {ex.Message}");
-                        // nack when error and retry
-                        await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
-                    }
+                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                 }
                 else
                 {
-                    _ = Task.Run(() => Handler(fullEvent.MessageContent)); // run task in background
                     switch (_responseType)
                     {
                         case ERabbitMqResponseType.BasicAck:
@@ -110,19 +115,27 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
                             await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
                             break;
                         case ERabbitMqResponseType.BasicReject:
-                            await channel.BasicRejectAsync(ea.DeliveryTag, requeue: true);
+                            await channel.BasicRejectAsync(ea.DeliveryTag, requeue: false);
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException();
+                            await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                            break;
                     }
                 }
-            });
-            await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError($"Handler error processing DeliveryTag {ea.DeliveryTag}: {ex.Message}");
+                // Có lỗi nghiệp vụ thì Nack và đẩy lại vào Queue (requeue = true)
+                // Lưu ý: Nếu lỗi do DB chết, requeue liên tục sẽ gây bão log. Nên có cơ chế Dead Letter Queue (DLX).
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+            }
         };
 
         await channel.BasicConsumeAsync(
             queue: routingKey,
-            autoAck: _responseType == ERabbitMqResponseType.Default, // false when use switch - case {_responseType}
+            // autoAck: _responseType == ERabbitMqResponseType.Default, // false when use switch - case {_responseType}
+            autoAck: false, // Phải là false để logic manual ack/nack bên trên hoạt động
             consumer: consumer);
     }
 
@@ -139,3 +152,39 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
 
     public abstract void AddHandler();
 }
+
+
+// // 1. Tạo một cái Exchange riêng rành cho Rác (Dead Letter Exchange)
+// await channel.ExchangeDeclareAsync("npon_dlx", ExchangeType.Direct, durable: true);
+//
+// // 2. Tạo cái Queue Rác (Dead Letter Queue) và map nó vào DLX
+// await channel.QueueDeclareAsync("npon_dlq", durable: true, exclusive: false, autoDelete: false);
+// await channel.QueueBindAsync("npon_dlq", "npon_dlx", "dlq_routing_key");
+//
+// // 3. Chỗ cấu hình Queue CHÍNH của ông, thêm cái Dictionary Arguments này vào:
+// var queueArgs = new Dictionary<string, object>
+// {
+//     { "x-dead-letter-exchange", "npon_dlx" }, // Chỉ định tên DLX
+//     { "x-dead-letter-routing-key", "dlq_routing_key" } // Chỉ định Routing Key của DLX
+// };
+//
+// // Khai báo Queue chính kèm theo Args
+// await channel.QueueDeclareAsync(
+//     queue: QueueName, 
+//     durable: true, 
+//     exclusive: false, 
+//     autoDelete: false, 
+//     arguments: queueArgs); // <--- vip
+
+
+
+
+// catch (Exception ex)
+// {
+//     _logger?.LogError($"Handler error processing DeliveryTag {ea.DeliveryTag}: {ex.Message}");
+//                 
+//     // QUAN TRỌNG: Đổi requeue = false. 
+//     // Do mình đã cài đặt x-dead-letter-exchange ở Bước 1, 
+//     // con Thỏ sẽ tự động chộp lấy cái message này và quăng sang npon_dlq thay vì vứt bỏ hoàn toàn.
+//     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false); 
+// }
