@@ -30,7 +30,9 @@ items:
           - name: AccountServiceUrl
             value: "http://accountservice:40004" # Gọi qua K8s DNS
           - name: CORS
-            value: "localhost:5000"
+            value: "*,localhost:5000"
+          - name: "IsDevEnvironment"
+            value: "false"
           # Cấp quyền ghi file tạm cho Data Protection
           volumeMounts:
           - name: dp-keys
@@ -79,6 +81,8 @@ items:
             value: "172.24.48.1:19092"
           - name: RabbitMqConnection
             value: "amqp://rabbitmq:password@172.24.48.1:5672/"
+          - name: "IsDevEnvironment"
+            value: "false"
           # Cấp quyền ghi file tạm cho Data Protection
           volumeMounts:
           - name: dp-keys
@@ -117,6 +121,8 @@ items:
             value: "http://accountservice:40004"
           - name: ConnectionString
             value: "Host=172.24.48.1;Port=5432;Username=postgres;Password=password;Database=general;"
+          - name: "IsDevEnvironment"
+            value: "false"
           # Cấp quyền ghi file tạm cho Data Protection
           volumeMounts:
           - name: dp-keys
@@ -138,7 +144,7 @@ items:
     ports:
     - port: 14023
       targetPort: 14023
-    type: NodePort
+    type: LoadBalancer # LoadBalancer -> localhost (auto map)
 
 - apiVersion: v1
   kind: Service

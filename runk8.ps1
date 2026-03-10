@@ -8,6 +8,8 @@
 ### taskkill /F /IM dotnet.exe
 ### taskkill /F /IM MSBuild.exe
 
+#lệnh tìm ip service  -    kubectl get svc sso -n default
+
 
 $projects = @(
     "MicroServices/Account/Service/NpOn.AccountService",
