@@ -11,8 +11,8 @@ public class PostgresDriverFactory : BaseDbDriverFactory
 {
     private readonly IObjectPoolStore? _poolStore;
 
-    public PostgresDriverFactory(INpOnConnectOption option, IObjectPoolStore? poolStore = null, int connectionNumber = 1) : base(EDb.Postgres,
-        option, connectionNumber)
+    public PostgresDriverFactory(INpOnConnectOption option, IObjectPoolStore? poolStore = null,
+        int connectionNumber = 1) : base(EDb.Postgres, option, connectionNumber)
     {
         _poolStore = poolStore;
     }

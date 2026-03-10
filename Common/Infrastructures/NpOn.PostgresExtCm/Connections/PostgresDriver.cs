@@ -40,8 +40,8 @@ public class PostgresDriver : NpOnDbDriver
             return; // Already connected.
         }
 
-        await DisconnectAsync();
-        _connection = new NpgsqlConnection(Option.ConnectionString);
+        // await DisconnectAsync();
+        _connection ??= new NpgsqlConnection(Option.ConnectionString);
         await _connection.OpenAsync(cancellationToken);
         Version = _connection.PostgreSqlVersion.ToString();
         if (_connection.Host != null)

@@ -1,14 +1,17 @@
 #pre setup (mở PowerShell gốc set)
 # nerdctl -n k8s.io images
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 
-# hoặc không cần set để chạy lệnh .\runk8.sp1 all
-# powershell -ExecutionPolicy Bypass -File .\runk8.ps1 all
+# hoặc không cần set để chạy lệnh .\runk8.ps1 build up
+# powershell -ExecutionPolicy Bypass -File .\runk8.ps1 build up
+
 #-- nếu cần
 ### taskkill /F /IM VBCSCompiler.exe
 ### taskkill /F /IM dotnet.exe
 ### taskkill /F /IM MSBuild.exe
 
 #lệnh tìm ip service  -    kubectl get svc sso -n default
+
+
 
 
 $projects = @(
@@ -51,29 +54,45 @@ function Get-DeployName($path) {
 }
 
 # ==========================================
-# 2. HÀM BUILD ĐA LUỒNG
+# 2. HÀM BUILD 2 GIAI ĐOẠN TỐI ƯU
 # ==========================================
 function Build-Targets($list) {
-    Write-Host "`n--- Dang build SONG SONG $($list.Count) Microservices ---" -ForegroundColor Cyan
+    Write-Host "`n--- [GIAI DOAN 1] BIEN DICH CODE (Dung chung Cache) ---" -ForegroundColor Cyan
     $overall_start = Get-Date
 
+    foreach ($p in $list) {
+        Write-Host "Dang bien dich: $p ..." -ForegroundColor DarkGray
+        # Biên dịch thuần túy để tạo file DLL. 
+        # Thằng đầu tiên sẽ build các project Share, các thằng sau bỏ qua nhờ cache MSBuild
+        dotnet build $p -c Release --nologo
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "--- KET THUC: Loi bien dich tai project $p! ---" -ForegroundColor Red
+            return $false
+        }
+    }
+
+    Write-Host "`n--- [GIAI DOAN 2] DONG GOI IMAGE VA NAP VAO K8S (Song song) ---" -ForegroundColor Cyan
+    # Tạo các tiến trình chạy ngầm
     $jobs = foreach ($path in $list) {
         Start-Job -ScriptBlock {
             param($p, $root)
             cd $root
             $start = Get-Date
             
+            # Đặt tên file tar tạm thời dựa trên tên thư mục
             $projectName = Split-Path $p -Leaf
             $tarFile = "$root\$projectName.tar.gz"
             
-            # 1. Build
-            $output = dotnet publish $p -t:PublishContainer -c Release -p:ContainerArchiveOutputPath=$tarFile --nologo 2>&1
+            # 1. Đóng gói ra file tar (Dùng cờ --no-build để không biên dịch lại)
+            $output = dotnet publish $p -t:PublishContainer -c Release --no-build --nologo -p:ContainerArchiveOutputPath=$tarFile 2>&1
             
-            # 2. Load
+            # 2. Nạp thẳng vào K8s namespace
             if ($LASTEXITCODE -eq 0 -and (Test-Path $tarFile)) {
+                # Dùng cmd để bơm pipe thẳng file vào nerdctl
                 $loadOutput = cmd.exe /c "nerdctl -n k8s.io load < ""$tarFile""" 2>&1
                 $output += "`n[Rancher] Đã nạp image: $loadOutput"
-                Remove-Item $tarFile -Force
+                Remove-Item $tarFile -Force # Dọn rác
             }
             
             $end = Get-Date
@@ -88,11 +107,12 @@ function Build-Targets($list) {
         } -ArgumentList $path, $pwd.Path
     }
 
-    Write-Host "Dang xu ly... Vui long doi..." -ForegroundColor Gray
+    Write-Host "Dang dong goi $($list.Count) services... Vui long doi..." -ForegroundColor Gray
+
     $jobResults = $jobs | Wait-Job | Receive-Job
     $jobs | Remove-Job
 
-    Write-Host "`n--- THONG KE THOI GIAN BUILD ---" -ForegroundColor Yellow
+    Write-Host "`n--- THONG KE THOI GIAN BUILD & LOAD ---" -ForegroundColor Yellow
     $anyError = $false
 
     foreach ($res in $jobResults) {
@@ -101,26 +121,28 @@ function Build-Targets($list) {
             Write-Host "$($res.Path.PadRight(60)) : $($res.Elapsed) giay"
         } else {
             Write-Host " [FAIL]" -NoNewline -ForegroundColor Red
-            Write-Host "$($res.Path.PadRight(60)) : Loi build!"
-            Write-Host "   -> Chi tiet:" -ForegroundColor Red
+            Write-Host "$($res.Path.PadRight(60)) : Loi dong goi!"
+            Write-Host "   -> Chi tiet lỗi (Full Log):" -ForegroundColor Red
             Write-Host ($res.Output | Out-String) -ForegroundColor DarkRed
             $anyError = $true
         }
     }
 
-    $overall_duration = "{0:N2}" -f ((Get-Date) - $overall_start).TotalSeconds
+    $overall_end = Get-Date
+    $overall_duration = "{0:N2}" -f ($overall_end - $overall_start).TotalSeconds
+    
     Write-Host "--------------------------------------------------------"
     if ($anyError) {
-        Write-Host "--- KET THUC: Co loi xay ra! ---" -ForegroundColor Red
+        Write-Host "--- KET THUC: Co loi xay ra trong qua trinh! ---" -ForegroundColor Red
         return $false
     } else {
-        Write-Host "--- SUCCESS: Xong trong $overall_duration giay! ---" -ForegroundColor Green
+        Write-Host "--- SUCCESS: Hoan thanh $($list.Count) image trong: $overall_duration giay! ---" -ForegroundColor Green
         return $true
     }
 }
 
 # ==========================================
-# 3. ĐIỀU HƯỚNG THỰC THI
+# 3. ĐIỀU HƯỚNG THỰC THI (KUBERNETES)
 # ==========================================
 if ($isDown) {
     Write-Host "--- Dang go bo he thong khoi K8s ---" -ForegroundColor Yellow
@@ -128,8 +150,10 @@ if ($isDown) {
     exit
 }
 if ($isStatus) {
-    Write-Host "--- Trang thai cac Pods ---" -ForegroundColor Cyan
+    Write-Host "--- Kiem tra trang thai cac Pods & Services ---" -ForegroundColor Cyan
     kubectl get pods -o wide
+    Write-Host ""
+    kubectl get svc
     exit
 }
 
@@ -160,14 +184,12 @@ if ($doBuild) {
 # 2. Thực hiện UP nếu có cờ và Build thành công
 if ($doUp -and $buildSuccess) {
     Write-Host "`n--- [UP] Kiem tra cau hinh K8s YAML ---" -ForegroundColor Cyan
-    # Luôn apply để cập nhật nếu lỡ bro có sửa file yaml
     kubectl apply -f $k8sFile
 
     Write-Host "`n--- [UP] Ép K8s chay lai (Restart) voi Image moi ---" -ForegroundColor Cyan
     foreach ($p in $targetProjects) {
         $deployName = Get-DeployName $p
         Write-Host "Restarting Deployment: $deployName ..." -ForegroundColor Gray
-        # Lệnh ma thuật ép K8s giết pod cũ, kéo pod mới lên
         kubectl rollout restart deployment $deployName
     }
     Write-Host "--- SUCCESS: Qua trinh deploy hoan tat! ---" -ForegroundColor Green
