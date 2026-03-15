@@ -8,6 +8,8 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonScope;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
+using Common.Infrastructures.NpOn.KafkaExtCm.Events;
+using Common.Infrastructures.NpOn.KafkaExtCm.Senders;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
@@ -33,7 +35,7 @@ public class AuthenticationService(
     IAccountPermissionService accountPermissionService,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IRabbitMqProducer rabbitMqProducer,
-    // IKafkaProducer kafkaProducer,
+    IKafkaProducer kafkaProducer,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
@@ -241,20 +243,19 @@ public class AuthenticationService(
             if (query.IsEnableMultiDevice)
             {
             }
-
-            // kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
-            // {
-            //     MessageContent = accountLoginRModel.ToLoginEvent()
-            // });
-
-
+            
             if (_isReadTokenImmediate)
                 await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
-
-            rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
+            
+            kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
             {
                 MessageContent = accountLoginRModel.ToLoginEvent()
             });
+
+            // rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
+            // {
+            //     MessageContent = accountLoginRModel.ToLoginEvent()
+            // });
             response.Data = accountLoginRModel;
             response.SetSuccess();
         });
@@ -432,6 +433,7 @@ public class AuthenticationService(
                         AccountId = accountId,
                     });
             await redisRepository.AddCachingPermissionException(accountId, permissionExceptionResponse.Data);
+            logger.LogWarning($"{accountId} login");
 
             response.SetSuccess();
         });

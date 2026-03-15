@@ -77,8 +77,18 @@ items:
             value: "Host=172.24.48.1;Port=5432;Username=postgres;Password=password;Database=account;"
           - name: RedisConnectString
             value: "172.24.48.1:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+          # Kafka 
+          - name: IsUseKafka
+            value: "true"
           - name: KafkaConnection
             value: "172.24.48.1:19092"
+          - name: KafkaTopicName
+            value: "NpOn_V2.AccountService"
+          - name: SaslUsername
+            value: "npon_admin"
+          - name: SaslPassword
+            value: "npon_admin_pass"
+          # Rabbit
           - name: RabbitMqConnection
             value: "amqp://rabbitmq:password@172.24.48.1:5672/"
           - name: "IsDevEnvironment"

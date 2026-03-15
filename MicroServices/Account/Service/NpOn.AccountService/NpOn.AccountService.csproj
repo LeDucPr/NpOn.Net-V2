@@ -18,7 +18,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.KafkaAppExtUse\NpOn.KafkaAppExtUse.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.KafkaAppExtUse\NpOn.KafkaAppExtUse.csproj" />
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RabbitMqAppExtUse\NpOn.RabbitMqAppExtUse.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
@@ -28,7 +28,7 @@
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonScope\NpOn.CommonScope.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj" />
         <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj"/>
         <ProjectReference Include="..\..\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj"/>
         <ProjectReference Include="..\..\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj"/>

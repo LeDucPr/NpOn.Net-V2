@@ -37,7 +37,7 @@ KeepAlivePingTimeoutSeconds: 30
 IsAutomaticKeyGeneration: true
 IsDevEnvironment: true
 
-IsUseKafka: false
+IsUseKafka: true
 KafkaConnection: "localhost:19092"
 KafkaTopicName: NpOn_V2.AccountService
 SaslUsername: npon_admin
@@ -47,8 +47,8 @@ IsUseRabbitMq: true
 RabbitMqConnection: "amqp://rabbitmq:password@localhost:5672/"
 RabbitMqExchangeName: NpOn_V2.AccountService
 
-LoginTokenExpiresTime: 15
-RefreshTokenExpiredTime: 30
+LoginTokenExpiresTime: 1
+RefreshTokenExpiredTime: 16
 
 IsUseMiddlewareLogger: true
 GeneralServiceUrl: "http://localhost:40000"

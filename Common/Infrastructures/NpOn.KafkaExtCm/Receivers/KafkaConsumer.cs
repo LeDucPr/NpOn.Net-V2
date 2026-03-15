@@ -18,16 +18,20 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
     private IConsumer<string, byte[]>? _consumer;
     private CancellationTokenSource? _cts;
     private readonly bool _autoAck;
-    private ERabbitMqResponseType _responseType = ERabbitMqResponseType.BasicAck;
+    private readonly ushort _prefetchCount; // for concurrency level
+    private readonly ERabbitMqResponseType _responseType = ERabbitMqResponseType.BasicAck;
+    private readonly Lock _commitLock = new Lock(); // ensure thread safety for Commit
 
     protected Func<T, Task>? Handler;
 
-    protected KafkaConsumer(IKafkaTopic kafkaTopic, bool autoAck = true,
-        ILogger<KafkaConsumer<T>>? logger = null)
+    protected KafkaConsumer(IKafkaTopic kafkaTopic, ILogger<KafkaConsumer<T>>? logger = null
+        , bool autoAck = true, ushort prefetchCount = 20
+    )
     {
         _kafkaTopic = kafkaTopic;
         _logger = logger;
         _autoAck = autoAck;
+        _prefetchCount = prefetchCount;
 
         AddHandler(); // same as RabbitMQ: set Handler before assigned consumer
         UseDefault().GetAwaiter().GetResult();
@@ -63,48 +67,81 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
 
     private async Task ConsumeLoop(bool isDecompress, CancellationToken token)
     {
-        while (!token.IsCancellationRequested)
+        var semaphore = new SemaphoreSlim(_prefetchCount);
+
+        try
         {
-            try
+            while (!token.IsCancellationRequested)
             {
-                var cr = _consumer!.Consume(token);
-                if (cr == null) continue;
+                try
+                {
+                    await semaphore.WaitAsync(token);
 
-                var fullEvent = ProtoBufMode.ProtoBufDeserialize<KafkaEvent<T>>(cr.Message.Value, isDecompress);
-                if (fullEvent?.MessageContent == null || Handler == null) continue;
+                    var cr = _consumer!.Consume(token);
+                    if (cr == null)
+                    {
+                        semaphore.Release();
+                        continue;
+                    }
 
-                await HandleMessage(cr, fullEvent.MessageContent);
-            }
-            catch (OperationCanceledException)
-            {
-                break; // Stop loop gracefully
-            }
-            catch (ConsumeException e)
-            {
-                _logger?.LogError($"Consume error: {e.Error.Reason}");
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError($"Unexpected error in ConsumeLoop: {ex.Message}");
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var fullEvent =
+                                ProtoBufMode.ProtoBufDeserialize<KafkaEvent<T>>(cr.Message.Value, isDecompress);
+                            if (fullEvent?.MessageContent != null && Handler != null)
+                            {
+                                await HandleMessage(cr, fullEvent.MessageContent);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogError($"Error deserializing or processing message: {ex.Message}");
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    }, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break; // Stop loop gracefully
+                }
+                catch (ConsumeException e)
+                {
+                    _logger?.LogError($"Consume error: {e.Error.Reason}");
+                    semaphore.Release();
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError($"Unexpected error in ConsumeLoop: {ex.Message}");
+                    semaphore.Release();
+                }
             }
         }
-        
-        _consumer?.Close();
+        finally
+        {
+            _consumer?.Close();
+            semaphore.Dispose();
+        }
     }
 
     private async Task HandleMessage(ConsumeResult<string, byte[]> cr, T message)
     {
         try
         {
+            await Handler!(message);
+
             if (_autoAck)
             {
-                await ProcessWithAck(cr, message);
-                return;
+                SafeCommit(cr);
             }
-
-            // if not autoAck, run in background and commit based on responseType
-            _ = Task.Run(() => Handler!(message));
-            CommitByResponseType(cr);
+            else
+            {
+                CommitByResponseType(cr);
+            }
         }
         catch (Exception ex)
         {
@@ -112,18 +149,12 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
         }
     }
 
-    private async Task ProcessWithAck(ConsumeResult<string, byte[]> cr, T message)
-    {
-        await Handler!(message);
-        _consumer!.Commit(cr);
-    }
-
     private void CommitByResponseType(ConsumeResult<string, byte[]> cr)
     {
         switch (_responseType)
         {
             case ERabbitMqResponseType.BasicAck:
-                _consumer!.Commit(cr);
+                SafeCommit(cr);
                 break;
             case ERabbitMqResponseType.BasicNack:
                 // Kafka does not have nack, can Seek offset if reprocessing is desired
@@ -135,6 +166,21 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
             default:
                 // no commit
                 break;
+        }
+    }
+
+    private void SafeCommit(ConsumeResult<string, byte[]> cr)
+    {
+        lock (_commitLock)
+        {
+            try
+            {
+                _consumer!.Commit(cr);
+            }
+            catch (KafkaException e)
+            {
+                _logger?.LogError($"Commit error: {e.Error.Reason}");
+            }
         }
     }
 

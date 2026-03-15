@@ -10,7 +10,7 @@ public class AccountSaveLoginKafkaConsumer(
     IKafkaTopic kafkaTopic,
     ILogger<AccountSaveLoginKafkaConsumer> logger,
     bool autoAck = true
-) : KafkaConsumer<AccountSaveLoginEvent>(kafkaTopic, autoAck, logger)
+) : KafkaConsumer<AccountSaveLoginEvent>(kafkaTopic, logger, autoAck)
 {
     public override void AddHandler()
     {
