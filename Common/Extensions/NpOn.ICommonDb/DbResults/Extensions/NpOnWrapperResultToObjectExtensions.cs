@@ -3,9 +3,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Common.Extensions.NpOn.ICommonDb.DbResults.Grpc;
 
-namespace Common.Extensions.NpOn.ICommonDb.DbResults;
+namespace Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 
-public static class NpOnWrapperResultExtensions
+public static partial class NpOnWrapperResultExtensions
 {
     // Cache for compiled mapper delegates. Key is the Type of the target object.
     private static readonly ConcurrentDictionary<Type, Delegate> MapperCache = new();
@@ -134,6 +134,7 @@ public static class NpOnWrapperResultExtensions
     }
 
     #endregion
+
 
     #region Public Extensions
 
