@@ -37,7 +37,7 @@ KeepAlivePingTimeoutSeconds: 30
 IsAutomaticKeyGeneration: true
 IsDevEnvironment: true
 
-IsUseKafka: true
+IsUseKafka: false
 KafkaConnection: "localhost:19092"
 KafkaTopicName: NpOn_V2.AccountService
 SaslUsername: npon_admin

@@ -11,6 +11,7 @@ public interface INpOnCell
     Type ValueType { get; } // type of System .Net
     DbType DbType { get; } // type of ADO.Net 
     string SourceTypeName { get; }
+    bool IsPrimaryKey { get; }
 }
 
 public interface INpOnCell<out T> : INpOnCell
@@ -29,9 +30,10 @@ public class NpOnCell<T> : INpOnCell<T>
     public Type ValueType => typeof(T);
     public DbType DbType { get; }
     public string SourceTypeName { get; }
+    public bool IsPrimaryKey { get; }
     public object? ValueAsObject => Value;
 
-    public NpOnCell(object? value, DbType dbType, string sourceTypeName)
+    public NpOnCell(object? value, DbType dbType, string sourceTypeName, bool isPrimaryKey = false)
     {
         if (value == null || value == DBNull.Value)
         {
@@ -43,6 +45,7 @@ public class NpOnCell<T> : INpOnCell<T>
         }
         DbType = dbType;
         SourceTypeName = sourceTypeName;
+        IsPrimaryKey = isPrimaryKey;
     }
 
     public virtual void Create()

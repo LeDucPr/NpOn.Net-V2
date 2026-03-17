@@ -1,6 +1,6 @@
-﻿using System.Collections.Concurrent;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Common.Extensions.NpOn.ICommonDb.DbResults.Grpc;
 
 namespace Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
@@ -8,7 +8,7 @@ namespace Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 public static partial class NpOnWrapperResultExtensions
 {
     // Cache for compiled mapper delegates. Key is the Type of the target object.
-    private static readonly ConcurrentDictionary<Type, Delegate> MapperCache = new();
+    private static readonly WrapperCacheStore<Type, Delegate> MapperCache = new();
 
     #region Private IL Generation and Caching
 

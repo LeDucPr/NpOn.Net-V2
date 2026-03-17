@@ -35,7 +35,7 @@ public class AuthenticationService(
     IAccountPermissionService accountPermissionService,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IRabbitMqProducer rabbitMqProducer,
-    IKafkaProducer kafkaProducer,
+    // IKafkaProducer kafkaProducer,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
@@ -247,15 +247,15 @@ public class AuthenticationService(
             if (_isReadTokenImmediate)
                 await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
             
-            kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
-            {
-                MessageContent = accountLoginRModel.ToLoginEvent()
-            });
-
-            // rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
+            // kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
             // {
             //     MessageContent = accountLoginRModel.ToLoginEvent()
             // });
+
+            rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
+            {
+                MessageContent = accountLoginRModel.ToLoginEvent()
+            });
             response.Data = accountLoginRModel;
             response.SetSuccess();
         });

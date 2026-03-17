@@ -45,6 +45,7 @@ public static class PostgresMappingExtensions
             il.Emit(OpCodes.Ldc_I4, columnIndex);
             il.Emit(OpCodes.Ldelem_Ref); // cellValue
             il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
+            il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); // isPrimaryKey
             if (createCell != null) il.Emit(OpCodes.Call, createCell);
             il.Emit(OpCodes.Stloc, cell);
 
@@ -118,6 +119,7 @@ public static class PostgresMappingExtensions
         il.Emit(OpCodes.Ldc_I4, columnIndex);
         il.Emit(OpCodes.Ldelem_Ref);
         il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
+        il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); // isPrimaryKey
         if (createCell != null) il.Emit(OpCodes.Call, createCell);
         il.Emit(OpCodes.Stloc, cell);
 

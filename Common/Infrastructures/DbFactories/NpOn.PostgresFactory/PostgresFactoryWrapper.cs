@@ -14,7 +14,7 @@ using NpgsqlTypes;
 
 namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 
-public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrapper
+public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrapper, IActionGenerator
 {
     public PostgresFactoryWrapper(
         string openConnectString, IObjectPoolStore? poolStore = null, int connectionNumber = 1, bool isUseCaching = true)
@@ -160,5 +160,33 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
         INpOnDbCommand dbCommand =
             new NpOnDbCommand(DbType, commandText, npgsqlParameters);
         return dbCommand;
+    }
+
+    public IBaseNpOnDbCommand TableActionCommand(INpOnWrapperResult table, ERepositoryAction action, string tableName)
+    {
+        table.CheckBuildTableActionCommand(action, tableName);
+        
+        var tableWrapper = (INpOnTableWrapper)table;
+        
+        (string commandText, List<NpgsqlParameter> npgsqlParameters) = action switch
+        {
+            ERepositoryAction.Add => tableWrapper.ToPostgresParamsInsert(tableName),
+            ERepositoryAction.Update => tableWrapper.ToPostgresParamsUpdate(tableName),
+            ERepositoryAction.Merge => tableWrapper.ToPostgresParamsMerge(tableName),
+            ERepositoryAction.Delete => tableWrapper.ToPostgresParamsDelete(tableName),
+            _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
+        };
+
+        var parameters = npgsqlParameters
+            .Select(p => new NpOnDbCommandParam<NpgsqlDbType>
+            {
+                ParamName = p.ParameterName,
+                ParamValue = p.Value ?? DBNull.Value,
+                ParamType = p.NpgsqlDbType
+            })
+            .Cast<INpOnDbCommandParam>()
+            .ToList();
+
+        return new NpOnDbCommand(DbType, commandText, parameters);
     }
 }
