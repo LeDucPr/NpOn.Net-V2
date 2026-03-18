@@ -19,8 +19,8 @@ public class PostgresDriver : NpOnDbDriver
     private NpgsqlConnection? _connection;
     private readonly IObjectPool<PostgresResultSetWrapper>? _resultSetPool;
 
-    public sealed override string Name { get; set; }
-    public sealed override string Version { get; set; }
+    public sealed override string Name { get; set; } = "PostgresDriver";
+    public sealed override string Version { get; set; } = "1.0";
 
     public override bool IsValidSession => _connection is { State: ConnectionState.Open };
 
@@ -84,7 +84,7 @@ public class PostgresDriver : NpOnDbDriver
             return CreateFailResult(EDbError.Command);
         }
 
-        return await ExecuteReaderInternalAsync(commandBuilder.CommandText, commandBuilder.Parameters);
+        return await ExecuteReaderInternalAsync(commandBuilder.CommandText, commandBuilder.Parameters, null, command.IsFetchKeyInfo);
     }
 
     public override async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>> ExecuteWithTransaction(
@@ -99,7 +99,7 @@ public class PostgresDriver : NpOnDbDriver
                 {
                     var commandBuilder = CommandCustomBuilder(command);
                     var result = await ExecuteReaderInternalAsync
-                        (commandBuilder.CommandText, commandBuilder.Parameters, transaction);
+                        (commandBuilder.CommandText, commandBuilder.Parameters, transaction, command.IsFetchKeyInfo);
                     results.Add(command, result); // dict
                     // If a command fails, break the loop immediately so the Wrapper can handle Rollback
                     if (!result.Status)
@@ -147,7 +147,8 @@ public class PostgresDriver : NpOnDbDriver
     private async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(
         string commandText,
         IEnumerable<INpOnDbCommandParam>? parameters,
-        INpOnDbTransaction? transaction = null)
+        INpOnDbTransaction? transaction = null,
+        bool fetchKeyInfo = false)
     {
         try
         {
@@ -178,7 +179,8 @@ public class PostgresDriver : NpOnDbDriver
             }
 
             // Transaction (using)
-            await using var reader = await pgCommand.ExecuteReaderAsync();
+            var commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
+            await using var reader = await pgCommand.ExecuteReaderAsync(commandBehavior);
             
             if (_resultSetPool != null)
             {

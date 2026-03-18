@@ -9,4 +9,5 @@ public interface IBaseNpOnDbCommand
     EDb DataBaseType { get; }
     EDbLanguage? DatabaseLanguage { get; }
     List<INpOnDbCommandParam>? Parameters { get; }
+    bool IsFetchKeyInfo { get; }
 }

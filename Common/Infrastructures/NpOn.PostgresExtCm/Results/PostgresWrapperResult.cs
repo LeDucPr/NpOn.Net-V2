@@ -1,7 +1,10 @@
-﻿using Common.Extensions.NpOn.CommonDb.Results;
+﻿using System.Collections.ObjectModel;
+using System.Data.Common;
+using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Npgsql;
+using Npgsql.Schema;
 
 namespace Common.Infrastructures.NpOn.PostgresExtCm.Results;
 
@@ -185,13 +188,18 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         }
 
         // 1. Build schema and name-to-index map
-        var schemaTable = reader.GetSchemaTable();
+        ReadOnlyCollection<NpgsqlDbColumn>? columnSchema = null;
+        if (reader.CanGetColumnSchema())
+        {
+            columnSchema = reader.GetColumnSchema();
+        }
+        
         var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>(reader.FieldCount);
         var nameToIndexMap = new Dictionary<string, int>(reader.FieldCount);
         for (int i = 0; i < reader.FieldCount; i++)
         {
             var columnName = reader.GetName(i);
-            var isPrimaryKey = schemaTable?.Rows[i][schemaTable.Columns.IndexOf("IsKey")] as bool? ?? false;
+            var isPrimaryKey = columnSchema?[i].IsKey ?? false;
             var schemaInfo = new NpOnColumnSchemaInfo(
                 columnName,
                 reader.GetFieldType(i),

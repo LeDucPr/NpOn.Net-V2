@@ -11,10 +11,12 @@ public class NpOnDbCommand : INpOnDbCommand
     private readonly EDbLanguage? _dbLanguage;
     private readonly ILogger<NpOnDbCommand> _logger = new Logger<NpOnDbCommand>(new NullLoggerFactory());
     private List<INpOnDbCommandParam>? _parameters;
+    private readonly bool _isFetchKeyInfo;
 
-    public NpOnDbCommand(EDb eDb, string? commandText)
+    public NpOnDbCommand(EDb eDb, string? commandText, bool isFetchKeyInfo = false)
     {
         CommandText = commandText ?? string.Empty;
+        _isFetchKeyInfo = isFetchKeyInfo;
         try
         {
             _eDb = eDb;
@@ -28,9 +30,10 @@ public class NpOnDbCommand : INpOnDbCommand
     }
 
 
-    public NpOnDbCommand(EDb eDb, string? commandText, List<INpOnDbCommandParam>? parameters)
+    public NpOnDbCommand(EDb eDb, string? commandText, List<INpOnDbCommandParam>? parameters, bool isFetchKeyInfo = false)
     {
         CommandText = commandText ?? string.Empty;
+        _isFetchKeyInfo = isFetchKeyInfo;
         try
         {
             _eDb = eDb;
@@ -60,4 +63,6 @@ public class NpOnDbCommand : INpOnDbCommand
     public EDbLanguage? DatabaseLanguage => _dbLanguage;
 
     public List<INpOnDbCommandParam>? Parameters => _parameters;
+    
+    public bool IsFetchKeyInfo => _isFetchKeyInfo;
 }
