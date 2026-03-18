@@ -1,5 +1,4 @@
-﻿using System.Data;
-using Common.Extensions.NpOn.CommonDb.Results;
+﻿using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Npgsql;
@@ -238,9 +237,6 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         // Reset base class state if needed (e.g. Status, Error)
         // Assuming SetSuccess/SetFail handles this, but we might need to clear errors manually if SetSuccess doesn't.
         // NpOnWrapperResult usually has Status and Error properties.
-        // We should probably reset them to default.
-        // Since we don't have access to base private setters easily without knowing NpOnWrapperResult implementation,
-        // we rely on Init calling SetSuccess/SetFail to overwrite state.
     }
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers

@@ -10,8 +10,8 @@ public static class PostgresUtils
 {
     public static object? NormalizePostgresValue(this object? value)
     {
-        if (value is DateTime { Kind: DateTimeKind.Utc } dt) // timestamptz (offset)
-            return dt.ToLocalTime();
+        // if (value is DateTime { Kind: DateTimeKind.Utc } dt) // timestamptz (offset)
+        //     return dt.ToLocalTime();
         return value;
     }
 
