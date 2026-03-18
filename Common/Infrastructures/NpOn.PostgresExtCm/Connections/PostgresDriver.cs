@@ -19,7 +19,7 @@ public class PostgresDriver : NpOnDbDriver
     private NpgsqlConnection? _connection;
     private readonly IObjectPool<PostgresResultSetWrapper>? _resultSetPool;
 
-    public sealed override string Name { get; set; } = "PostgresDriver";
+    public sealed override string Name { get; set; } = "NpOn-V2.PostgresDriver";
     public sealed override string Version { get; set; } = "1.0";
 
     public override bool IsValidSession => _connection is { State: ConnectionState.Open };
