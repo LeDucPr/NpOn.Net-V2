@@ -44,10 +44,10 @@ public class CassandraDriver : NpOnDbDriver
             Name = cassandraBuilder.ApplicationName;
             Version = cassandraBuilder.ApplicationVersion;
         }
-        
+
         _session = await _cluster.ConnectAsync(Option.Keyspace).ConfigureAwait(false);
     }
-    
+
     public override async Task DisconnectAsync()
     {
         if (!Option.IsShutdownImmediate)
@@ -84,12 +84,10 @@ public class CassandraDriver : NpOnDbDriver
             HashSet<string>? primaryKeys = null;
             if (rowSet.Columns.Length > 0)
             {
-                // Lấy Keyspace và Table trực tiếp từ metadata của cột đầu tiên trong RowSet
+                // Lấy Keyspace và Table từ metadata trong RowSet (đầu tiên)
                 var firstCol = rowSet.Columns[0];
                 if (!string.IsNullOrEmpty(firstCol.Keyspace) && !string.IsNullOrEmpty(firstCol.Table))
-                {
                     primaryKeys = GetPrimaryKeys(firstCol.Keyspace, firstCol.Table);
-                }
             }
 
             return new CassandraResultSetWrapper(rowSet, primaryKeys);
@@ -105,26 +103,17 @@ public class CassandraDriver : NpOnDbDriver
         var primaryKeys = new HashSet<string>();
         if (_cluster == null) return primaryKeys;
 
-        // Metadata.GetTable là hàm đồng bộ trong hầu hết driver Cassandra
+        // Metadata.GetTable là hàm đồng bộ trong driver Cassandra
         var table = _cluster.Metadata.GetTable(keyspaceName, tableName);
         if (table == null) return primaryKeys;
 
         if (table.PartitionKeys != null)
-        {
             foreach (var col in table.PartitionKeys)
-            {
                 primaryKeys.Add(col.Name);
-            }
-        }
 
         if (table.ClusteringKeys != null)
-        {
             foreach (var cluster in table.ClusteringKeys)
-            {
-                // ClusteringKey là Tuple<TableColumn, SortOrder>
-                primaryKeys.Add(cluster.Item1.Name);
-            }
-        }
+                primaryKeys.Add(cluster.Item1.Name); // ClusteringKey - Tuple<TableColumn, SortOrder>
 
         return primaryKeys;
     }

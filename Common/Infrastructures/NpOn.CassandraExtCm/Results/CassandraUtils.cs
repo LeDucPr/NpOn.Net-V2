@@ -7,11 +7,33 @@ namespace Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
 public static class CassandraUtils
 {
-    public const string CqlTypeNameBlob = "blob";
+    private static readonly Dictionary<Type, DbType> TypeMap = new()
+    {
+        { typeof(string), DbType.String },
+        { typeof(char), DbType.StringFixedLength },
+        { typeof(int), DbType.Int32 },
+        { typeof(long), DbType.Int64 }, // CQL bigint / counter
+        { typeof(short), DbType.Int16 }, // CQL smallint
+        { typeof(sbyte), DbType.SByte }, // CQL tinyint (8-bit signed)
+        { typeof(byte), DbType.Byte },
+        { typeof(decimal), DbType.Decimal },
+        { typeof(double), DbType.Double },
+        { typeof(float), DbType.Single },
+        { typeof(DateTime), DbType.DateTime },
+        { typeof(DateTimeOffset), DbType.DateTimeOffset }, // CQL timestamp
+        { typeof(TimeSpan), DbType.Time },
+        { typeof(Guid), DbType.Guid }, // CQL uuid / timeuuid
+        { typeof(bool), DbType.Boolean },
+        { typeof(byte[]), DbType.Binary }, // CQL blob
+        { typeof(BigInteger), DbType.VarNumeric }, // CQL varint
+        { typeof(IPAddress), DbType.String }, // CQL inet
+        { typeof(LocalDate), DbType.Date }, // CQL date
+        { typeof(LocalTime), DbType.Time }, // CQL time
+        { typeof(uint), DbType.UInt32 },
+        { typeof(ulong), DbType.UInt64 },
+        { typeof(ushort), DbType.UInt16 }
+    };
 
-    /// <summary>
-    /// Normalize value from Cassandra driver to .NET standard
-    /// </summary>
     public static object? NormalizeCassandraValue(this object? value)
     {
         if (value == null || value == DBNull.Value) return null;
@@ -24,38 +46,13 @@ public static class CassandraUtils
         };
     }
 
-    /// <summary>
-    /// Get CQL Type Name from Column metadata
-    /// </summary>
-    public static string GetCqlTypeName(this CqlColumn column)
-    {
-        if (column == null) return CqlTypeNameBlob;
-        
-        return column.TypeCode.ToString().ToLowerInvariant();
-    }
+    public static string GetCqlTypeName(this CqlColumn column) => column.TypeCode.ToString().ToLowerInvariant();
 
-    /// <summary>
-    /// Map System.Type to DbType for Cassandra
-    /// </summary>
     public static DbType GetDbType(Type type)
     {
-        if (type == typeof(string) || type == typeof(char)) return DbType.String;
-        if (type == typeof(int)) return DbType.Int32;
-        if (type == typeof(long)) return DbType.Int64;
-        if (type == typeof(short)) return DbType.Int16;
-        if (type == typeof(byte)) return DbType.Byte;
-        if (type == typeof(decimal)) return DbType.Decimal;
-        if (type == typeof(double)) return DbType.Double;
-        if (type == typeof(float)) return DbType.Single;
-        if (type == typeof(DateTime)) return DbType.DateTime;
-        if (type == typeof(DateTimeOffset)) return DbType.DateTimeOffset;
-        if (type == typeof(TimeSpan)) return DbType.Time;
-        if (type == typeof(Guid)) return DbType.Guid;
-        if (type == typeof(bool)) return DbType.Boolean;
-        if (type == typeof(byte[])) return DbType.Binary;
-        if (type == typeof(BigInteger)) return DbType.VarNumeric;
-        if (type == typeof(IPAddress)) return DbType.String;
-
-        return DbType.Object;
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        if (underlyingType.IsEnum)
+            underlyingType = Enum.GetUnderlyingType(underlyingType);
+        return TypeMap.GetValueOrDefault(underlyingType, DbType.Object);
     }
 }
