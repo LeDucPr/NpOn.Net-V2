@@ -1,53 +1,61 @@
-﻿using System.Net;
+using System.Data;
+using System.Net;
 using System.Numerics;
+using Cassandra;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
 public static class CassandraUtils
 {
-    private static readonly IReadOnlyDictionary<Type, string> TypeToCqlMap = new Dictionary<Type, string>
-    {
-        // Kiểu chuỗi 
-        [typeof(string)] = "text", // "varchar", "ascii"
-        [typeof(char)] = "text",
+    public const string CqlTypeNameBlob = "blob";
 
-        // Number 
-        [typeof(int)] = "int",
-        [typeof(long)] = "bigint",
-        [typeof(short)] = "smallint",
-        [typeof(byte)] = "tinyint",
-        [typeof(BigInteger)] = "varint",
-        [typeof(decimal)] = "decimal",
-        [typeof(double)] = "double",
-        [typeof(float)] = "float",
-        // Time
-        [typeof(DateTime)] = "timestamp",
-        [typeof(DateTimeOffset)] = "timestamp",
-        [typeof(TimeSpan)] = "duration", // Cassandra 4.0+
-        // uuid & logic 
-        [typeof(Guid)] = "uuid",
-        [typeof(bool)] = "boolean",
-        // binary & inet 
-        [typeof(byte[])] = "blob",
-        [typeof(IPAddress)] = "inet"
-    };
-
-    public static string GetCqlTypeName(Type type)
+    /// <summary>
+    /// Normalize value from Cassandra driver to .NET standard
+    /// </summary>
+    public static object? NormalizeCassandraValue(this object? value)
     {
-        if (TypeToCqlMap.TryGetValue(type, out var cqlType))
+        if (value == null || value == DBNull.Value) return null;
+
+        return value switch
         {
-            return cqlType;
-        }
-        else if (type.IsGenericType)
-        {
-            var genericTypeDefinition = type.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(IDictionary<,>) || genericTypeDefinition == typeof(Dictionary<,>))
-                return "map";
-            if (genericTypeDefinition == typeof(ISet<>) || genericTypeDefinition == typeof(HashSet<>))
-                return "set";
-            if (genericTypeDefinition == typeof(IEnumerable<>) || genericTypeDefinition == typeof(IList<>) || genericTypeDefinition == typeof(List<>))
-                return "list";
-        }
-        return "blob";
+            LocalDate ld => new DateTime(ld.Year, ld.Month, ld.Day),
+            LocalTime lt => new TimeSpan(lt.TotalNanoseconds / 100),
+            _ => value
+        };
+    }
+
+    /// <summary>
+    /// Get CQL Type Name from Column metadata
+    /// </summary>
+    public static string GetCqlTypeName(this CqlColumn column)
+    {
+        if (column == null) return CqlTypeNameBlob;
+        
+        return column.TypeCode.ToString().ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Map System.Type to DbType for Cassandra
+    /// </summary>
+    public static DbType GetDbType(Type type)
+    {
+        if (type == typeof(string) || type == typeof(char)) return DbType.String;
+        if (type == typeof(int)) return DbType.Int32;
+        if (type == typeof(long)) return DbType.Int64;
+        if (type == typeof(short)) return DbType.Int16;
+        if (type == typeof(byte)) return DbType.Byte;
+        if (type == typeof(decimal)) return DbType.Decimal;
+        if (type == typeof(double)) return DbType.Double;
+        if (type == typeof(float)) return DbType.Single;
+        if (type == typeof(DateTime)) return DbType.DateTime;
+        if (type == typeof(DateTimeOffset)) return DbType.DateTimeOffset;
+        if (type == typeof(TimeSpan)) return DbType.Time;
+        if (type == typeof(Guid)) return DbType.Guid;
+        if (type == typeof(bool)) return DbType.Boolean;
+        if (type == typeof(byte[])) return DbType.Binary;
+        if (type == typeof(BigInteger)) return DbType.VarNumeric;
+        if (type == typeof(IPAddress)) return DbType.String;
+
+        return DbType.Object;
     }
 }

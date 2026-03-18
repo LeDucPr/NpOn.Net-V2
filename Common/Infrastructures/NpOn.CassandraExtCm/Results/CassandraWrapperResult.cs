@@ -1,5 +1,4 @@
-﻿using Cassandra;
-using Common.Extensions.NpOn.CommonDb;
+using Cassandra;
 using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -7,81 +6,43 @@ using Common.Extensions.NpOn.ICommonDb.DbResults;
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
 /// <summary>
-/// Cassandra Row -> Cell 
+/// ColumnWrapper
 /// </summary>
-public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
+public class CassandraRowWrapper : NpOnWrapperResult<object[], IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
-    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
+    private readonly Func<object[], IReadOnlyDictionary<string, INpOnCell>> _mapper;
 
-    public CassandraRowWrapper(Row parent, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) : base(parent)
+    public CassandraRowWrapper(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper) :
+        base(parent)
     {
-        _schemaMap = schemaMap;
+        _mapper = mapper;
     }
 
     protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<string, INpOnCell>();
-
-        foreach (var schemaInfo in _schemaMap.Values)
-        {
-            // Lấy giá trị từ đối tượng Row của Cassandra bằng tên cột
-            object? cellValue = Parent.GetValue(schemaInfo.DataType, schemaInfo.ColumnName);
-            Type columnType = schemaInfo.DataType;
-
-            Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
-
-            INpOnCell cell = (INpOnCell)Activator.CreateInstance(
-                genericCellType,
-                cellValue,
-                // columnType.ToDbType(), // error  // Chuyển đổi từ System.Type sang DbType
-                schemaInfo.ProviderDataTypeName // Tên kiểu dữ liệu gốc của Cassandra (ví dụ: "text", "int")
-            )!;
-
-            dictionary.Add(schemaInfo.ColumnName, cell);
-        }
-
-        return dictionary;
+        return _mapper(Parent);
     }
 
     public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
 }
 
 /// <summary>
-/// Cassandra Column -> Cell 
+/// ColumnWrapper (truy cập được từ Key-integer hoặc Key-string)
 /// </summary>
-public class CassandraColumnWrapper : NpOnWrapperResult<IReadOnlyList<Row>, IReadOnlyDictionary<int, INpOnCell>>,
+public class CassandraColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>,
     INpOnColumnWrapper
 {
-    private readonly string _columnName;
-    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
+    private readonly Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> _mapper;
 
-    public CassandraColumnWrapper(IReadOnlyList<Row> parent, string columnName,
-        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) : base(parent)
+    public CassandraColumnWrapper(List<object[]> parent,
+        Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> mapper) : base(parent)
     {
-        _columnName = columnName;
-        _schemaMap = schemaMap;
+        _mapper = mapper;
     }
 
     protected override IReadOnlyDictionary<int, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<int, INpOnCell>();
-        var schemaInfo = _schemaMap[_columnName];
-        Type columnType = schemaInfo.DataType;
-        Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
-
-        for (int i = 0; i < Parent.Count; i++)
-        {
-            Row row = Parent[i];
-            INpOnCell cell = (INpOnCell)Activator.CreateInstance(
-                genericCellType,
-                row.GetValue(columnType, _columnName),
-                // columnType.ToDbType(),  // error
-                schemaInfo.ProviderDataTypeName
-            )!;
-            dictionary.Add(i, cell);
-        }
-
-        return dictionary;
+        return _mapper(Parent);
     }
 
     public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
@@ -96,32 +57,27 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
     private readonly List<CassandraColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public CassandraColumnCollection(IReadOnlyList<Row> allRows,
-        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap)
+    public CassandraColumnCollection(List<object[]> data, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
     {
-        var nameToIndexMap = new Dictionary<string, int>();
+        _nameToIndexMap = nameToIndexMap;
         _columnWrappers = new List<CassandraColumnWrapper>(schemaMap.Count);
 
-        int i = 0;
         foreach (var schemaInfo in schemaMap.Values)
         {
-            nameToIndexMap.Add(schemaInfo.ColumnName, i++);
-            _columnWrappers.Add(new CassandraColumnWrapper(allRows, schemaInfo.ColumnName, schemaMap));
+            var mapper = CassandraMappingExtensions.CreateColumnMapper(schemaInfo.ColumnName, schemaMap, nameToIndexMap);
+            _columnWrappers.Add(new CassandraColumnWrapper(data, mapper));
         }
-
-        _nameToIndexMap = nameToIndexMap;
     }
 
     public CassandraColumnWrapper this[string columnName] => _columnWrappers[_nameToIndexMap[columnName]];
     public CassandraColumnWrapper this[int columnIndex] => _columnWrappers[columnIndex];
 
-    // IReadOnlyDictionary...
+    // reader
     public IEnumerable<string> Keys => _nameToIndexMap.Keys;
     public IEnumerable<CassandraColumnWrapper> Values => _columnWrappers;
     public int Count => _columnWrappers.Count;
     public bool ContainsKey(string key) => _nameToIndexMap.ContainsKey(key);
-
-    #region Implementation
 
     public bool TryGetValue(string key, out CassandraColumnWrapper value)
     {
@@ -143,6 +99,7 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
         }
     }
 
+    // IReadOnlyDictionary<int, ...>
     IEnumerable<int> IReadOnlyDictionary<int, CassandraColumnWrapper>.Keys => Enumerable.Range(0, Count);
     bool IReadOnlyDictionary<int, CassandraColumnWrapper>.ContainsKey(int key) => key >= 0 && key < Count;
 
@@ -169,8 +126,6 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
-    #endregion
-
     public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndexes(int[] indexes)
     {
         indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
@@ -191,56 +146,92 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
     }
 }
 
-/// <summary>
-/// Data result of Query 
-/// </summary>
 public class CassandraResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
-    private readonly IReadOnlyList<Row> _allRows;
-    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
+    private IReadOnlyDictionary<int, CassandraRowWrapper> Rows { get; set; }
+    private CassandraColumnCollection Columns { get; set; }
 
-    public IReadOnlyDictionary<int, CassandraRowWrapper> Rows { get; }
-    public CassandraColumnCollection Columns { get; }
+    // Delegate to return this object to the pool
+    public Action<CassandraResultSetWrapper>? ReturnToPool { get; set; }
 
-    public CassandraResultSetWrapper(RowSet? rowSet = null)
+    public CassandraResultSetWrapper()
+    {
+        // Default constructor for pooling
+        Rows = new Dictionary<int, CassandraRowWrapper>();
+        Columns = null!;
+    }
+
+    public CassandraResultSetWrapper(RowSet? rowSet = null, HashSet<string>? primaryKeys = null)
+    {
+        Init(rowSet, primaryKeys);
+    }
+
+    public void Init(RowSet? rowSet, HashSet<string>? primaryKeys = null)
     {
         if (rowSet == null)
         {
-            _allRows = [];
-            _schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
-            Rows = new Dictionary<int, CassandraRowWrapper>();
-            Columns = new CassandraColumnCollection(_allRows, _schemaMap);
             SetFail(EDbError.CassandraRowSetNull);
+            Rows = new Dictionary<int, CassandraRowWrapper>();
+            Columns = null!; 
             return;
         }
 
-        //  schema from Cql.Column
-        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
-        foreach (var cqlColumn in rowSet.Columns)
+        // 1. Build schema and name-to-index map
+        var cqlColumns = rowSet.Columns;
+        var cqlColumnsLength = cqlColumns?.Length ?? 0;
+        
+        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>(cqlColumnsLength);
+        var nameToIndexMap = new Dictionary<string, int>(cqlColumnsLength);
+        var orderedSchemas = new List<NpOnColumnSchemaInfo>(cqlColumnsLength);
+
+        if (cqlColumns != null)
         {
-            var schemaInfo = new NpOnColumnSchemaInfo(
-                cqlColumn.Name,
-                cqlColumn.Type, // System.Type
-                CassandraUtils.GetCqlTypeName(cqlColumn.Type)
-            );
-            schemaMap.Add(cqlColumn.Name, schemaInfo);
+            for (int i = 0; i < cqlColumns.Length; i++)
+            {
+                var cqlColumn = cqlColumns[i];
+                var isPrimaryKey = primaryKeys?.Contains(cqlColumn.Name) ?? false;
+                var schemaInfo = new NpOnColumnSchemaInfo(
+                    cqlColumn.Name,
+                    cqlColumn.Type,
+                    cqlColumn.GetCqlTypeName(),
+                    isPrimaryKey
+                );
+                schemaMap.Add(cqlColumn.Name, schemaInfo);
+                nameToIndexMap.Add(cqlColumn.Name, i);
+                orderedSchemas.Add(schemaInfo);
+            }
         }
 
-        _schemaMap = schemaMap;
-        // schema from Cql.Row
-        _allRows = rowSet.ToList(); // Row -> access
+        // 2. Create high-performance mapping from Cassandra.Row to object[] array
+        var normalizeMethod = typeof(CassandraUtils).GetMethod(nameof(CassandraUtils.NormalizeCassandraValue), new[] { typeof(object) });
+        var arrayMapper = CassandraMappingExtensions.CreateArrayRowMapper(orderedSchemas, normalizeMethod);
 
-        // View (Rows và Columns) <schemaMap> input
-        Rows = _allRows
-            .Select((row, index) => new { row, index })
-            .ToDictionary(
-                item => item.index,
-                item => new CassandraRowWrapper(item.row, _schemaMap)
-            );
+        var data = new List<object[]>();
 
-        Columns = new CassandraColumnCollection(_allRows, _schemaMap);
+        // 3. Read data
+        foreach (var row in rowSet)
+        {
+            data.Add(arrayMapper(row));
+        }
+
+        // 4. Wrap data
+        var rowMapper = CassandraMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
+        var rows = new Dictionary<int, CassandraRowWrapper>(data.Count);
+        for (int i = 0; i < data.Count; i++)
+        {
+            rows.Add(i, new CassandraRowWrapper(data[i], rowMapper));
+        }
+
+        Rows = rows;
+        Columns = new CassandraColumnCollection(data, schemaMap, nameToIndexMap);
 
         SetSuccess();
+    }
+
+    public void Reset() // for objectPooling 
+    {
+        Rows = new Dictionary<int, CassandraRowWrapper>();
+        Columns = null!;
     }
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
@@ -248,6 +239,8 @@ public class CassandraResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         get
         {
             Dictionary<int, INpOnRowWrapper?> result = new();
+            if (Rows is not { Count: > 0 })
+                return result;
             foreach (var row in Rows)
                 result.Add(row.Key, row.Value);
             return result;
@@ -255,4 +248,9 @@ public class CassandraResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
     }
 
     public INpOnCollectionWrapper CollectionWrappers => Columns;
+
+    public override void Dispose()
+    {
+        ReturnToPool?.Invoke(this);
+    }
 }

@@ -1,6 +1,5 @@
 ﻿using Cassandra;
 using Common.Extensions.NpOn.CommonDb.Connections;
-// using Cassandra.Mapping;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -10,10 +9,8 @@ namespace Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 
 public class CassandraDriver : NpOnDbDriver
 {
-    // DRIVER 
     private ICluster? _cluster;
     private ISession? _session;
-    // private IMapper? _mapper;
     public sealed override string Name { get; set; }
     public sealed override string Version { get; set; }
 
@@ -29,7 +26,7 @@ public class CassandraDriver : NpOnDbDriver
         {
             if (Option.IsWaitNextTransaction)
             {
-                return; // Đã có session hợp lệ và option yêu cầu chờ.
+                return;
             }
 
             await DisconnectAsync().ConfigureAwait(false);
@@ -49,7 +46,6 @@ public class CassandraDriver : NpOnDbDriver
         }
         
         _session = await _cluster.ConnectAsync(Option.Keyspace).ConfigureAwait(false);
-        // _mapper = new Mapper(_session);
     }
     
     public override async Task DisconnectAsync()
@@ -57,7 +53,7 @@ public class CassandraDriver : NpOnDbDriver
         if (!Option.IsShutdownImmediate)
         {
             if (_session != null)
-                await _session.ShutdownAsync().ConfigureAwait(false); // chờ transaction hoàn tất
+                await _session.ShutdownAsync().ConfigureAwait(false);
             if (_cluster != null)
                 await _cluster.ShutdownAsync().ConfigureAwait(false);
         }
@@ -69,29 +65,68 @@ public class CassandraDriver : NpOnDbDriver
 
         _session = null;
         _cluster = null;
-        // _mapper = null;
     }
 
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
-        // 1. Guard Clauses: Kiểm tra trạng thái hợp lệ và đầu vào
         if (!IsValidSession || _session == null)
             return new CassandraResultSetWrapper().SetFail(EDbError.Session);
         if (command is not INpOnDbCommand execCommand)
             return new CassandraResultSetWrapper().SetFail(EDbError.Command);
         if (string.IsNullOrWhiteSpace(execCommand.CommandText))
             return new CassandraResultSetWrapper().SetFail(EDbError.CommandText);
+
         try
         {
             var statement = new SimpleStatement(execCommand.CommandText);
-            RowSet rowSet = await _session.ExecuteAsync(statement)
-                .ConfigureAwait(false);
-            return new CassandraResultSetWrapper(rowSet);
+            RowSet rowSet = await _session.ExecuteAsync(statement).ConfigureAwait(false);
+
+            HashSet<string>? primaryKeys = null;
+            if (rowSet.Columns.Length > 0)
+            {
+                // Lấy Keyspace và Table trực tiếp từ metadata của cột đầu tiên trong RowSet
+                var firstCol = rowSet.Columns[0];
+                if (!string.IsNullOrEmpty(firstCol.Keyspace) && !string.IsNullOrEmpty(firstCol.Table))
+                {
+                    primaryKeys = GetPrimaryKeys(firstCol.Keyspace, firstCol.Table);
+                }
+            }
+
+            return new CassandraResultSetWrapper(rowSet, primaryKeys);
         }
         catch (Exception)
         {
             return new CassandraResultSetWrapper().SetFail(EDbError.CommandTextSyntax);
         }
+    }
+
+    private HashSet<string> GetPrimaryKeys(string keyspaceName, string tableName)
+    {
+        var primaryKeys = new HashSet<string>();
+        if (_cluster == null) return primaryKeys;
+
+        // Metadata.GetTable là hàm đồng bộ trong hầu hết driver Cassandra
+        var table = _cluster.Metadata.GetTable(keyspaceName, tableName);
+        if (table == null) return primaryKeys;
+
+        if (table.PartitionKeys != null)
+        {
+            foreach (var col in table.PartitionKeys)
+            {
+                primaryKeys.Add(col.Name);
+            }
+        }
+
+        if (table.ClusteringKeys != null)
+        {
+            foreach (var cluster in table.ClusteringKeys)
+            {
+                // ClusteringKey là Tuple<TableColumn, SortOrder>
+                primaryKeys.Add(cluster.Item1.Name);
+            }
+        }
+
+        return primaryKeys;
     }
 
     protected override async ValueTask DisposeAsyncCore()
