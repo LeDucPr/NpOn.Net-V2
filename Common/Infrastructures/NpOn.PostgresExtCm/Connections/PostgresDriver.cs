@@ -84,7 +84,8 @@ public class PostgresDriver : NpOnDbDriver
             return CreateFailResult(EDbError.Command);
         }
 
-        return await ExecuteReaderInternalAsync(commandBuilder.CommandText, commandBuilder.Parameters, null, command.IsFetchKeyInfo);
+        return await ExecuteReaderInternalAsync(commandBuilder.CommandText, commandBuilder.Parameters, null,
+            command.IsFetchKeyInfo);
     }
 
     public override async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>> ExecuteWithTransaction(
@@ -126,10 +127,10 @@ public class PostgresDriver : NpOnDbDriver
             wrapper.ReturnToPool = w => _resultSetPool.Return(w);
             return wrapper;
         }
-        
+
         return new PostgresResultSetWrapper().SetFail(error);
     }
-    
+
     private INpOnWrapperResult CreateFailResult(Exception ex)
     {
         if (_resultSetPool != null)
@@ -140,7 +141,7 @@ public class PostgresDriver : NpOnDbDriver
             wrapper.ReturnToPool = w => _resultSetPool.Return(w);
             return wrapper;
         }
-        
+
         return new PostgresResultSetWrapper().SetFail(ex);
     }
 
@@ -179,9 +180,9 @@ public class PostgresDriver : NpOnDbDriver
             }
 
             // Transaction (using)
-            var commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
+            CommandBehavior commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
             await using var reader = await pgCommand.ExecuteReaderAsync(commandBehavior);
-            
+
             if (_resultSetPool != null)
             {
                 var wrapper = _resultSetPool.Get();
