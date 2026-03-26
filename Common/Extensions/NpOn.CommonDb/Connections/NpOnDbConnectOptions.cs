@@ -99,7 +99,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     private string? _keyspace = string.Empty; // cassandra, scyllaDb
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption SetKeyspace<T>(string keyspace) where T : INpOnDbDriver
+    public virtual INpOnConnectOption SetKeyspace/*<T>*/(string keyspace) /* where T : INpOnDbDriver*/
     {
         try
         {
@@ -151,7 +151,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     private string[]? _contactAddresses;
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver
+    public virtual INpOnConnectOption SetContactAddresses/*<T>*/(string[]? contactAddresses)/* where T : INpOnDbDriver*/
     {
         try
         {

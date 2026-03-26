@@ -125,6 +125,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ICommonDb", "Common\Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.BaseDbFactory", "Common\Extensions\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj", "{E9D04675-63E2-4DE2-B3F0-49A6D8168E15}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.CassandraAppExtUse", "Common\Applications\ApplicationExtensions\NpOn.CassandraAppExtUse\NpOn.CassandraAppExtUse.csproj", "{AD60B2C8-CA48-4D12-B7E7-4F6EE9539640}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.CassandraFactory", "Common\Infrastructures\DbFactories\NpOn.CassandraFactory\NpOn.CassandraFactory.csproj", "{C7607972-6CE5-4606-9DED-B8FC83ECD96F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -311,6 +315,14 @@ Global
 		{E9D04675-63E2-4DE2-B3F0-49A6D8168E15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9D04675-63E2-4DE2-B3F0-49A6D8168E15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9D04675-63E2-4DE2-B3F0-49A6D8168E15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD60B2C8-CA48-4D12-B7E7-4F6EE9539640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD60B2C8-CA48-4D12-B7E7-4F6EE9539640}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD60B2C8-CA48-4D12-B7E7-4F6EE9539640}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD60B2C8-CA48-4D12-B7E7-4F6EE9539640}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7607972-6CE5-4606-9DED-B8FC83ECD96F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7607972-6CE5-4606-9DED-B8FC83ECD96F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7607972-6CE5-4606-9DED-B8FC83ECD96F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7607972-6CE5-4606-9DED-B8FC83ECD96F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -375,5 +387,7 @@ Global
 		{F38C25E0-B91F-4337-8848-EA87CD2DB928} = {3E4BDAE5-9D01-428D-A48F-5A8F943FE139}
 		{A111616F-9CA4-4229-BA2D-11C56ECFE9C7} = {3E4BDAE5-9D01-428D-A48F-5A8F943FE139}
 		{E9D04675-63E2-4DE2-B3F0-49A6D8168E15} = {3E4BDAE5-9D01-428D-A48F-5A8F943FE139}
+		{AD60B2C8-CA48-4D12-B7E7-4F6EE9539640} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
+		{C7607972-6CE5-4606-9DED-B8FC83ECD96F} = {B1A2A5B2-1473-4BFE-A5D8-C4F5CC9AF91B}
 	EndGlobalSection
 EndGlobal

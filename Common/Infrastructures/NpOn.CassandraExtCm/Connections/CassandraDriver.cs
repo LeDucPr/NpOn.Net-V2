@@ -1,8 +1,9 @@
-﻿using Cassandra;
+using Cassandra;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Connections;
@@ -11,13 +12,18 @@ public class CassandraDriver : NpOnDbDriver
 {
     private ICluster? _cluster;
     private ISession? _session;
+    private readonly IObjectPool<CassandraResultSetWrapper>? _resultSetPool;
     public sealed override string Name { get; set; }
     public sealed override string Version { get; set; }
 
     public override bool IsValidSession => _session is { IsDisposed: false };
 
-    public CassandraDriver(CassandraConnectOption option) : base(option)
+    public CassandraDriver(CassandraConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
+        if (objectPoolStore != null)
+        {
+            _resultSetPool = objectPoolStore.GetPool(() => new CassandraResultSetWrapper());
+        }
     }
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
@@ -70,15 +76,25 @@ public class CassandraDriver : NpOnDbDriver
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _session == null)
-            return new CassandraResultSetWrapper().SetFail(EDbError.Session);
+            return CreateFailResult(EDbError.Session);
         if (command is not INpOnDbCommand execCommand)
-            return new CassandraResultSetWrapper().SetFail(EDbError.Command);
+            return CreateFailResult(EDbError.Command);
         if (string.IsNullOrWhiteSpace(execCommand.CommandText))
-            return new CassandraResultSetWrapper().SetFail(EDbError.CommandText);
+            return CreateFailResult(EDbError.CommandText);
 
         try
         {
-            var statement = new SimpleStatement(execCommand.CommandText);
+            SimpleStatement statement;
+            if (execCommand.Parameters != null && execCommand.Parameters.Any())
+            {
+                var values = execCommand.Parameters.Select(p => p.ParamValue).ToArray();
+                statement = new SimpleStatement(execCommand.CommandText, values);
+            }
+            else
+            {
+                statement = new SimpleStatement(execCommand.CommandText);
+            }
+            
             RowSet rowSet = await _session.ExecuteAsync(statement).ConfigureAwait(false);
 
             HashSet<string>? primaryKeys = null;
@@ -90,12 +106,47 @@ public class CassandraDriver : NpOnDbDriver
                     primaryKeys = GetPrimaryKeys(firstCol.Keyspace, firstCol.Table);
             }
 
+            if (_resultSetPool != null)
+            {
+                var wrapper = _resultSetPool.Get();
+                wrapper.Reset();
+                wrapper.Init(rowSet, primaryKeys);
+                wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+                return wrapper;
+            }
+
             return new CassandraResultSetWrapper(rowSet, primaryKeys);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return new CassandraResultSetWrapper().SetFail(EDbError.CommandTextSyntax);
+            return CreateFailResult(ex);
         }
+    }
+
+    private INpOnWrapperResult CreateFailResult(EDbError error)
+    {
+        if (_resultSetPool != null)
+        {
+            var wrapper = _resultSetPool.Get();
+            wrapper.Reset();
+            wrapper.SetFail(error);
+            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            return wrapper;
+        }
+        return new CassandraResultSetWrapper().SetFail(error);
+    }
+
+    private INpOnWrapperResult CreateFailResult(Exception ex)
+    {
+        if (_resultSetPool != null)
+        {
+            var wrapper = _resultSetPool.Get();
+            wrapper.Reset();
+            wrapper.SetFail(ex);
+            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            return wrapper;
+        }
+        return new CassandraResultSetWrapper().SetFail(ex);
     }
 
     private HashSet<string> GetPrimaryKeys(string keyspaceName, string tableName)

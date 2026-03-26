@@ -10,7 +10,7 @@ public interface INpOnConnectOption
     INpOnConnectOption SetConnectionString(string connectionString);
     string? ConnectionString { get; }
 
-    INpOnConnectOption? SetKeyspace<T>(string keyspace) where T : INpOnDbDriver;
+    INpOnConnectOption? SetKeyspace(string keyspace); // where T : INpOnDbDriver;
     string? Keyspace { get; }
 
     INpOnConnectOption? SetPort<T>(int port) where T : INpOnDbDriver;
@@ -22,7 +22,7 @@ public interface INpOnConnectOption
     INpOnConnectOption? SetCollectionName<T>(string keyspace) where T : INpOnDbDriver;
     string? CollectionName { get; }
 
-    INpOnConnectOption? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver;
+    INpOnConnectOption SetContactAddresses /*<T>*/(string[]? contactAddresses); /* where T : INpOnDbDriver;*/
     string[]? ContactAddresses { get; }
 
     INpOnConnectOption SetShutdownImmediate(bool isShutdownImmediate);

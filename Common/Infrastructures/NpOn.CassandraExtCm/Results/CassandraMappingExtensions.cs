@@ -27,7 +27,8 @@ public static class CassandraMappingExtensions
         var dictCtor = typeof(Dictionary<string, INpOnCell>).GetConstructor(new[] { typeof(int) });
         var dictAdd = typeof(Dictionary<string, INpOnCell>).GetMethod(nameof(Dictionary<string, INpOnCell>.Add));
         var createCell = typeof(CassandraCellDynamicFactory).GetMethod(nameof(CassandraCellDynamicFactory.Create));
-        var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] { typeof(RuntimeTypeHandle) });
+        var getTypeFromHandle =
+            typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] { typeof(RuntimeTypeHandle) });
 
         // var dictionary = new Dictionary<string, INpOnCell>(schemaMap.Count);
         il.Emit(OpCodes.Ldc_I4, schemaMap.Count);
@@ -87,11 +88,12 @@ public static class CassandraMappingExtensions
         var cell = il.DeclareLocal(typeof(INpOnCell));
 
         var listCountGetter = typeof(List<object[]>).GetProperty(nameof(List<object[]>.Count))?.GetGetMethod();
-        var listIndexerGetter = typeof(List<object[]>).GetMethod("get_Item"); 
+        var listIndexerGetter = typeof(List<object[]>).GetMethod("get_Item");
         var dictCtor = typeof(Dictionary<int, INpOnCell>).GetConstructor(new[] { typeof(int) });
         var dictAdd = typeof(Dictionary<int, INpOnCell>).GetMethod(nameof(Dictionary<int, INpOnCell>.Add));
         var createCell = typeof(CassandraCellDynamicFactory).GetMethod(nameof(CassandraCellDynamicFactory.Create));
-        var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] { typeof(RuntimeTypeHandle) });
+        var getTypeFromHandle =
+            typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] { typeof(RuntimeTypeHandle) });
 
         // Load Argument 0
         il.Emit(OpCodes.Ldarg_0);
@@ -111,7 +113,7 @@ public static class CassandraMappingExtensions
 
         il.MarkLabel(loopStart);
 
-        il.Emit(OpCodes.Ldtoken, schemaInfo.DataType); 
+        il.Emit(OpCodes.Ldtoken, schemaInfo.DataType);
         if (getTypeFromHandle != null) il.Emit(OpCodes.Call, getTypeFromHandle);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldloc, i);
@@ -119,7 +121,7 @@ public static class CassandraMappingExtensions
         il.Emit(OpCodes.Ldc_I4, columnIndex);
         il.Emit(OpCodes.Ldelem_Ref);
         il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
-        il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); 
+        il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
         if (createCell != null) il.Emit(OpCodes.Call, createCell);
         il.Emit(OpCodes.Stloc, cell);
 
@@ -131,14 +133,14 @@ public static class CassandraMappingExtensions
         // i++
         il.Emit(OpCodes.Ldloc, i);
         il.Emit(OpCodes.Ldc_I4_1);
-        il.Emit(OpCodes.Add); 
+        il.Emit(OpCodes.Add);
         il.Emit(OpCodes.Stloc, i);
 
         // if i < rowCount
         il.MarkLabel(loopCheck);
         il.Emit(OpCodes.Ldloc, i);
         il.Emit(OpCodes.Ldloc, rowCount);
-        il.Emit(OpCodes.Blt, loopStart); 
+        il.Emit(OpCodes.Blt, loopStart);
 
         il.Emit(OpCodes.Ldloc, dictionary);
         il.Emit(OpCodes.Ret);
@@ -147,7 +149,8 @@ public static class CassandraMappingExtensions
             typeof(Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>));
     }
 
-    public static Func<Row, object[]> CreateArrayRowMapper(IReadOnlyList<NpOnColumnSchemaInfo> orderedSchemas, MethodInfo? normalizerMethod = null)
+    public static Func<Row, object[]> CreateArrayRowMapper(IReadOnlyList<NpOnColumnSchemaInfo> orderedSchemas,
+        MethodInfo? normalizerMethod = null)
     {
         var dynamicMethod = new DynamicMethod(
             nameof(CreateArrayRowMapper),
@@ -159,7 +162,8 @@ public static class CassandraMappingExtensions
         var il = dynamicMethod.GetILGenerator();
 
         var getValueMethod = typeof(Row).GetMethod(nameof(Row.GetValue), new[] { typeof(Type), typeof(string) });
-        var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] { typeof(RuntimeTypeHandle) });
+        var getTypeFromHandle =
+            typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new[] { typeof(RuntimeTypeHandle) });
 
         // var values = new object[orderedSchemas.Count];
         il.Emit(OpCodes.Ldc_I4, orderedSchemas.Count);
@@ -173,8 +177,8 @@ public static class CassandraMappingExtensions
             var schemaInfo = orderedSchemas[i];
 
             // values[i] = ...
-            il.Emit(OpCodes.Ldloc, values); 
-            il.Emit(OpCodes.Ldc_I4, i); 
+            il.Emit(OpCodes.Ldloc, values);
+            il.Emit(OpCodes.Ldc_I4, i);
 
             // reader.GetValue(type, name)
             il.Emit(OpCodes.Ldarg_0); // Row
@@ -184,7 +188,7 @@ public static class CassandraMappingExtensions
 
             il.Emit(OpCodes.Ldstr, schemaInfo.ColumnName);
 
-            if (getValueMethod != null) il.Emit(OpCodes.Callvirt, getValueMethod); 
+            if (getValueMethod != null) il.Emit(OpCodes.Callvirt, getValueMethod);
 
             // if (normalizerMethod != null) normalizerMethod(value)
             if (normalizerMethod != null) il.Emit(OpCodes.Call, normalizerMethod);
