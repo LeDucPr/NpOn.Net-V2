@@ -51,13 +51,13 @@ namespace Common.Infrastructures.DbFactories.NpOn.CassandraFactory
                     valueParams.Add("?");
 
                     row.TryGetValue(colName, out var cell);
-                    var paramValue = cell?.ValueAsObject ?? DBNull.Value;
+                    var (paramValue, cassType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(cell?.ValueAsObject);
 
-                    parameters.Add(new NpOnDbCommandParam<object>
+                    parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                     {
                         ParamName = $"p{paramCounter++}",
-                        ParamValue = paramValue,
-                        ParamType = paramValue.GetType()
+                        ParamValue = paramValue ?? DBNull.Value,
+                        ParamType = cassType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                     });
                 }
 
@@ -105,13 +105,13 @@ namespace Common.Infrastructures.DbFactories.NpOn.CassandraFactory
                     setClauses.Add($"\"{colName}\" = ?");
 
                     row.TryGetValue(colName, out var cell);
-                    var paramValue = cell?.ValueAsObject ?? DBNull.Value;
+                    var (paramValue, cassType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(cell?.ValueAsObject);
                     
-                    parameters.Add(new NpOnDbCommandParam<object>
+                    parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                     {
                         ParamName = $"v{paramCounter++}",
-                        ParamValue = paramValue,
-                        ParamType = paramValue.GetType()
+                        ParamValue = paramValue ?? DBNull.Value,
+                        ParamType = cassType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                     });
                 }
 
@@ -123,11 +123,12 @@ namespace Common.Infrastructures.DbFactories.NpOn.CassandraFactory
                     if (!row.TryGetValue(pkColName, out var cell) || cell.ValueAsObject == null)
                         throw new InvalidOperationException($"PK value for '{pkColName}' cannot be null.");
 
-                    parameters.Add(new NpOnDbCommandParam<object>
+                    var (pkValue, pkType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(cell.ValueAsObject);
+                    parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                     {
                         ParamName = $"pk{paramCounter++}",
-                        ParamValue = cell.ValueAsObject,
-                        ParamType = cell.ValueAsObject.GetType()
+                        ParamValue = pkValue ?? DBNull.Value,
+                        ParamType = pkType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                     });
                 }
 
@@ -177,11 +178,12 @@ namespace Common.Infrastructures.DbFactories.NpOn.CassandraFactory
                     if (!row.TryGetValue(pkColName, out var cell) || cell.ValueAsObject == null)
                         throw new InvalidOperationException($"PK value for '{pkColName}' cannot be null.");
 
-                    parameters.Add(new NpOnDbCommandParam<object>
+                    var (pkValue, pkType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(cell.ValueAsObject);
+                    parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                     {
                         ParamName = $"pk{paramCounter++}",
-                        ParamValue = cell.ValueAsObject,
-                        ParamType = cell.ValueAsObject.GetType()
+                        ParamValue = pkValue ?? DBNull.Value,
+                        ParamType = pkType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                     });
                 }
 

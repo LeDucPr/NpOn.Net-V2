@@ -53,11 +53,12 @@ public static class BaseDomainExtensions
                 cols.Add(columnName);
                 paramNames.Add(param);
                 
-                var p = new NpOnDbCommandParam<object>
+                var (val, cassType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(raw);
+                var p = new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                 {
                     ParamName = $"p_{i}_{cols.Count}",
-                    ParamValue = raw ?? DBNull.Value,
-                    ParamType = raw?.GetType() ?? typeof(object)
+                    ParamValue = val ?? DBNull.Value,
+                    ParamType = cassType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                 };
                 parameters.Add(p);
             }
@@ -107,11 +108,12 @@ public static class BaseDomainExtensions
                 }
 
                 setClauses.Add($"{colName} = ?");
-                parameters.Add(new NpOnDbCommandParam<object>
+                var (val, cassType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(raw);
+                parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                 {
                     ParamName = $"v_{i}_{colName}",
-                    ParamValue = raw ?? DBNull.Value,
-                    ParamType = raw?.GetType() ?? typeof(object)
+                    ParamValue = val ?? DBNull.Value,
+                    ParamType = cassType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                 });
             }
 
@@ -124,12 +126,13 @@ public static class BaseDomainExtensions
                 if (pkVal == null)
                     throw new Exception($"Primary key value for {pkMember.ColumnName} cannot be null");
 
+                var (pkValue, pkType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(pkVal);
                 pkConditions.Add($"{pkMember.ColumnName} = ?");
-                parameters.Add(new NpOnDbCommandParam<object>
+                parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                 {
                     ParamName = $"pk_{i}_{pkMember.ColumnName}",
-                    ParamValue = pkVal,
-                    ParamType = pkVal.GetType()
+                    ParamValue = pkValue ?? DBNull.Value,
+                    ParamType = pkType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                 });
             }
 
@@ -189,12 +192,13 @@ public static class BaseDomainExtensions
                     }
                 }
 
+                var (pkValue, pkType) = Common.Infrastructures.NpOn.CassandraExtCm.Results.CassandraUtils.NormalizeForCassandra(raw);
                 pkConditions.Add($"{pkMember.ColumnName} = ?");
-                parameters.Add(new NpOnDbCommandParam<object>
+                parameters.Add(new NpOnDbCommandParam<Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType>
                 {
                     ParamName = $"pk_{i}_{pkMember.ColumnName}",
-                    ParamValue = raw,
-                    ParamType = raw.GetType()
+                    ParamValue = pkValue ?? DBNull.Value,
+                    ParamType = pkType ?? Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown
                 });
             }
 

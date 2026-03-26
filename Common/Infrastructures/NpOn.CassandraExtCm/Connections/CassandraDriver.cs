@@ -1,5 +1,6 @@
 using Cassandra;
 using Common.Extensions.NpOn.CommonDb.Connections;
+using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -87,8 +88,26 @@ public class CassandraDriver : NpOnDbDriver
             SimpleStatement statement;
             if (execCommand.Parameters != null && execCommand.Parameters.Any())
             {
-                var values = execCommand.Parameters.Select(p => p.ParamValue).ToArray();
-                statement = new SimpleStatement(execCommand.CommandText, values);
+                var values = new List<object?>();
+                foreach (var prm in execCommand.Parameters)
+                {
+                    var targetDbType = ECassandraDbType.Unknown;
+                    if (prm is NpOnDbCommandParam<ECassandraDbType> typedParam)
+                        targetDbType = typedParam.ParamType;
+
+                    // value and type logic
+                    if (targetDbType != ECassandraDbType.Unknown)
+                    {
+                        // Here you can do custom casting inside driver if specific ECassandraDbType requires it
+                        // For Cassandra driver DataStax, most primitive matching is fine
+                        values.Add(prm.ParamValue);
+                    }
+                    else
+                    {
+                        values.Add(prm.ParamValue);
+                    }
+                }
+                statement = new SimpleStatement(execCommand.CommandText, values.ToArray());
             }
             else
             {
