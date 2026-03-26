@@ -28,7 +28,7 @@ public class CassandraRowWrapper : NpOnWrapperResult<object[], IReadOnlyDictiona
 
 /// <summary>
 /// ColumnWrapper (truy cập được từ Key-integer hoặc Key-string)
-/// </summary>
+/// </summary>  
 public class CassandraColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>,
     INpOnColumnWrapper
 {

@@ -2,6 +2,7 @@ using System.Data;
 using System.Net;
 using System.Numerics;
 using Cassandra;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
@@ -31,7 +32,9 @@ public static class CassandraUtils
         { typeof(LocalTime), DbType.Time }, // CQL time
         { typeof(uint), DbType.UInt32 },
         { typeof(ulong), DbType.UInt64 },
-        { typeof(ushort), DbType.UInt16 }
+        { typeof(ushort), DbType.UInt16 },
+        { typeof(TimeUuid), DbType.Guid }, // CQL timeuuid
+        { typeof(Duration), DbType.Object } // CQL duration
     };
 
     public static object? NormalizeCassandraValue(this object? value)
@@ -56,35 +59,55 @@ public static class CassandraUtils
         return TypeMap.GetValueOrDefault(underlyingType, DbType.Object);
     }
 
-    public static Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType GetECassandraDbType(Type type)
+    public static ECassandraDbType GetECassandraDbType(Type type)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
         if (underlyingType.IsEnum)
             underlyingType = Enum.GetUnderlyingType(underlyingType);
 
-        if (underlyingType == typeof(string)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Text;
-        if (underlyingType == typeof(int)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Int;
-        if (underlyingType == typeof(long)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Bigint;
-        if (underlyingType == typeof(short)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.SmallInt;
-        if (underlyingType == typeof(sbyte)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.TinyInt;
-        if (underlyingType == typeof(byte[])) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Blob;
-        if (underlyingType == typeof(bool)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Boolean;
-        if (underlyingType == typeof(decimal)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Decimal;
-        if (underlyingType == typeof(double)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Double;
-        if (underlyingType == typeof(float)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Float;
-        if (underlyingType == typeof(Guid)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Uuid;
-        if (underlyingType == typeof(DateTime)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Timestamp;
-        if (underlyingType == typeof(DateTimeOffset)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Timestamp;
-        if (underlyingType == typeof(LocalDate)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Date;
-        if (underlyingType == typeof(LocalTime)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Time;
-        if (underlyingType == typeof(TimeSpan)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Time;
-        if (underlyingType == typeof(IPAddress)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Inet;
-        if (underlyingType == typeof(BigInteger)) return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Varint;
+        if (underlyingType == typeof(string)) return ECassandraDbType.Text;
+        if (underlyingType == typeof(int)) return ECassandraDbType.Int;
+        if (underlyingType == typeof(long)) return ECassandraDbType.Bigint;
+        if (underlyingType == typeof(short)) return ECassandraDbType.SmallInt;
+        if (underlyingType == typeof(sbyte)) return ECassandraDbType.TinyInt;
+        if (underlyingType == typeof(bool)) return ECassandraDbType.Boolean;
+        if (underlyingType == typeof(decimal)) return ECassandraDbType.Decimal;
+        if (underlyingType == typeof(double)) return ECassandraDbType.Double;
+        if (underlyingType == typeof(float)) return ECassandraDbType.Float;
+        if (underlyingType == typeof(Guid)) return ECassandraDbType.Uuid;
+        if (underlyingType == typeof(DateTime)) return ECassandraDbType.Timestamp;
+        if (underlyingType == typeof(DateTimeOffset)) return ECassandraDbType.Timestamp;
+        if (underlyingType == typeof(LocalDate)) return ECassandraDbType.Date;
+        if (underlyingType == typeof(LocalTime)) return ECassandraDbType.Time;
+        if (underlyingType == typeof(TimeSpan)) return ECassandraDbType.Time;
+        if (underlyingType == typeof(IPAddress)) return ECassandraDbType.Inet;
+        if (underlyingType == typeof(BigInteger)) return ECassandraDbType.Varint;
+        if (underlyingType == typeof(TimeUuid)) return ECassandraDbType.Timeuuid;
+        if (underlyingType == typeof(Duration)) return ECassandraDbType.Duration;
 
-        return Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown;
+        if (underlyingType.IsArray)
+        {
+            if (underlyingType == typeof(byte[])) return ECassandraDbType.Blob;
+            return ECassandraDbType.List;
+        }
+
+        if (underlyingType.IsGenericType)
+        {
+            var genDef = underlyingType.GetGenericTypeDefinition();
+            if (genDef == typeof(List<>) || genDef == typeof(IList<>) || genDef == typeof(IEnumerable<>))
+                return ECassandraDbType.List;
+            if (genDef == typeof(Dictionary<,>) || genDef == typeof(IDictionary<,>))
+                return ECassandraDbType.Map;
+            if (genDef == typeof(HashSet<>) || genDef == typeof(ISet<>))
+                return ECassandraDbType.Set;
+            if (typeof(System.Runtime.CompilerServices.ITuple).IsAssignableFrom(underlyingType))
+                return ECassandraDbType.Tuple;
+        }
+
+        return ECassandraDbType.Unknown;
     }
 
-    public static (object? Value, Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType? DbType) NormalizeForCassandra(object? raw)
+    public static (object? Value, ECassandraDbType? DbType) NormalizeForCassandra(object? raw)
     {
         if (raw == null || raw == DBNull.Value) return (null, null);
 
@@ -105,6 +128,6 @@ public static class CassandraUtils
         else if (raw is ushort us) raw = (int)us;
         else if (raw is byte b) raw = (sbyte)b;
         
-        return (raw, dbType != Common.Extensions.NpOn.CommonEnums.DatabaseEnums.ECassandraDbType.Unknown ? dbType : null);
+        return (raw, dbType != ECassandraDbType.Unknown ? dbType : null);
     }
 }
