@@ -49,7 +49,7 @@ public static class CassandraCellDynamicFactory
             nameof(CassandraCell<object>.FromCassandra),
             BindingFlags.Public | BindingFlags.Static,
             null,
-            new[] { typeof(object), typeof(string), typeof(bool) },
+            new[] { typeof(object), typeof(string), typeof(bool) }, // overload parameters
             null
         );
 
