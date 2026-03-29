@@ -30,7 +30,7 @@ public class RedisDriver : NpOnDbDriver
 
         await DisconnectAsync();
         if (Option.ConnectionString != null)
-            _connection = await ConnectionMultiplexer.ConnectAsync(Option.ConnectionString);
+            _connection ??= await ConnectionMultiplexer.ConnectAsync(Option.ConnectionString); // 
 
         if (_connection is { IsConnected: true })
         {
