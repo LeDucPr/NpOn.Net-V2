@@ -12,7 +12,9 @@ AppName: AccountService
 CookieDomain: ".npon_v2"
 CookieAuthenName: NpOn
 JwtTokensKey: "h987HG&H&G$T*h*8Yo8Y!&iy8ttg*I$%U_YhKJ$#uG8Q7T_G^87!G@H9QN87*tyh&H$uM!iy$G7_68Rf&$*hY97^8Hu_iYG8!67GFtfG87TG*&^tKioGTK"
-IsStartAsync: true
+
+
+IsStartAsync: false
 IsUseGrpcStandardMode: true
 IsUseEnableUnencryptedMode: true
 HostPort: 40004
@@ -20,11 +22,11 @@ HostDomain: "http://0.0.0.0"
 WorkerThreadMin: 2500
 
 
-ConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=password;Database=account;"
-ConnectionNumber: 1000 #00
+PostgresConnectionString: "Host=192.168.1.7;Port=5432;Username=postgres;Password=password;Database=account;"
+PostgresConnectionNumber: 1000 #00
 
 IsUseRedisCache: true
-RedisConnectString: "localhost:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+RedisConnectString: "192.168.1.7:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 1000 #00
 
 #CORS: "*"
@@ -38,13 +40,13 @@ IsAutomaticKeyGeneration: true
 IsDevEnvironment: true
 
 IsUseKafka: false
-KafkaConnection: "localhost:19092"
+KafkaConnection: "192.168.1.7:19092"
 KafkaTopicName: NpOn_V2.AccountService
 SaslUsername: npon_admin
 SaslPassword: npon_admin_pass
 
 IsUseRabbitMq: true
-RabbitMqConnection: "amqp://rabbitmq:password@localhost:5672/"
+RabbitMqConnection: "amqp://rabbitmq:password@192.168.1.7:5672/"
 RabbitMqExchangeName: NpOn_V2.AccountService
 
 LoginTokenExpiresTime: 1

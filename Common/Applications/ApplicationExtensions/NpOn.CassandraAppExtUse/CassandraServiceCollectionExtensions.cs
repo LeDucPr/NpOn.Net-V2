@@ -13,9 +13,9 @@ public static class CassandraServiceCollectionExtensions
         services.AddSingleton<ICassandraFactoryWrapper, CassandraFactoryWrapper>(sp =>
         {
             connectionString ??=
-                EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
+                EApplicationConfiguration.PostgresConnectionString.GetAppSettingConfig().AsDefaultString();
             connectionNumber ??=
-                EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
+                EApplicationConfiguration.PostgresConnectionNumber.GetAppSettingConfig().AsDefaultInt();
 
             var contactAddresses = string.IsNullOrWhiteSpace(connectionString) 
                 ? Array.Empty<string>() 

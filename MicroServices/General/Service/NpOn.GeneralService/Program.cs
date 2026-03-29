@@ -46,7 +46,7 @@ public sealed class Program : HttpCommonProgram
         IObjectPoolStore store = new ObjectPoolStore();
         store.PreAllocate(
             () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
-            EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt()
+            EApplicationConfiguration.PostgresConnectionNumber.GetAppSettingConfig().AsDefaultInt()
         );
         services.AddSingleton(store);
         services.AddPostgres(poolStore: store);

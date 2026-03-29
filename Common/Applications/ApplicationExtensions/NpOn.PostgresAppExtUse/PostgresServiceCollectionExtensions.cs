@@ -13,9 +13,9 @@ public static class PostgresServiceCollectionExtensions
         services.AddSingleton<IPostgresFactoryWrapper, PostgresFactoryWrapper>(sp =>
         {
             connectionString ??=
-                EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
+                EApplicationConfiguration.PostgresConnectionString.GetAppSettingConfig().AsDefaultString();
             connectionNumber ??=
-                EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
+                EApplicationConfiguration.PostgresConnectionNumber.GetAppSettingConfig().AsDefaultInt();
 
             PostgresFactoryWrapper factoryWrapper =
                 new PostgresFactoryWrapper(connectionString, poolStore, (int)connectionNumber);
