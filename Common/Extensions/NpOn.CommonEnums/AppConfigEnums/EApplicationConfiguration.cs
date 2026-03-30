@@ -15,6 +15,7 @@ public enum EApplicationConfiguration
     [Display(Name = "PostgresConnectionString")] PostgresConnectionString, // - string
     [Display(Name = "PostgresConnectionNumber")] PostgresConnectionNumber, // - int
     [Display(Name = "CassandraConnectionString")] CassandraConnectionString, // - string
+    [Display(Name = "CassandraKeySpace")] CassandraKeySpace, // - int
     [Display(Name = "CassandraConnectionNumber")] CassandraConnectionNumber, // - int
     [Display(Name = "RedisConnectString")] RedisConnectString, // - string
     [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int

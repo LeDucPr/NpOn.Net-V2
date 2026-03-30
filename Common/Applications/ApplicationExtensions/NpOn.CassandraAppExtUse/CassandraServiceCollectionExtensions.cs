@@ -8,14 +8,13 @@ namespace NpOn.CassandraAppExtUse;
 public static class CassandraServiceCollectionExtensions
 {
     public static IServiceCollection AddCassandra(this IServiceCollection services,
-        string keyspace, string? connectionString = null, int? connectionNumber = null, IObjectPoolStore? poolStore = null)
+        string? keyspace = null, string? connectionString = null, int? connectionNumber = null, IObjectPoolStore? poolStore = null)
     {
         services.AddSingleton<ICassandraFactoryWrapper, CassandraFactoryWrapper>(sp =>
         {
-            connectionString ??=
-                EApplicationConfiguration.PostgresConnectionString.GetAppSettingConfig().AsDefaultString();
-            connectionNumber ??=
-                EApplicationConfiguration.PostgresConnectionNumber.GetAppSettingConfig().AsDefaultInt();
+            keyspace ??= EApplicationConfiguration.CassandraKeySpace.GetAppSettingConfig().AsDefaultString();
+            connectionString ??= EApplicationConfiguration.CassandraConnectionString.GetAppSettingConfig().AsDefaultString();
+            connectionNumber ??= EApplicationConfiguration.CassandraConnectionNumber.GetAppSettingConfig().AsDefaultInt();
 
             var contactAddresses = string.IsNullOrWhiteSpace(connectionString) 
                 ? Array.Empty<string>() 

@@ -1,7 +1,6 @@
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
-using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
@@ -10,10 +9,9 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.Migration.Service.NpOn.MigrationService.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using NpOn.AddGrpcAppExtUse;
-using NpOn.CommonGrpcCall;
+using NpOn.CassandraAppExtUse;
 
 namespace MicroServices.Migration.Service.NpOn.MigrationService;
 
@@ -38,19 +36,21 @@ public sealed class Program : HttpCommonProgram
                 .AddDefaultKestrelListenConfig()
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
-                // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
-                // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
-        
+        // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
+        // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore();
         store.PreAllocate(
             () => new NpOnWrapperResult(),
             1000
-        );  
+        );
         services.AddSingleton(store);
         services
+            .AddCassandra(poolStore: store)
             .AddPostgres(poolStore: store);
-            // .AddRedis();
+
+        // .AddRedis();
 
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())

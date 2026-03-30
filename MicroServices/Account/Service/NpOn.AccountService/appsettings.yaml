@@ -25,7 +25,6 @@ WorkerThreadMin: 2500
 PostgresConnectionString: "Host=192.168.1.7;Port=5432;Username=postgres;Password=password;Database=account;"
 PostgresConnectionNumber: 1000 #00
 
-
 IsUseRedisCache: true
 RedisConnectString: "192.168.1.7:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 1000 #00

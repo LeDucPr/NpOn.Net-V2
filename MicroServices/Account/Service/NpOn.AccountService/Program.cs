@@ -19,7 +19,6 @@ using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.AddGrpcAppExtUse;
-using NpOn.CassandraAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
@@ -61,7 +60,6 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)
-            .AddCassandra(poolStore: store)
             .AddRedis();
 
 
