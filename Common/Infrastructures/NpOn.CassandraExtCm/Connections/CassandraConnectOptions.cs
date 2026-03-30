@@ -1,10 +1,13 @@
-﻿using Common.Extensions.NpOn.CommonDb.Connections;
+using Common.Extensions.NpOn.CommonDb.Connections;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 
 public class CassandraConnectOption : DbNpOnConnectOption<CassandraDriver>
 {
+    public IObjectPoolStore? PoolStore { get; set; }
+
     public override bool IsConnectValid()
     {
         try

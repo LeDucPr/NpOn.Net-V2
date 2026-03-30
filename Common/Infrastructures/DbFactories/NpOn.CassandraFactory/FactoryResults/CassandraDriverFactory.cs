@@ -12,8 +12,17 @@ public class CassandraDriverFactory : BaseDbDriverFactory
 {
     private readonly IObjectPoolStore? _poolStore;
 
+    private static INpOnConnectOption InjectPoolStore(INpOnConnectOption option, IObjectPoolStore? poolStore)
+    {
+        if (option is CassandraConnectOption cassandraOption)
+        {
+            cassandraOption.PoolStore = poolStore;
+        }
+        return option;
+    }
+
     public CassandraDriverFactory(INpOnConnectOption option, IObjectPoolStore? poolStore = null,
-        int connectionNumber = 1) : base(EDb.Postgres, option, connectionNumber)
+        int connectionNumber = 1) : base(EDb.Cassandra, InjectPoolStore(option, poolStore), connectionNumber)
     {
         _poolStore = poolStore;
     }
@@ -34,7 +43,7 @@ public class CassandraDriverFactory : BaseDbDriverFactory
                 nameof(option));
         }
 
-        INpOnDbDriver driver = new CassandraDriver(cassandraOptions, _poolStore);
+        INpOnDbDriver driver = new CassandraDriver(cassandraOptions, cassandraOptions.PoolStore ?? _poolStore);
         return new NpOnDbConnection<CassandraDriver>(driver);
     }
 }
