@@ -10,6 +10,7 @@ using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.Account.Service.NpOn.AccountService.KafkaConsumers;
 using MicroServices.Account.Service.NpOn.AccountService.RabbitMqConsumers;
 using MicroServices.Account.Service.NpOn.AccountService.Services;
@@ -18,6 +19,7 @@ using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.AddGrpcAppExtUse;
+using NpOn.CassandraAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
@@ -51,7 +53,7 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton<IObjectPoolStore>(sp => 
         {
             store.PreAllocate(
-                () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
+                () => new NpOnWrapperResult(),
                 100
             );
             return store;
@@ -59,6 +61,7 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)
+            .AddCassandra(poolStore: store)
             .AddRedis();
 
 

@@ -7,6 +7,7 @@ using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.General.Contract.GeneralServiceContract.ReadModels;
 using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
@@ -45,7 +46,7 @@ public sealed class Program : HttpCommonProgram
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore();
         store.PreAllocate(
-            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
+            () => new NpOnWrapperResult(),
             EApplicationConfiguration.PostgresConnectionNumber.GetAppSettingConfig().AsDefaultInt()
         );
         services.AddSingleton(store);

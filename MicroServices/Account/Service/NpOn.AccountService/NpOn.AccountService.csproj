@@ -18,6 +18,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj"/>
+        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.CassandraAppExtUse\NpOn.CassandraAppExtUse.csproj" />
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.KafkaAppExtUse\NpOn.KafkaAppExtUse.csproj" />
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RabbitMqAppExtUse\NpOn.RabbitMqAppExtUse.csproj"/>

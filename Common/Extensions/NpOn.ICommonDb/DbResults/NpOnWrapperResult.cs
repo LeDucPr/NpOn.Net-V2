@@ -19,7 +19,7 @@ public interface INpOnWrapperResult<out TParent, out TChild> : INpOnWrapperResul
     TChild Result { get; }
 }
 
-public abstract class NpOnWrapperResult : INpOnWrapperResult
+public class NpOnWrapperResult : INpOnWrapperResult
 {
     private bool _isSuccess = false;
     private string? _errorString = null;
@@ -29,7 +29,7 @@ public abstract class NpOnWrapperResult : INpOnWrapperResult
     private long _queryTimeMilliseconds = 0;
     private bool _isStopped = false;
 
-    protected NpOnWrapperResult()
+    public NpOnWrapperResult()
     {
         _stopwatch = Stopwatch.StartNew();
     }

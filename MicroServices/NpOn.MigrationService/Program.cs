@@ -8,6 +8,7 @@ using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.Migration.Service.NpOn.MigrationService.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -43,7 +44,7 @@ public sealed class Program : HttpCommonProgram
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore();
         store.PreAllocate(
-            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
+            () => new NpOnWrapperResult(),
             1000
         );  
         services.AddSingleton(store);
