@@ -77,8 +77,8 @@ services:
       - 9101:9100
       - 9161:9160
       - 7200:7199
-    depends_on:
-      - scylla-node1
+    # depends_on:
+    #   - scylla-node1
     networks:
       vnet:
 
@@ -101,9 +101,9 @@ services:
       - 9102:9100
       - 9162:9160
       - 7201:7199
-    depends_on:
-      - scylla-node1
-      - scylla-node2
+    # depends_on:
+    #   - scylla-node1
+    #   - scylla-node2
     networks:
       vnet:
 

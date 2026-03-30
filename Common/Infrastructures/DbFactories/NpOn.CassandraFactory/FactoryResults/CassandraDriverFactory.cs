@@ -4,7 +4,6 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
-using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 
 namespace Common.Infrastructures.DbFactories.NpOn.CassandraFactory.FactoryResults;
 

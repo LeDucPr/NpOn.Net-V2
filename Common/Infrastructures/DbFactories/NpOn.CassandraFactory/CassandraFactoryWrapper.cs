@@ -20,12 +20,12 @@ public class CassandraFactoryWrapper : BaseDbFactoryWrapper, ICassandraFactoryWr
         DbType = EDb.Cassandra;
         Factory = new CassandraDriverFactory(
 #pragma warning disable CS0618 // Type or member is obsolete
-            new CassandraConnectOption()
+            option: new CassandraConnectOption()
                 .SetKeyspace(keyspace)
 #pragma warning restore CS0618 // Type or member is obsolete
                 .SetContactAddresses(contactAddresses),
-            poolStore,
-            connectionNumber);
+            poolStore: poolStore,
+            connectionNumber: connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
@@ -36,7 +36,7 @@ public class CassandraFactoryWrapper : BaseDbFactoryWrapper, ICassandraFactoryWr
         DbType = EDb.Cassandra;
         if (connectOption is not CassandraConnectOption)
             throw new ArgumentException("connectOption must be a CassandraConnectOption");
-        Factory = new CassandraDriverFactory(connectOption, poolStore, connectionNumber);
+        Factory = new CassandraDriverFactory(option: connectOption, poolStore: poolStore, connectionNumber: connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
