@@ -1,11 +1,11 @@
-﻿using System.Collections.Concurrent;
+﻿using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 
 namespace Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 
 // A thread-safe store for managing and accessing multiple object pools.
 public class ObjectPoolStore : IObjectPoolStore
 {
-    private readonly ConcurrentDictionary<Type, object> _pools = new();
+    private readonly WrapperCacheStore<Type, object> _pools = new();
 
     // Gets or creates an object pool for the specified type.
     public IObjectPool<T> GetPool<T>(Func<T> objectFactory) where T : class =>

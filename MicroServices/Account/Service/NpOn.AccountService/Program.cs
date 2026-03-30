@@ -48,10 +48,14 @@ public sealed class Program : HttpCommonProgram
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore();
-        store.PreAllocate(
-            () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
-            100
-        );
+        services.AddSingleton<IObjectPoolStore>(sp => 
+        {
+            store.PreAllocate(
+                () => new Common.Infrastructures.NpOn.PostgresExtCm.Results.PostgresResultSetWrapper(),
+                100
+            );
+            return store;
+        });
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)

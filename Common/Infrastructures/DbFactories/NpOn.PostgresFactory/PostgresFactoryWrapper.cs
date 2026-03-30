@@ -21,10 +21,10 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
     {
         DbType = EDb.Postgres;
         Factory = new PostgresDriverFactory(
-            new PostgresConnectOption()
+            option: new PostgresConnectOption()
                 .SetConnectionString(openConnectString),
-            poolStore,
-            connectionNumber);
+            poolStore: poolStore,
+            connectionNumber: connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
@@ -35,7 +35,7 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
         DbType = EDb.Postgres;
         if (connectOption is not PostgresConnectOption)
             throw new ArgumentException("connectOption must be a PostgresConnectOption");
-        Factory = new PostgresDriverFactory(connectOption, poolStore, connectionNumber);
+        Factory = new PostgresDriverFactory(option: connectOption, poolStore: poolStore, connectionNumber: connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }

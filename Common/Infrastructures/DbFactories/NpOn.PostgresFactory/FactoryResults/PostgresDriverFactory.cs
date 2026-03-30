@@ -11,8 +11,17 @@ public class PostgresDriverFactory : BaseDbDriverFactory
 {
     private readonly IObjectPoolStore? _poolStore;
 
+    private static INpOnConnectOption InjectPoolStore(INpOnConnectOption option, IObjectPoolStore? poolStore)
+    {
+        if (option is PostgresConnectOption pgOption)
+        {
+            pgOption.PoolStore = poolStore;
+        }
+        return option;
+    }
+
     public PostgresDriverFactory(INpOnConnectOption option, IObjectPoolStore? poolStore = null,
-        int connectionNumber = 1) : base(EDb.Postgres, option, connectionNumber)
+        int connectionNumber = 1) : base(EDb.Postgres, InjectPoolStore(option, poolStore), connectionNumber)
     {
         _poolStore = poolStore;
     }
@@ -33,7 +42,7 @@ public class PostgresDriverFactory : BaseDbDriverFactory
                 nameof(option));
         }
 
-        INpOnDbDriver driver = new PostgresDriver(postgresOptions, _poolStore);
+        INpOnDbDriver driver = new PostgresDriver(postgresOptions, postgresOptions.PoolStore ?? _poolStore);
         return new NpOnDbConnection<PostgresDriver>(driver);
     }
 }
