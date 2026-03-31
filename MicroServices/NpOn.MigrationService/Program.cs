@@ -8,10 +8,12 @@ using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
+using MicroServices.Migration.Service.NpOn.IMigrationService;
 using MicroServices.Migration.Service.NpOn.MigrationService.Services;
 using Microsoft.AspNetCore.Builder;
 using NpOn.AddGrpcAppExtUse;
 using NpOn.CassandraAppExtUse;
+using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Migration.Service.NpOn.MigrationService;
 
@@ -36,6 +38,7 @@ public sealed class Program : HttpCommonProgram
                 .AddDefaultKestrelListenConfig()
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
+                // .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
         // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
         // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
@@ -79,7 +82,7 @@ public sealed class Program : HttpCommonProgram
         // }
 
         // Add Service
-        // services.AddTransient<IAccountInfoService, AccountInfoService>();
+        services.AddTransient<ICassandraMigration, CassandraMigration>();
 
         // Add Repository
         // services.AddTransient<IAccountInfoStorageAdapter, AccountInfoStorageAdapter>();
@@ -93,7 +96,7 @@ public sealed class Program : HttpCommonProgram
     protected override Task ConfigurePipeline(WebApplication app)
     {
         // Add Map Grpc Service
-        // app.MapGrpcService<AccountInfoService>();
+        app.MapGrpcService<CassandraMigration>();
         return Task.CompletedTask;
     }
 }

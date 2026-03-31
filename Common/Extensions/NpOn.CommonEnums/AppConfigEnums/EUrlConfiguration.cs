@@ -8,4 +8,5 @@ public enum EUrlConfiguration
     // UrlZone
     AccountServiceUrl, // - string
     GeneralServiceUrl, // - string
+    MigrationService, // - string
 }

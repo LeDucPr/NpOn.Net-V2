@@ -15,4 +15,9 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3"/>
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
+      <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+    </ItemGroup>
 </Project>

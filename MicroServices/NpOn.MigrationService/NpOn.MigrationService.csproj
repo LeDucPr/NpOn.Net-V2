@@ -27,5 +27,6 @@
       <ProjectReference Include="..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
       <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
+      <ProjectReference Include="..\NpOn.IMigrationService\NpOn.IMigrationService.csproj" />
     </ItemGroup>
 </Project>

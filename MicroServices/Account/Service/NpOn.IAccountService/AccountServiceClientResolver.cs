@@ -17,4 +17,3 @@ public class AccountServiceClientResolver : InternalGrpcClientResolver
             return Task.CompletedTask;
         };
 }
- 
