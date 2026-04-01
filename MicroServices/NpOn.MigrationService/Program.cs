@@ -13,7 +13,6 @@ using MicroServices.Migration.Service.NpOn.MigrationService.Services;
 using Microsoft.AspNetCore.Builder;
 using NpOn.AddGrpcAppExtUse;
 using NpOn.CassandraAppExtUse;
-using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Migration.Service.NpOn.MigrationService;
 
@@ -56,6 +55,10 @@ public sealed class Program : HttpCommonProgram
         // .AddRedis();
 
 
+        // Add Service
+        services.AddTransient<CassandraMigration>();
+        services.AddTransient<ICassandraMigration>(sp => sp.GetRequiredService<CassandraMigration>());
+
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();
@@ -81,8 +84,6 @@ public sealed class Program : HttpCommonProgram
         //         .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
         // }
 
-        // Add Service
-        services.AddTransient<ICassandraMigration, CassandraMigration>();
 
         // Add Repository
         // services.AddTransient<IAccountInfoStorageAdapter, AccountInfoStorageAdapter>();

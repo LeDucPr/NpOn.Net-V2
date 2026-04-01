@@ -21,7 +21,7 @@ public static class CassandraServiceCollectionExtensions
                 : connectionString.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
             CassandraFactoryWrapper factoryWrapper =
-                new CassandraFactoryWrapper(keyspace, contactAddresses, poolStore, (int)connectionNumber);
+                new CassandraFactoryWrapper(connectionString, keyspace, contactAddresses, poolStore, (int)connectionNumber);
             return factoryWrapper;
         });
         return services;

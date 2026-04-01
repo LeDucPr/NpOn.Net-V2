@@ -14,7 +14,7 @@ namespace Common.Infrastructures.DbFactories.NpOn.CassandraFactory;
 
 public class CassandraFactoryWrapper : BaseDbFactoryWrapper, ICassandraFactoryWrapper, IActionGenerator
 {
-    public CassandraFactoryWrapper(
+    public CassandraFactoryWrapper(string connectString,
         string keyspace, string[] contactAddresses, IObjectPoolStore? poolStore = null, int connectionNumber = 1, bool isUseCaching = true)
     {
         DbType = EDb.Cassandra;
@@ -23,6 +23,7 @@ public class CassandraFactoryWrapper : BaseDbFactoryWrapper, ICassandraFactoryWr
             option: new CassandraConnectOption()
                 .SetKeyspace(keyspace)
 #pragma warning restore CS0618 // Type or member is obsolete
+                .SetConnectionString(connectString)
                 .SetContactAddresses(contactAddresses),
             poolStore: poolStore,
             connectionNumber: connectionNumber);

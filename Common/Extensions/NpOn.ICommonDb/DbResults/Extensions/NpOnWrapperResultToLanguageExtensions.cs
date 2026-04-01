@@ -1,4 +1,5 @@
 using System.Text;
+using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
 namespace Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
@@ -42,108 +43,137 @@ public class NpOnWrapperResultQueryBuilder
     /// </summary>
     public string BuildInsert()
     {
+        var rowList = _rows.ToList();
+        if (rowList.Count == 0) return string.Empty;
+
         var sb = new StringBuilder();
         var tableName = _tableName ?? "UnknownTable";
 
-        foreach (var rowWrapper in _rows)
+        switch (_language)
         {
-            var cells = rowWrapper.GetRowWrapper();
-            if (cells.Count == 0) 
-                continue;
+            case EDbLanguage.Cql:
+                if (rowList.Count > 1) sb.AppendLine("BEGIN BATCH");
+                foreach (var rowWrapper in rowList)
+                {
+                    var cells = rowWrapper.GetRowWrapper();
+                    if (cells.Count == 0) continue;
 
-            var columns = new List<string>();
-            var values = new List<string>();
+                    var columns = new List<string>();
+                    var values = new List<string>();
+                    foreach (var kvp in cells)
+                    {
+                        var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
+                        columns.Add(targetCol);
+                        values.Add(FormatDbValue(kvp.Value?.ValueAsObject));
+                    }
+                    sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)});\n");
+                }
+                if (rowList.Count > 1) sb.Append("APPLY BATCH;");
+                break;
 
-            foreach (var kvp in cells)
-            {
-                var sourceCol = kvp.Key;
-                var targetCol = _columnMappings.GetValueOrDefault(sourceCol, sourceCol);
-                columns.Add(targetCol);
+            case EDbLanguage.Sql:
+                foreach (var rowWrapper in rowList)
+                {
+                    var cells = rowWrapper.GetRowWrapper();
+                    if (cells.Count == 0) continue;
 
-                var cellValue = kvp.Value.ValueAsObject;
-                values.Add(FormatDbValue(cellValue));
-            }
+                    var columns = new List<string>();
+                    var values = new List<string>();
+                    foreach (var kvp in cells)
+                    {
+                        var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
+                        columns.Add(targetCol);
+                        values.Add(FormatDbValue(kvp.Value?.ValueAsObject));
+                    }
+                    sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)});\n");
+                }
+                break;
 
-            switch (_language)
-            {
-                case EDbLanguage.Sql:
-                case EDbLanguage.Cql:
-                    sb.Append("INSERT INTO ")
-                      .Append(tableName)
-                      .Append(" (")
-                      .Append(string.Join(", ", columns))
-                      .Append(") VALUES (")
-                      .Append(string.Join(", ", values))
-                      .Append(");\n");
-                    break;
-                case EDbLanguage.Json:
-                case EDbLanguage.Bson:
-                case EDbLanguage.Unknown:
-                default:
-                    throw new NotSupportedException($"Language {_language} cannot be merged yet for INSERT.");
-            }
+            default:
+                throw new NotSupportedException($"Language {_language} cannot be merged yet for INSERT.");
         }
 
         return sb.ToString();
     }
 
     /// <summary>
+    /// Centralized build method that routes to BuildInsert, BuildUpdate or BuildMerge based on repository action.
+    /// </summary>
+    public string Build(ERepositoryAction action)
+    {
+        return action switch
+        {
+            ERepositoryAction.Add => BuildInsert(),
+            ERepositoryAction.Update => BuildUpdate(),
+            ERepositoryAction.Merge => BuildMerge(),
+            _ => throw new NotSupportedException($"Action {action} is not supported for CQL/SQL.")
+        };
+    }
+
+
+    /// <summary>
     /// Generates an UPDATE query string (using PrimaryKey from Cells as where keys)
     /// </summary>
     public string BuildUpdate()
     {
+        var rowList = _rows.ToList();
+        if (rowList.Count == 0) return string.Empty;
+
         var sb = new StringBuilder();
         var tableName = _tableName ?? "UnknownTable";
 
-        foreach (var rowWrapper in _rows)
+        switch (_language)
         {
-            var cells = rowWrapper.GetRowWrapper();
-            if (cells.Count == 0) 
-                continue;
-
-            var setClauses = new List<string>();
-            var whereClauses = new List<string>();
-
-            foreach (var kvp in cells)
-            {
-                var sourceCol = kvp.Key;
-                var targetCol = _columnMappings.TryGetValue(sourceCol, out var mappedCol) ? mappedCol : sourceCol;
-                var cellValue = kvp.Value?.ValueAsObject;
-                var formattedValue = FormatDbValue(cellValue);
-
-                if (kvp.Value?.IsPrimaryKey == true)
+            case EDbLanguage.Cql:
+                if (rowList.Count > 1) sb.AppendLine("BEGIN BATCH");
+                foreach (var rowWrapper in rowList)
                 {
-                    whereClauses.Add($"{targetCol} = {formattedValue}");
+                    var cells = rowWrapper.GetRowWrapper();
+                    if (cells.Count == 0) continue;
+
+                    var setClauses = new List<string>();
+                    var whereClauses = new List<string>();
+                    foreach (var kvp in cells)
+                    {
+                        var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
+                        var formattedValue = FormatDbValue(kvp.Value.ValueAsObject);
+
+                        if (kvp.Value.IsPrimaryKey)
+                            whereClauses.Add($"{targetCol} = {formattedValue}");
+                        else
+                            setClauses.Add($"{targetCol} = {formattedValue}");
+                    }
+                    if (whereClauses.Count == 0) whereClauses.Add("1 = 0"); // break
+                    sb.Append($"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE {string.Join(" AND ", whereClauses)};\n");
                 }
-                else
+                if (rowList.Count > 1) sb.Append("APPLY BATCH;");
+                break;
+
+            case EDbLanguage.Sql:
+                foreach (var rowWrapper in rowList)
                 {
-                    setClauses.Add($"{targetCol} = {formattedValue}");
+                    var cells = rowWrapper.GetRowWrapper();
+                    if (cells.Count == 0) continue;
+
+                    var setClauses = new List<string>();
+                    var whereClauses = new List<string>();
+                    foreach (var kvp in cells)
+                    {
+                        var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
+                        var formattedValue = FormatDbValue(kvp.Value.ValueAsObject);
+
+                        if (kvp.Value?.IsPrimaryKey == true)
+                            whereClauses.Add($"{targetCol} = {formattedValue}");
+                        else
+                            setClauses.Add($"{targetCol} = {formattedValue}");
+                    }
+                    if (whereClauses.Count == 0) whereClauses.Add("1 = 0"); // break
+                    sb.Append($"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE {string.Join(" AND ", whereClauses)};\n");
                 }
-            }
+                break;
 
-            if (whereClauses.Count == 0)
-            {
-                whereClauses.Add("1 = 0"); 
-            }
-
-            switch (_language)
-            {
-                case EDbLanguage.Sql:
-                case EDbLanguage.Cql:
-                    sb.Append("UPDATE ")
-                      .Append(tableName)
-                      .Append(" SET ")
-                      .Append(string.Join(", ", setClauses))
-                      .Append(" WHERE ")
-                      .Append(string.Join(" AND ", whereClauses))
-                      .Append(";\n");
-                    break;
-                case EDbLanguage.Json:
-                case EDbLanguage.Bson:
-                case EDbLanguage.Unknown:
-                default:
-                    throw new NotSupportedException($"Language {_language} cannot be merged yet for UPDATE.");
-            }
+            default:
+                throw new NotSupportedException($"Language {_language} cannot be merged yet for UPDATE.");
         }
 
         return sb.ToString();
@@ -154,85 +184,69 @@ public class NpOnWrapperResultQueryBuilder
     /// </summary>
     public string BuildMerge()
     {
+        var rowList = _rows.ToList();
+        if (rowList.Count == 0) return string.Empty;
+
         var sb = new StringBuilder();
         var tableName = _tableName ?? "UnknownTable";
 
-        foreach (var rowWrapper in _rows)
+        switch (_language)
         {
-            var cells = rowWrapper.GetRowWrapper();
-            if (cells.Count == 0) 
-                continue;
-
-            var columns = new List<string>();
-            var values = new List<string>();
-            var primaryKeys = new List<string>();
-            var updateClauses = new List<string>();
-
-            foreach (var kvp in cells)
-            {
-                var sourceCol = kvp.Key;
-                var targetCol = _columnMappings.GetValueOrDefault(sourceCol, sourceCol);
-                columns.Add(targetCol);
-
-                var cellValue = kvp.Value.ValueAsObject;
-                var formattedValue = FormatDbValue(cellValue);
-                values.Add(formattedValue);
-
-                if (kvp.Value.IsPrimaryKey)
+            case EDbLanguage.Cql:
+                // CQL Insert is automatically an Upsert
+                if (rowList.Count > 1) sb.AppendLine("BEGIN BATCH");
+                foreach (var rowWrapper in rowList)
                 {
-                    primaryKeys.Add(targetCol);
+                    var cells = rowWrapper.GetRowWrapper();
+                    if (cells.Count == 0) continue;
+
+                    var columns = new List<string>();
+                    var values = new List<string>();
+                    foreach (var kvp in cells)
+                    {
+                        var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
+                        columns.Add(targetCol);
+                        values.Add(FormatDbValue(kvp.Value?.ValueAsObject));
+                    }
+                    sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)});\n");
                 }
-                else
+                if (rowList.Count > 1) sb.Append("APPLY BATCH;");
+                break;
+
+            case EDbLanguage.Sql:
+                foreach (var rowWrapper in rowList)
                 {
-                    updateClauses.Add($"{targetCol} = EXCLUDED.{targetCol}");
-                }
-            }
+                    var cells = rowWrapper.GetRowWrapper();
+                    if (cells.Count == 0) continue;
 
-            switch (_language)
-            {
-                case EDbLanguage.Sql:
-                    // Postgres-style Upsert (MERGE ON CONFLICT)
-                    sb.Append("INSERT INTO ")
-                      .Append(tableName)
-                      .Append(" (")
-                      .Append(string.Join(", ", columns))
-                      .Append(") VALUES (")
-                      .Append(string.Join(", ", values))
-                      .Append(")");
+                    var columns = new List<string>();
+                    var values = new List<string>();
+                    var primaryKeys = new List<string>();
+                    var updateClauses = new List<string>();
+                    foreach (var kvp in cells)
+                    {
+                        var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
+                        var formattedValue = FormatDbValue(kvp.Value?.ValueAsObject);
+                        columns.Add(targetCol);
+                        values.Add(formattedValue);
 
+                        if (kvp.Value?.IsPrimaryKey == true)
+                            primaryKeys.Add(targetCol);
+                        else
+                            updateClauses.Add($"{targetCol} = EXCLUDED.{targetCol}");
+                    }
+
+                    sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})");
                     if (primaryKeys.Count > 0 && updateClauses.Count > 0)
-                    {
-                        sb.Append(" ON CONFLICT (")
-                          .Append(string.Join(", ", primaryKeys))
-                          .Append(") DO UPDATE SET ")
-                          .Append(string.Join(", ", updateClauses));
-                    }
-                    else if (primaryKeys.Count > 0 && updateClauses.Count == 0)
-                    {
-                        sb.Append(" ON CONFLICT (")
-                          .Append(string.Join(", ", primaryKeys))
-                          .Append(") DO NOTHING");
-                    }
+                        sb.Append($" ON CONFLICT ({string.Join(", ", primaryKeys)}) DO UPDATE SET {string.Join(", ", updateClauses)}");
+                    else if (primaryKeys.Count > 0)
+                        sb.Append($" ON CONFLICT ({string.Join(", ", primaryKeys)}) DO NOTHING");
                     sb.Append(";\n");
-                    break;
+                }
+                break;
 
-                case EDbLanguage.Cql:
-                    // CQL Insert is automatically an Upsert
-                    sb.Append("INSERT INTO ")
-                      .Append(tableName)
-                      .Append(" (")
-                      .Append(string.Join(", ", columns))
-                      .Append(") VALUES (")
-                      .Append(string.Join(", ", values))
-                      .Append(");\n");
-                    break;
-
-                case EDbLanguage.Json:
-                case EDbLanguage.Bson:
-                case EDbLanguage.Unknown:
-                default:
-                    throw new NotSupportedException($"Language {_language} cannot be merged yet for MERGE.");
-            }
+            default:
+                throw new NotSupportedException($"Language {_language} cannot be merged yet for MERGE.");
         }
 
         return sb.ToString();
@@ -247,6 +261,7 @@ public class NpOnWrapperResultQueryBuilder
             string s => $"'{s.Replace("'", "''")}'",
             DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss.fff}'",
             bool b => b ? "true" : "false",
+            Guid g => g.ToString(), // UUID literals in CQL are not quoted
             _ => value.ToString() ?? "NULL"
         };
     }
@@ -292,4 +307,5 @@ public static partial class NpOnWrapperResultExtensions
     {
         return new NpOnWrapperResultQueryBuilder(new[] { rowWrapper }, language);
     }
+
 }

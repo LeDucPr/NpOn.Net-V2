@@ -9,13 +9,13 @@ public class HostingApp(
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("NpOn.AccountService AppHostedService is starting multi-threaded");
+        logger.LogInformation("NpOn.MigrationService AppHostedService is starting multi-threaded");
         await cassandraMigration.TransferTable();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("NpOn.AccountService AppHostedService is stopping");
+        logger.LogInformation("NpOn.MigrationService AppHostedService is stopping");
         return Task.CompletedTask;
     }
 }
