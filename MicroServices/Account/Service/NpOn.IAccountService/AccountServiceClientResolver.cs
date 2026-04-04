@@ -3,7 +3,7 @@ using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.IAccountService;
 
-public class AccountServiceClientResolver : InternalGrpcClientResolver
+public class AccountServiceClientResolver : SharedGrpcClientResolver
 {
     protected override Func<IServiceCollection, string, Task> RegistrationAction =>
         (services, url) =>

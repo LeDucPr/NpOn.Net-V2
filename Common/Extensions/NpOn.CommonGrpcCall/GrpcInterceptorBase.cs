@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Common.Extensions.NpOn.HeaderConfig;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 
 namespace NpOn.CommonGrpcCall;
 
-public abstract class GrpcInterceptor(
-    ILogger<GrpcInterceptor> logger,
+public abstract class GrpcInterceptorBase(
+    ILogger<GrpcInterceptorBase> logger,
     GrpcHeaderConfig headerConfig,
     // , IHttpContextAccessor? httpContextAccessor
     bool isUseLogUnaryCall = true,

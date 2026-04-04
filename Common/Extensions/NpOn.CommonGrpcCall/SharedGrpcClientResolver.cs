@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Grpc.Core;
 using Grpc.Net.Client.Configuration;
@@ -8,22 +8,22 @@ using ProtoBuf.Grpc.ClientFactory;
 
 namespace NpOn.CommonGrpcCall;
 
-public abstract class InternalGrpcClientResolver
+public abstract class SharedGrpcClientResolver
 {
     protected abstract Func<IServiceCollection, string, Task>? RegistrationAction { get; }
 
     public void SelfRegisterGrpcClientLoadBalancing(IServiceCollection services, string url)
     {
-        services.AddTransient<InternalGrpcInterceptor>();
+        services.AddTransient<SharedGrpcInterceptor>();
         if (RegistrationAction != null)
             RegistrationAction(services, url);
     }
 }
 
-public static class InternalGrpcClientResolverExtensions
+public static class SharedGrpcClientResolverExtensions
 {
     public static IServiceCollection AddConnectService // other service call this method
-    (this IServiceCollection services, InternalGrpcClientResolver resolver, string? url = null,
+    (this IServiceCollection services, SharedGrpcClientResolver resolver, string? url = null,
         EUrlConfiguration? eUrlConfiguration = null)
     {
         if (eUrlConfiguration != null)
@@ -97,7 +97,7 @@ public static class InternalGrpcClientResolverExtensions
         services.AddCodeFirstGrpcClient<T>((provider, options) => { ConfigGrpcClientOptions(options, url, provider); })
             .AddInterceptor(provider =>
             {
-                InternalGrpcInterceptor loggerInterceptor = provider.GetRequiredService<InternalGrpcInterceptor>();
+                SharedGrpcInterceptor loggerInterceptor = provider.GetRequiredService<SharedGrpcInterceptor>();
                 loggerInterceptor.Host = url;
                 return loggerInterceptor;
             });
@@ -119,7 +119,7 @@ public static class InternalGrpcClientResolverExtensions
                     (provider, options) => { ConfigGrpcClientOptions(options, url, provider); })
                 .AddInterceptor(provider =>
                 {
-                    InternalGrpcInterceptor loggerInterceptor = provider.GetRequiredService<InternalGrpcInterceptor>();
+                    SharedGrpcInterceptor loggerInterceptor = provider.GetRequiredService<SharedGrpcInterceptor>();
                     loggerInterceptor.Host = url;
                     return loggerInterceptor;
                 });

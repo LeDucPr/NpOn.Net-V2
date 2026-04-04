@@ -3,7 +3,7 @@ using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Migration.Service.NpOn.IMigrationService;
 
-public class MigrationServiceClientResolver : InternalGrpcClientResolver
+public class MigrationServiceClientResolver : SharedGrpcClientResolver
 {
     protected override Func<IServiceCollection, string, Task> RegistrationAction =>
         (services, url) =>

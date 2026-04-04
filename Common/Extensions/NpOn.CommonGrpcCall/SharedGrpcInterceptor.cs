@@ -4,15 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace NpOn.CommonGrpcCall;
 
-public class InternalGrpcInterceptor(
-    ILogger<GrpcInterceptor> logger,
+public class SharedGrpcInterceptor(
+    ILogger<GrpcInterceptorBase> logger,
     GrpcHeaderConfig headerConfig,
     IHttpContextAccessor? httpContextAccessor,
     bool isUseLogUnaryCall = true,
     bool isUseLogClientStreamingCall = true,
     bool isUseLogServerStreamingCall = true,
     bool isUseLogDuplexStreamingCall = true
-) : GrpcInterceptor(logger, headerConfig, isUseLogUnaryCall, isUseLogClientStreamingCall, isUseLogServerStreamingCall,
+) : GrpcInterceptorBase(logger, headerConfig, isUseLogUnaryCall, isUseLogClientStreamingCall, isUseLogServerStreamingCall,
     isUseLogDuplexStreamingCall)
 {
     private readonly GrpcHeaderConfig _headerConfig = headerConfig;
@@ -32,5 +32,13 @@ public class InternalGrpcInterceptor(
             .Value;
         if (authenKey?.Length > 0)
             _headerConfig.Replace(DefaultHeaderConstant.GrpcInteralCallerAuthentication, authenKey);
+
+        // Forward External Authorization Header (e.g. Bearer token) if present
+        string? authorizationExt = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
+                x.Key.Equals("Authorization", StringComparison.CurrentCultureIgnoreCase))
+            .Value;
+        // Grpc header keys should be lower case, gRPC requires lowercase header keys.
+        if (authorizationExt?.Length > 0)
+            _headerConfig.Replace("authorization", authorizationExt);
     }
 }
