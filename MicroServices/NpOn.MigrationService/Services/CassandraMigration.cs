@@ -18,6 +18,7 @@ public class CassandraMigration(
     ILogger<CommonService> logger
 ) : CommonService(logger), ICassandraMigration
 {
+    private readonly ILogger<CommonService> _logger = logger;
     private const string PostgresDefaultColumnName = "ctid";
 
     public async Task<CommonResponse> TransferTable()
@@ -28,7 +29,7 @@ public class CassandraMigration(
                 "acc_srv_account", 
                 "acc_srv_account_address",
                 "acc_srv_account_login",
-            ];
+            ];  
             int pageSize = 500;
 
             foreach (string tableName in tableNames)
@@ -71,13 +72,13 @@ public class CassandraMigration(
                         ExecType = EExecType.Query
                     });
                     
-                    logger.LogInformation($"Sync Done {tableName} -- {pageSize*(countTime++)}");
+                    _logger.LogInformation($"Sync Done {tableName} -- {pageSize*(countTime++)}");
                     // Nếu số lượng dòng lấy ra ít hơn pageSize tức là đã hết bảng
                     if (result is not INpOnTableWrapper tableWrapper ||
                         tableWrapper.RowWrappers is not { Count: > 0 } rowWrappers)
                         hasData = false;
                 }
-                logger.LogInformation($"Sync Done {tableName}");
+                _logger.LogInformation($"Sync Done {tableName}");
             }
 
             response.SetSuccess();
@@ -106,7 +107,7 @@ public class CassandraMigration(
 
         if (result is not INpOnTableWrapper tableWrapper ||
             tableWrapper.RowWrappers is not { Count: > 0 } rowWrappers)
-            return null;
+            return PostgresDefaultColumnName;
         string? indexKey = tableWrapper.RowWrappers.First().Value?.GetRowWrapper()[indexColumnKey].ValueAsObject
             .AsDefaultString();
         return

@@ -13,11 +13,11 @@ public class HostingApp(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("NpOn.AccountService AppHostedService is starting multi-threaded");
-        await authenticationService.ChangeAccountStatus(new AccountSetStatusCommand
-        {
-            AccountId = new Guid("a13a55c8-230d-4e19-b795-1a113d196626"),
-            AccountStatus = EAccountStatus.Active,
-        });
+        // await authenticationService.ChangeAccountStatus(new AccountSetStatusCommand
+        // {
+        //     AccountId = new Guid("a13a55c8-230d-4e19-b795-1a113d196626"),
+        //     AccountStatus = EAccountStatus.Active,
+        // });
         // await LoginStressTest();
     }
 

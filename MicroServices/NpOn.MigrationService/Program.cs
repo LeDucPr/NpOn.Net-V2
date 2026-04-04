@@ -36,7 +36,7 @@ public sealed class Program : HttpCommonProgram
             services
                 .AddDefaultKestrelListenConfig()
                 .AddGrpcDefaultMode()
-                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.CallToInternalServer));
+                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer));
                 // .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
         // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
         // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);

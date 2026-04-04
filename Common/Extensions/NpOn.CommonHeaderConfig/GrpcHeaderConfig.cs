@@ -32,7 +32,7 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
         endUseType = decomposeEndUseTypes.First();
         _metadataEntries ??= [];
         _endUseType = endUseType;
-        if (_endUseType == EGrpcEndUseType.CallToInternalServer)
+        if (_endUseType == EGrpcEndUseType.InternalServer)
         {
             _metadataHeaders = new Metadata();
             _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerUserName, Environment.UserName));
@@ -45,7 +45,7 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
             return;
         }
 
-        if (_endUseType == EGrpcEndUseType.CallToExternalServer)
+        if (_endUseType == EGrpcEndUseType.ExternalServer)
         {
             _metadataHeaders = new Metadata();
             _metadataEntries.AddRange(headers?.Select(header => new Metadata.Entry(header.Key, header.Value)) ?? []);
@@ -65,7 +65,7 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
     {
         if (_metadataHeaders == null)
             return;
-        if (_endUseType == EGrpcEndUseType.CallToInternalServer || _endUseType == EGrpcEndUseType.CallToExternalServer)
+        if (_endUseType == EGrpcEndUseType.InternalServer || _endUseType == EGrpcEndUseType.ExternalServer)
         {
             var callerUserEntry = _metadataHeaders.Get(key);
             if (callerUserEntry != null)
