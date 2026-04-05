@@ -10,6 +10,7 @@ public static class AddGrpcServiceCollectionExtensions
     public static IServiceCollection AddGrpcDefaultMode(this IServiceCollection services)
     {
         // common grpc
+        services.AddCodeFirstGrpcReflection();
         services.AddCodeFirstGrpc(config =>
         {
             config.ResponseCompressionLevel = System.IO.Compression.CompressionLevel.NoCompression;

@@ -4,7 +4,6 @@ using Common.Applications.NpOn.CommonApplication.Parameters;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Logging;
 
 namespace Common.Applications.NpOn.CommonApplication;
@@ -131,14 +130,6 @@ public abstract class CommonProgram
             .AddEnvironmentVariables() // override Docker Compose 
             // .AddYamlFile($"appsettings.{builder.Environment.EnvironmentName}.yaml", optional: true)
             ;
-
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.ConfigureEndpointDefaults(listenOptions =>
-            {
-                listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-            });
-        });
 
         // host-domain-start
         string hostDomain = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostDomain).AsDefaultString();

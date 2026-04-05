@@ -41,7 +41,7 @@ public sealed class Program : HttpCommonProgram
     {
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
             services
-                .AddDefaultKestrelListenConfig()
+                .AddDefaultKestrelListenConfig(out _)
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)

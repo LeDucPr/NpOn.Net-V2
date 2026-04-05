@@ -14,6 +14,7 @@
       <ProjectReference Include="..\..\..\..\MicroServices\Account\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj" />
       <ProjectReference Include="..\..\..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
     </ItemGroup>
 
     <ItemGroup>

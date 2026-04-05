@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Attributes;
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
@@ -6,6 +6,7 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Controllers.NpOn.SSO.Mappings.Account;
 using Controllers.NpOn.SSO.Requests;
+using Controllers.NpOn.SSO.OutputModels;
 using Controllers.NpOn.SSO.Validators;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
@@ -15,6 +16,8 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using System.ServiceModel;
+
 namespace Controllers.NpOn.SSO.Controllers;
 
 public class AccountController(
@@ -22,7 +25,7 @@ public class AccountController(
     ContextService contextService,
     IAuthenticationService authenticationService,
     IAccountPermissionService accountPermissionService
-) : BaseSsoController(logger, contextService)
+) : BaseSsoController(logger, contextService), IAccountGrpcController
 {
     private readonly ContextService _contextService = contextService;
 
@@ -139,9 +142,9 @@ public class AccountController(
     [Obsolete("Obsolete")]
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> Login([FromBody] AccountLoginRequest request)
+    public async Task<CommonApiResponse<AccountLoginResponseWrapper>> Login([FromBody] AccountLoginRequest request)
     {
-        return await ProcessRequest<object>(async (response) =>
+        return await ProcessRequest<AccountLoginResponseWrapper>(async (response) =>
         {
             var validator = AccountLoginRequestValidator.ValidateRequest(request);
             if (!validator.IsValid)
@@ -180,7 +183,7 @@ public class AccountController(
             }
 
             // response.Data = await LoginProcess(tokenResult.Data);
-            response.Data = new
+            response.Data = new AccountLoginResponseWrapper
             {
                 Model = accountLoginResponse.Data.ToModel(),
             };

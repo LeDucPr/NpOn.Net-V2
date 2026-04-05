@@ -38,7 +38,7 @@ public sealed class Program : HttpCommonProgram
         // call load balancing services 
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
             services
-                .AddDefaultKestrelListenConfig()
+                .AddDefaultKestrelListenConfig(out _)
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);

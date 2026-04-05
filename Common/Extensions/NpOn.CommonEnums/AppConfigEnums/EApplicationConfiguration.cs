@@ -11,6 +11,7 @@ namespace Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 public enum EApplicationConfiguration
 {
     [Display(Name = "HostPort")] HostPort, // - int
+    [Display(Name = "PublicGrpcHostPort")] PublicGrpcHostPort, // - int
     [Display(Name = "HostDomain")] HostDomain, // - string
     [Display(Name = "PostgresConnectionString")] PostgresConnectionString, // - string
     [Display(Name = "PostgresConnectionNumber")] PostgresConnectionNumber, // - int

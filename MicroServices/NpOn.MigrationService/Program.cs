@@ -34,10 +34,10 @@ public sealed class Program : HttpCommonProgram
     {
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
             services
-                .AddDefaultKestrelListenConfig()
+                .AddDefaultKestrelListenConfig(out _)
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer));
-                // .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
+        // .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
         // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
         // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 

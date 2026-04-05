@@ -1,0 +1,99 @@
+syntax = "proto3";
+package Controllers.NpOn.SSO.Controllers;
+import "protobuf-net/bcl.proto"; // schema for protobuf-net's handling of core .NET types
+
+message AccountLoginOutputModel {
+   .bcl.Guid AccountId = 1; // default value could not be applied: 00000000-0000-0000-0000-000000000000
+   EAuthentication AuthType = 2;
+   ELoginType LoginType = 3;
+   string FullName = 4;
+   string PhoneNumber = 5;
+   string Token = 6;
+   string RefreshToken = 7;
+   .bcl.DateTime CreatedAt = 8;
+   string SessionId = 9;
+   int32 MinuteExpire = 10;
+}
+message AccountLoginRequest {
+   string Email = 1;
+   string PhoneNumber = 2;
+   string UserName = 3;
+   string Password = 4;
+   string DeviceInfo = 5;
+   ELoginType LoginType = 6;
+   EAuthentication AuthType = 7;
+   string AppId = 8;
+   bool IsOldSystemAccount = 9;
+}
+message AccountLoginResponseWrapper {
+   AccountLoginOutputModel Model = 1;
+}
+message CommonApiResponse_AccountLoginResponseWrapper {
+   bool Status = 1;
+   EErrorCode ErrorCode = 2;
+   repeated string ErrorMessages = 3;
+   int32 Version = 4;
+   string ServerTime = 5;
+   AccountLoginResponseWrapper Data = 6;
+   string ServerTimeUtc = 7;
+   string DataEncrypt = 8;
+   string KeyEncrypt = 9;
+   int32 TotalRow = 10;
+}
+enum EAuthentication {
+   // this is a composite/flags enumeration
+   ZERO = 0; // proto3 requires a zero value as the first item (it can be named anything)
+   Mobile = 1;
+   WebApp = 2;
+}
+enum EErrorCode {
+   option allow_alias = true;
+   NoErrorCode = 0;
+   Success = 1;
+   Fail = 2;
+   ErrorCommentLimit = 3;
+   ErrorCommentTime = 4;
+   Unauthorized = 401;
+   PermissionDeny = 403;
+   NotFound = 404;
+   UserNotFound = 404;
+   InternalExceptions = 500;
+   NullRequestExceptions = 501;
+   AntiXss = 502;
+   NotExistExceptions = 503;
+   UserNullException = 504;
+   IdNullException = 505;
+   CurrentWebsiteNullException = 506;
+   CurrentCompanyNullException = 507;
+   InternalExceptionsNotDefine = 508;
+   InternalExceptionsInService = 509;
+   AccountPasswordIsConfigured = 510;
+   OtpSendLimit = 511;
+   OtpVerifyLimit = 512;
+   OtpInvalid = 513;
+   Grpc = 514;
+   GrpcUnimplemented = 515;
+   GrpcUnavailable = 516;
+   GrpcInternal = 517;
+   GrpcCancelled = 518;
+   GrpcDeadlineExceeded = 519;
+   GrpcNotFound = 520;
+   GrpcAlreadyExists = 521;
+   GrpcPermissionDenied = 522;
+   GrpcResourceExhausted = 523;
+   GrpcFailedPrecondition = 524;
+   GrpcAborted = 525;
+   GrpcOutOfRange = 526;
+   GrpcUnauthenticated = 527;
+   GrpcDataLoss = 528;
+   GrpcUnknown = 529;
+   DataProcessingError = 530;
+}
+enum ELoginType {
+   // this is a composite/flags enumeration
+   ZERO = 0; // proto3 requires a zero value as the first item (it can be named anything)
+   Default = 1;
+}
+service AccountController {
+   rpc Login (AccountLoginRequest) returns (CommonApiResponse_AccountLoginResponseWrapper);
+}

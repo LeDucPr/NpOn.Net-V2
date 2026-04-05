@@ -8,9 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="protobuf-net" Version="3.2.56"/>
-        <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.187"/>
-        <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.0.187"/>
+        <PackageReference Include="protobuf-net" Version="3.2.56" />
+        <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.187" />
+        <PackageReference Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
+        <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.0.187" />
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
     </ItemGroup>
 
     <ItemGroup>

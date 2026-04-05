@@ -17,20 +17,21 @@
 
 
     <ItemGroup>
-        <PackageReference Include="FluentValidation" Version="12.1.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.2.25502.107"/>
+        <PackageReference Include="FluentValidation" Version="12.1.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.2.25502.107" />
+        <PackageReference Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\Common\Applications\ApplicationExtensions\NpOn.TokenValidatorExtUse\NpOn.TokenValidatorExtUse.csproj"/>
-        <ProjectReference Include="..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
-        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
-        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj"/>
-        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj"/>
-        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
-        <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj"/>
-        <ProjectReference Include="..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj"/>
+        <ProjectReference Include="..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj" />
+        <ProjectReference Include="..\..\Common\Applications\ApplicationExtensions\NpOn.TokenValidatorExtUse\NpOn.TokenValidatorExtUse.csproj" />
+        <ProjectReference Include="..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
+        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
+        <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+        <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj" />
+        <ProjectReference Include="..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
     </ItemGroup>
 
     <ItemGroup>
