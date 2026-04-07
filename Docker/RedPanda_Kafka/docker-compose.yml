@@ -30,7 +30,7 @@ services:
       - --kafka-addr
       - "PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092"
       - --advertise-kafka-addr
-      - "PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092"
+      - "PLAINTEXT://redpanda:9092,OUTSIDE://${HOST_IP:-localhost}:19092"
     volumes:
       - redpanda_data:/var/lib/redpanda/data
     healthcheck:

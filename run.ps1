@@ -1,12 +1,21 @@
-#pre setup (mở PowerShell gốc set)
-# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 
-# hoặc không cần set để chạy lệnh .\run.sp1 all
-# powershell -ExecutionPolicy Bypass -File .\run.ps1 all
-#-- nếu cần
-### taskkill /F /IM VBCSCompiler.exe
-### taskkill /F /IM dotnet.exe
-### taskkill /F /IM MSBuild.exe
+# -- Dynamic IP Detection for Kafka/RedPanda
+function Get-HostIP {
+    $ip = (Get-NetIPAddress -AddressFamily IPv4 | 
+           Where-Object { 
+               $_.InterfaceAlias -notmatch 'vEthernet|WSL|Docker|Loopback' -and 
+               $_.IPAddress -notmatch '^169.254' -and 
+               $_.IPAddress -notmatch '^172\.'
+           } | 
+           Select-Object -First 1).IPAddress
+    if (-not $ip) {
+        $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notmatch 'Loopback' } | Select-Object -First 1).IPAddress
+    }
+    return $ip
+}
 
+$env:HOST_IP = Get-HostIP
+Write-Host "--- Detected Host IP: $env:HOST_IP ---" -ForegroundColor Yellow
+# -------------------------------------------
 
 # Danh sách các folder chứa project
 $projects = @(

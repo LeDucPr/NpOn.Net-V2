@@ -602,70 +602,6 @@ public class CommonUtilityMode
         return path.StartsWith("/") ? $"{domain}{path}" : $"{domain}/{path}";
     }
 
-    public static string SetDomainCdn(string domain, string key, string domainSystem, string keyStem, string? path)
-    {
-        if (string.IsNullOrEmpty(path))
-        {
-            return string.Empty;
-        }
-
-        if (path.StartsWith("https://vms-files.vietnamnet.vn/files"))
-        {
-            path = path.Replace("https://vms-files.vietnamnet.vn/files", string.Empty);
-        }
-
-        if (path.StartsWith("https://vms-files.vietnamnet.vn/cdn-files"))
-        {
-            path = path.Replace("https://vms-files.vietnamnet.vn/cdn-files", string.Empty);
-        }
-
-        if (path.StartsWith("https://vms-files.vietnamnet.vn"))
-        {
-            path = path.Replace("https://vms-files.vietnamnet.vn", string.Empty);
-        }
-
-        if (path.StartsWith("/cdn-files/files"))
-        {
-            path = path.Replace("/cdn-files/files", "/files");
-        }
-
-        if (path.StartsWith($"{key}/files/"))
-        {
-            path = path.Replace($"{key}/files/", "/");
-        }
-
-        if (path.StartsWith("http"))
-        {
-            return path;
-        }
-
-        if (path.StartsWith(key))
-        {
-            path = path.Remove(0, key.Length);
-            return path.StartsWith("/") ? $"{domain}{path}" : $"{domain}/{path}";
-        }
-
-        if (path.StartsWith($"/{key}"))
-        {
-            path = path.Remove(0, key.Length + 1);
-            return path.StartsWith("/") ? $"{domain}{path}" : $"{domain}/{path}";
-        }
-
-        if (path.StartsWith(keyStem))
-        {
-            path = path.Remove(0, keyStem.Length);
-            return path.StartsWith("/") ? $"{domainSystem}{path}" : $"{domainSystem}/{path}";
-        }
-
-        if (path.StartsWith($"/{keyStem}"))
-        {
-            path = path.Remove(0, keyStem.Length + 1);
-            return path.StartsWith("/") ? $"{domainSystem}{path}" : $"{domainSystem}/{path}";
-        }
-
-        return path.StartsWith("/") ? $"{domain}{path}" : $"{domain}/{path}";
-    }
-
     public static string SetDomainCdnByAdmin(string domain, string key, string domainSystem, string keyStem,
         string? path)
     {
@@ -776,20 +712,7 @@ public class CommonUtilityMode
         path = path.Remove(0, domain.Length);
         return path.StartsWith("/") ? $"{key}{path}" : $"{key}/{path}";
     }
-
-    public static string SetDomainCdnAndSite(string domain, string key, string domainSystem, string keyStem,
-        string path, int width)
-    {
-        if (string.IsNullOrEmpty(path))
-        {
-            return string.Empty;
-        }
-
-        string url = SetDomainCdn(domain, key, domainSystem, keyStem, path);
-        url += $"?width={width}";
-        return url;
-    }
-
+    
     public static string SetDomainCdnAndSiteBackend(string domain, string key, string domainSystem,
         string keySystem, string path,
         int width)
@@ -1632,31 +1555,6 @@ public class CommonUtilityMode
         { "\u00C2\u0323", "\u1EAC" }, // Ậ
         { "\u00C2\u0303", "\u1EAA" } // Ẫ
     };
-
-
-    public static Tuple<string, string> GetDomainAndArticleIdFromUrl(string? url)
-    {
-        if (string.IsNullOrEmpty(url)) return new Tuple<string, string>(string.Empty, string.Empty);
-        url = url.Trim();
-        // https://vietnamnet.vn/mai-doanh-thu-hon-400-ti-box-office-vietnam-noi-gi-2251945.html
-        string pattern = @"^(https?://)(.*)/(.*)-(.*)(\.html)$";
-
-        Regex regex = new Regex(pattern);
-
-        Match match = regex.Match(url);
-
-        if (match.Success)
-        {
-            var domain = match.Groups[2].Value;
-            var articleId = match.Groups[4].Value;
-
-            // https://vietnamnet.vn/viet-nam-nhap-khau-o-to-giam-hon-50-so-voi-thang-1-2023-pre2252036.html
-            if (articleId.StartsWith("pre")) articleId = articleId.Substring(3);
-            return new Tuple<string, string>(domain, articleId);
-        }
-
-        return new Tuple<string, string>(string.Empty, string.Empty);
-    }
 
     public static (long?, string) GetInt64HashCode(string? text)
     {
