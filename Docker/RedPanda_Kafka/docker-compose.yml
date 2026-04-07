@@ -29,8 +29,8 @@ services:
       - redpanda.superusers=["npon_admin"]
       - --kafka-addr
       - "PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092"
-    environment:
-      - REDPANDA_ADVERTISE_KAFKA_ADDR=PLAINTEXT://redpanda:9092,OUTSIDE://${HOST_IP:-localhost}:19092
+      - --advertise-kafka-addr
+      - "PLAINTEXT://redpanda:9092,OUTSIDE://${KAFKA_HOST_IP:-192.168.1.11}:19092"
     volumes:
       - redpanda_data:/var/lib/redpanda/data
     healthcheck:
