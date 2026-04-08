@@ -1,11 +1,9 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.General.Contract.NpOn.GeneralServiceContract;
 using NpgsqlTypes;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.GeneralServiceContract.ReadModels;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 
 [ProtoContract]
 public class TblFldRModel : BaseGeneralRModel

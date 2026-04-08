@@ -40,36 +40,37 @@ public static class AutoGenerateGrpcProtoExtensions
             {
                 Directory.CreateDirectory(bclDirectory);
             }
+            // from lib
             string bclContent = @"syntax = ""proto3"";
-package bcl;
+                package bcl;
 
-message TimeSpan {
-   int64 value = 1; // default value could not be applied: 00:00:00
-   int32 scale = 2; // default value could not be applied: Days
-}
-message DateTime {
-   int64 value = 1; // default value could not be applied: 0001-01-01T00:00:00
-   int32 scale = 2; // default value could not be applied: Days
-   int32 kind = 3; // default value could not be applied: Unspecified
-}
-message NetObjectProxy {
-   int32 existingObjectKey = 1;
-   int32 newObjectKey = 2;
-   int32 existingTypeKey = 3;
-   int32 newTypeKey = 4;
-   int32 typeNameKey = 5;
-   bytes payload = 8;
-   string typeString = 9;
-}
-message Guid {
-   fixed64 lo = 1; // default value could not be applied: 0
-   fixed64 hi = 2; // default value could not be applied: 0
-}
-message Decimal {
-   uint64 lo = 1; // default value could not be applied: 0
-   uint32 hi = 2; // default value could not be applied: 0
-   uint32 signScale = 3; // default value could not be applied: 0
-}";
+                message TimeSpan {
+                   int64 value = 1; // default value could not be applied: 00:00:00
+                   int32 scale = 2; // default value could not be applied: Days
+                }
+                message DateTime {
+                   int64 value = 1; // default value could not be applied: 0001-01-01T00:00:00
+                   int32 scale = 2; // default value could not be applied: Days
+                   int32 kind = 3; // default value could not be applied: Unspecified
+                }
+                message NetObjectProxy {
+                   int32 existingObjectKey = 1;
+                   int32 newObjectKey = 2;
+                   int32 existingTypeKey = 3;
+                   int32 newTypeKey = 4;
+                   int32 typeNameKey = 5;
+                   bytes payload = 8;
+                   string typeString = 9;
+                }
+                message Guid {
+                   fixed64 lo = 1; // default value could not be applied: 0
+                   fixed64 hi = 2; // default value could not be applied: 0
+                }
+                message Decimal {
+                   uint64 lo = 1; // default value could not be applied: 0
+                   uint32 hi = 2; // default value could not be applied: 0
+                   uint32 signScale = 3; // default value could not be applied: 0
+                }";
             File.WriteAllText(Path.Combine(bclDirectory, "bcl.proto"), bclContent);
 
             // Find all interfaces marked with [ServiceContract]

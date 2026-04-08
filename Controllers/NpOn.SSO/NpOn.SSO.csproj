@@ -35,7 +35,7 @@
 
     <ItemGroup>
         <Content Include="..\..\.dockerignore">
-            <Link>.dockerignore</Link>
+          <Link>.dockerignore</Link>
         </Content>
         <Content Include="appsettings.yaml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

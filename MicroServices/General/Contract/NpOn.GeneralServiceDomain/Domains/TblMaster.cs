@@ -1,10 +1,9 @@
 ﻿using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.HandleFlow.Attributes;
-using MicroServices.General.Contract.GeneralServiceContract;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.Domains;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("tblmaster")]

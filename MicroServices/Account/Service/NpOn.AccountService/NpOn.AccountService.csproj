@@ -39,15 +39,11 @@
 
     <ItemGroup>
         <Content Include="..\..\..\..\.dockerignore">
-            <Link>.dockerignore</Link>
+          <Link>.dockerignore</Link>
         </Content>
         <Content Include="appsettings.yaml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="logs\" />
     </ItemGroup>
 
 

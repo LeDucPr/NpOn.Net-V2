@@ -1,9 +1,10 @@
 ﻿using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
+using MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 
 [ProtoContract]
 public class CommandRModel : BaseGeneralRModel

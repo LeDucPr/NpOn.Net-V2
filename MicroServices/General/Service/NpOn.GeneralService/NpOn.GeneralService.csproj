@@ -26,14 +26,15 @@
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj"/>
-        <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj"/>
+        <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceCommand\NpOn.GeneralServiceCommand.csproj" />
+        <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceReadModel\NpOn.GeneralServiceReadModel.csproj" />
         <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj"/>
         <ProjectReference Include="..\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
         <Content Include="..\..\..\..\.dockerignore">
-            <Link>.dockerignore</Link>
+          <Link>.dockerignore</Link>
         </Content>
         <Content Include="appsettings.yaml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

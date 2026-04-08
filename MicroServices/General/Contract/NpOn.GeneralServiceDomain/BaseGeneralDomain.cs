@@ -1,8 +1,8 @@
 ﻿using Common.Extensions.NpOn.CommonBaseDomain;
-using MicroServices.General.Contract.NpOn.GeneralServiceContract.Domains;
+using MicroServices.General.Contract.NpOn.GeneralServiceDomain.Domains;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.NpOn.GeneralServiceContract;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceDomain;
 
 [ProtoContract]
 [ProtoInclude(100, typeof(TblMaster))]

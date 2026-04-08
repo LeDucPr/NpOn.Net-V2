@@ -4,7 +4,7 @@ using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountConstant;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
-using MicroServices.General.Contract.NpOn.GeneralServiceContract.Queries;
+using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
 using MicroServices.General.Service.NpOn.IGeneralService;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
