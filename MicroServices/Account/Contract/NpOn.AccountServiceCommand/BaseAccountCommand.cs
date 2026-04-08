@@ -27,7 +27,7 @@ namespace MicroServices.Account.Contracts.NpOn.AccountServiceCommand;
 [ProtoInclude(1800, typeof(AccountGroupSearchQuery))]
 [ProtoInclude(1900, typeof(AccountAddressAddOrChangeCommand))]
 [ProtoInclude(2000, typeof(AccountSyncFromOldSystemCommand))]
-[ProtoInclude(2000, typeof(AccountInfoGetByAccountIdsQuery))]
+[ProtoInclude(2100, typeof(AccountInfoGetByAccountIdsQuery))]
 
 public abstract class BaseAccountCommand : CommonAbsQuery
 {
