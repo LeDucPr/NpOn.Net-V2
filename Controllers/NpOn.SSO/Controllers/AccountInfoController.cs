@@ -4,7 +4,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Controllers.NpOn.SSO.Mappings.Account;
 using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.Validators;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Mvc;
 

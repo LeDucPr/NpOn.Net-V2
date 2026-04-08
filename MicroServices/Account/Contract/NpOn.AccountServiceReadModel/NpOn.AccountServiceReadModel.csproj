@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>MicroServices.Account.Contracts.NpOn.AccountServiceReadModel</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj" />
+      <ProjectReference Include="..\NpOn.AccountServiceCommand\NpOn.AccountServiceCommand.csproj" />
+    </ItemGroup>
+
+</Project>

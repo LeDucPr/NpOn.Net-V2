@@ -1,7 +1,7 @@
 ﻿using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountConstant;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 

@@ -1,5 +1,4 @@
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Service.NpOn.IAccountService;
 

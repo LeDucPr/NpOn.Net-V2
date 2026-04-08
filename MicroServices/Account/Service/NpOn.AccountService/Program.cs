@@ -93,8 +93,6 @@ public sealed class Program : HttpCommonProgram
         services.AddTransient<IAuthenticationService, AuthenticationService>();
         services.AddTransient<IAccountPermissionService, AccountPermissionService>();
         services.AddTransient<IAccountGroupService, AccountGroupService>();
-        services.AddTransient<IAccountMenuService, AccountMenuService>();
-        services.AddTransient<IAccountMenuPermissionService, AccountMenuPermissionService>();
 
         // Add Repository
         services.AddTransient<IAccountInfoStorageAdapter, AccountInfoStorageAdapter>();
@@ -102,8 +100,6 @@ public sealed class Program : HttpCommonProgram
         services.AddTransient<IAuthenticationStorageAdapter, AuthenticationStorageAdapter>();
         services.AddTransient<IAccountTokenAndPermissionRedisRepository, AccountTokenAndPermissionRedisRepository>();
         services.AddTransient<IAccountGroupStorageAdapter, AccountGroupStorageAdapter>();
-        services.AddTransient<IAccountMenuStorageAdapter, AccountMenuStorageAdapter>();
-        services.AddTransient<IAccountMenuPermissionStorageAdapter, AccountMenuPermissionStorageAdapter>();
 
         return Task.CompletedTask;
     }
@@ -118,8 +114,6 @@ public sealed class Program : HttpCommonProgram
         app.MapGrpcService<AuthenticationService>();
         app.MapGrpcService<AccountPermissionService>();
         app.MapGrpcService<AccountGroupService>();
-        app.MapGrpcService<AccountMenuService>();
-        app.MapGrpcService<AccountMenuPermissionService>();
         return Task.CompletedTask;
     }
 }

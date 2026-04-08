@@ -8,8 +8,6 @@ using Controllers.NpOn.SSO.Mappings.Account;
 using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.OutputModels;
 using Controllers.NpOn.SSO.Validators;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using MicroServices.Account.Service.NpOn.IAccountService;
@@ -17,6 +15,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using System.ServiceModel;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
 
 namespace Controllers.NpOn.SSO.Controllers;
 

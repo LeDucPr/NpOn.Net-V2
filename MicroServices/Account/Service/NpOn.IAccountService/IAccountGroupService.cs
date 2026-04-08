@@ -1,7 +1,7 @@
 ﻿using System.ServiceModel;
 using Common.Extensions.NpOn.CommonGrpcContract;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
 
 namespace MicroServices.Account.Service.NpOn.IAccountService;
 

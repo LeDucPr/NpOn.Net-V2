@@ -1,4 +1,4 @@
-﻿using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+﻿using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 
@@ -11,5 +11,5 @@ public interface IAuthenticationStorageAdapter
     Task<List<AccountLoginRModel>?> AccountLoginInfoGetByRefreshToken(string refreshToken);
     Task<AccountRModel?> AccountGetById(string accountId); // Guid
     Task<List<AccountRModel>?> AccountGetByIds(string[]? accountIds); //Guids
-    Task<AccountLoginRModel?> AccountLoginInfoGetBySessionId(string sessionId); 
+    Task<AccountLoginRModel?> AccountLoginInfoGetBySessionId(string sessionId);
 }

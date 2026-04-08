@@ -12,11 +12,11 @@ using Common.Infrastructures.NpOn.KafkaExtCm.Events;
 using Common.Infrastructures.NpOn.KafkaExtCm.Senders;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Events;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Events;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
+using MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
+using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using MicroServices.Account.Service.NpOn.IAccountService;
@@ -70,8 +70,8 @@ public class AuthenticationService(
                 return;
             }
 
-            Contracts.NpOn.AccountServiceContract.Domains.Account account =
-                new Contracts.NpOn.AccountServiceContract.Domains.Account(command);
+            Contracts.NpOn.AccountServiceDomain.Domains.Account account =
+                new Contracts.NpOn.AccountServiceDomain.Domains.Account(command);
             if (!(await baseRepository.Add([account]))?.Status ?? false)
             {
                 response.SetFail("Add new Account fail");
@@ -118,8 +118,8 @@ public class AuthenticationService(
                 return;
             }
 
-            Contracts.NpOn.AccountServiceContract.Domains.Account accountChangeStatus =
-                new Contracts.NpOn.AccountServiceContract.Domains.Account(existAccounts);
+            Contracts.NpOn.AccountServiceDomain.Domains.Account accountChangeStatus =
+                new Contracts.NpOn.AccountServiceDomain.Domains.Account(existAccounts);
             accountChangeStatus.ChangeStatus(command);
             // if (!(await baseRepository.Update([accountChangeStatus]))?.Status ?? false)
             // {
@@ -207,8 +207,8 @@ public class AuthenticationService(
                 return;
             }
 
-            Contracts.NpOn.AccountServiceContract.Domains.Account accountChangeStatus =
-                new Contracts.NpOn.AccountServiceContract.Domains.Account(existAccounts);
+            Contracts.NpOn.AccountServiceDomain.Domains.Account accountChangeStatus =
+                new Contracts.NpOn.AccountServiceDomain.Domains.Account(existAccounts);
             accountChangeStatus.ChangeNewPassword(command);
             if (!(await baseRepository.Update([accountChangeStatus]))?.Status ?? false)
             {
@@ -433,7 +433,6 @@ public class AuthenticationService(
                         AccountId = accountId,
                     });
             await redisRepository.AddCachingPermissionException(accountId, permissionExceptionResponse.Data);
-            logger.LogWarning($"{accountId} login");
 
             response.SetSuccess();
         });

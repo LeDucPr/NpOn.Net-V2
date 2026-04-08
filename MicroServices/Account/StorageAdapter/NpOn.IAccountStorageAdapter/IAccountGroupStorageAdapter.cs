@@ -1,4 +1,4 @@
-﻿using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+﻿using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 

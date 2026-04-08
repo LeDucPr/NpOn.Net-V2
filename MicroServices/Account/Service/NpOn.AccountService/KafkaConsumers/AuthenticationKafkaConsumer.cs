@@ -1,6 +1,6 @@
 ﻿using Common.Infrastructures.NpOn.KafkaExtCm.Receivers;
 using Common.Infrastructures.NpOn.KafkaExtCm.Topics;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Events;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Events;
 using MicroServices.Account.Service.NpOn.IAccountService;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.KafkaConsumers;

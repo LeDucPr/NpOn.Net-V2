@@ -1,4 +1,4 @@
-﻿using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
+﻿using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 
 namespace Controllers.NpOn.SSO.Requests;

@@ -1,6 +1,6 @@
 ﻿using Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Receivers;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Events;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Events;
 using MicroServices.Account.Service.NpOn.IAccountService;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.RabbitMqConsumers;

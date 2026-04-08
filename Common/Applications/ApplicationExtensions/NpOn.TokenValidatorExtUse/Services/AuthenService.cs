@@ -1,6 +1,6 @@
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
+using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Service.NpOn.IAccountService;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;

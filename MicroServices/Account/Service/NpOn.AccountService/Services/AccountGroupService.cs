@@ -2,10 +2,10 @@
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Domains;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Queries;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
+using MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
+using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 

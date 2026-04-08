@@ -1,5 +1,5 @@
 ﻿using Controllers.NpOn.SSO.OutputModels;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 
 namespace Controllers.NpOn.SSO.Mappings.Account;
 

@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.ReadModels;
+using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using Microsoft.IdentityModel.Tokens;
 

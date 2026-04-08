@@ -3,7 +3,7 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.Validators;
-using MicroServices.Account.Contracts.NpOn.AccountServiceContract.Commands;
+using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Mvc;
 
