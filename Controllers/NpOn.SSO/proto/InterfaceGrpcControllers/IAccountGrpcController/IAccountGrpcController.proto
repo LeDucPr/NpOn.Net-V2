@@ -1,5 +1,5 @@
 syntax = "proto3";
-package Controllers.NpOn.SSO.Controllers;
+package Controllers.NpOn.SSO.InterfaceGrpcControllers;
 import "protobuf-net/bcl.proto"; // schema for protobuf-net's handling of core .NET types
 
 message AccountLoginOutputModel {
@@ -94,6 +94,6 @@ enum ELoginType {
    ZERO = 0; // proto3 requires a zero value as the first item (it can be named anything)
    Default = 1;
 }
-service AccountController {
+service AccountGrpcController {
    rpc Login (AccountLoginRequest) returns (CommonApiResponse_AccountLoginResponseWrapper);
 }

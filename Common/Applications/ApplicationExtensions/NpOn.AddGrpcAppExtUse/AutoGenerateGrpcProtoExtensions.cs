@@ -84,32 +84,28 @@ public static class AutoGenerateGrpcProtoExtensions
                 string schema = generator.GetSchema(type);
 
                 string nameSpace = type.Namespace ?? "";
-                if (nameSpace.Contains("Controllers"))
+                string subFolder = string.Empty;
+
+                // Shorten path: Search for meaningful category (InterfaceGrpcControllers, MicroServices, etc.) from right to left
+                string[] segments = nameSpace.Split('.');
+                for (int i = segments.Length - 1; i >= 0; i--)
                 {
-                    // Convert namespace "Controllers.NpOn.SSO.Controllers" to "Controllers/NpOn.SSO/Controllers"
-                    string namespacePath = nameSpace.Replace(".", Path.DirectorySeparatorChar.ToString());
-                    string nestedFolderPath = Path.Combine(protoRootPath, namespacePath, type.Name);
-
-                    if (!Directory.Exists(nestedFolderPath))
+                    if (segments[i].Contains("Controllers") || segments[i].Contains("MicroServices"))
                     {
-                        Directory.CreateDirectory(nestedFolderPath);
+                        subFolder = segments[i];
+                        break;
                     }
-
-                    string filePath = Path.Combine(nestedFolderPath, $"{type.Name}.proto");
-                    File.WriteAllText(filePath, schema);
                 }
-                else
+
+                string nestedFolderPath = Path.Combine(protoRootPath, subFolder, type.Name);
+
+                if (!Directory.Exists(nestedFolderPath))
                 {
-                    // Fallback if not matching exactly the controller namespace structure
-                    string fallbackFolder = Path.Combine(protoRootPath, type.Name);
-                    if (!Directory.Exists(fallbackFolder))
-                    {
-                        Directory.CreateDirectory(fallbackFolder);
-                    }
-
-                    string filePath = Path.Combine(fallbackFolder, $"{type.Name}.proto");
-                    File.WriteAllText(filePath, schema);
+                    Directory.CreateDirectory(nestedFolderPath);
                 }
+
+                string filePath = Path.Combine(nestedFolderPath, $"{type.Name}.proto");
+                File.WriteAllText(filePath, schema);
             }
         }
         catch (Exception ex)

@@ -1,14 +1,15 @@
 using System.ServiceModel;
 using Common.Extensions.NpOn.CommonGrpcContract;
-using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.OutputModels;
+using Controllers.NpOn.SSO.Requests;
+using Microsoft.AspNetCore.Authorization;
 
-namespace Controllers.NpOn.SSO.Controllers;
+namespace Controllers.NpOn.SSO.InterfaceGrpcControllers;
 
-[ServiceContract(Name = "Controllers.NpOn.SSO.Controllers.AccountController")]
+[ServiceContract]
 public interface IAccountGrpcController
 {
     [OperationContract]
-    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    [AllowAnonymous]
     Task<CommonApiResponse<AccountLoginResponseWrapper>> Login(AccountLoginRequest request);
 }
