@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace Common.Infrastructures.NpOn.MssqlExtCm.Results;
 
@@ -48,5 +49,28 @@ public static class MssqlUtils
             return DbType.Int32;
         }
         return TypeMap.GetValueOrDefault(nonNullableType, DbType.Object);
+    }
+
+    public static object? NormalizeMssqlValue(object? value)
+    {
+        if (value == DBNull.Value) return null;
+        return value;
+    }
+
+    public static (object? Value, SqlDbType? DbType) NormalizeForMssql(object? raw)
+    {
+        if (raw == null || raw == DBNull.Value)
+            return (DBNull.Value, SqlDbType.Variant);
+
+        var p = new SqlParameter { Value = raw };
+        var sqlDbType = p.SqlDbType;
+
+        // DateTime handling
+        if (raw is DateTime dt)
+        {
+            return (dt, SqlDbType.DateTime2);
+        }
+
+        return (raw, sqlDbType);
     }
 }

@@ -27,6 +27,9 @@ public enum EApplicationConfiguration
     [Display(Name = "YugaBytePgConnectStrings")] YugaBytePgConnectStrings, // - string
     [Display(Name = "YugaBytePgConnectionNumber")] YugaBytePgConnectionNumber, // - int
     [Display(Name = "IsUseYugaBytePg")] IsUseYugaBytePg, // - bool
+    [Display(Name = "MssqlConnectionString")] MssqlConnectionString, // - string
+    [Display(Name = "MssqlConnectionNumber")] MssqlConnectionNumber, // - int
+    [Display(Name = "IsUseMssql")] IsUseMssql, // - bool
 
     
     // Connection Settings
