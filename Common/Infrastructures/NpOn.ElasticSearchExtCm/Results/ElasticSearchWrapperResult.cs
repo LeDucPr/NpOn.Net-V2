@@ -1,6 +1,5 @@
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Elastic.Clients.Elasticsearch;
 
 namespace Common.Infrastructures.NpOn.ElasticSearchExtCm.Results;
 
@@ -76,12 +75,11 @@ public class ElasticSearchWrapperResult :
     {
         if (Parent.IsSingle)
         {
-            return Parent.SingleValue != null ? new[] { As<T>() } : Array.Empty<T?>();
+            return Parent.SingleValue != null ? [As<T>()] : [];
         }
 
         return Parent.Values?.Select(v =>
         {
-            if (v == null) return default;
             if (v is T tValue) return tValue;
             try
             {

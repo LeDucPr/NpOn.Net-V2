@@ -1,11 +1,13 @@
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.ElasticSearchExtCm.Commands;
 using Common.Infrastructures.NpOn.ElasticSearchExtCm.Results;
 using Elastic.Clients.Elasticsearch;
+using Elastic.Transport;
 
 namespace Common.Infrastructures.NpOn.ElasticSearchExtCm.Connections;
 
@@ -15,7 +17,8 @@ public class ElasticSearchDriver : NpOnDbDriver
     public override string Name { get; set; } = "ElasticSearch";
     public override string Version { get; set; } = "Unknown";
 
-    public override bool IsValidSession => _client != null; // Basic check, can be improved with ping
+    // Valid if we instantiated client since Elastic pooling is internal
+    public override bool IsValidSession => _client != null;
 
     public ElasticSearchDriver(INpOnConnectOption option) : base(option)
     {
@@ -23,62 +26,58 @@ public class ElasticSearchDriver : NpOnDbDriver
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        if (IsValidSession)
+        if (IsValidSession) return;
+
+        var connectionString = Option.ConnectionString;
+        if (string.IsNullOrWhiteSpace(connectionString)) return;
+
+        // Split multiple endpoints if comma-separated
+        var uris = connectionString.Split(',').Select(u => new Uri(u.Trim())).ToArray();
+
+        ElasticsearchClientSettings settings;
+        if (uris.Length > 1)
         {
-            return;
+            var pool = new StaticNodePool(uris);
+            settings = new ElasticsearchClientSettings(pool);
         }
+        else
+            settings = new ElasticsearchClientSettings(uris[0]);
 
-        await DisconnectAsync();
-        if (Option.ConnectionString != null)
+        // Apply credentials if any from Option or connection string logic here.
+        // We assume standard setup for now.
+        _client = new ElasticsearchClient(settings);
+
+        try
         {
-            // Assuming connection string is a URL for now. 
-            // More complex config (auth, multiple nodes) might need parsing or a different option structure.
-            var settings = new ElasticsearchClientSettings(new Uri(Option.ConnectionString));
-            
-            // Disable certificate validation for development if needed, or configure properly
-            // settings.ServerCertificateValidationCallback(CertificateValidations.AllowAll);
-
-            _client = new ElasticsearchClient(settings);
+            var ping = await _client.PingAsync(cancellationToken);
+            if (ping.IsValidResponse)
+            {
+                Name = "ElasticSearch Pool";
+            }
         }
-
-        if (_client != null)
+        catch
         {
-            try 
-            {
-                var info = await _client.InfoAsync(cancellationToken);
-                if (info.IsValidResponse)
-                {
-                    Version = info.Version.Number;
-                    Name = $"ElasticSearch on {Option.ConnectionString}";
-                }
-            }
-            catch
-            {
-                // Connection failed
-                _client = null;
-            }
+            _client = null;
         }
     }
 
-    public override async Task DisconnectAsync()
+    public override Task DisconnectAsync()
     {
-        // ElasticsearchClient doesn't have a persistent connection to close in the same way as SQL drivers,
-        // but we can nullify the client.
-        _client = null;
-        await Task.CompletedTask;
+        _client = null; // ElasticsearchClient internally manages connection pool. Dropping reference.
+        return Task.CompletedTask;
     }
 
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _client == null)
         {
-            return new ElasticSearchWrapperResult(new ElasticSearchContainer(null)).SetFail(EDbError.Connection);
+            return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(EDbError.Connection);
         }
 
         if (command is not ElasticSearchDbCommand esCommand)
         {
-            return new ElasticSearchWrapperResult(new ElasticSearchContainer(null))
-                .SetFail(EDbError.CommandNotSupported);
+            return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(
+                EDbError.CommandNotSupported);
         }
 
         try
@@ -86,44 +85,73 @@ public class ElasticSearchDriver : NpOnDbDriver
             switch (esCommand.CommandType)
             {
                 case EElasticSearchCommand.Index:
-                    if (esCommand.Document == null) return new ElasticSearchWrapperResult(new ElasticSearchContainer(null)).SetFail(EDbError.CommandParam);
-                    var indexResponse = await _client.IndexAsync(esCommand.Document, esCommand.IndexName);
-                    return new ElasticSearchWrapperResult(new ElasticSearchContainer(indexResponse.Id));
+                    if (esCommand.Document == null)
+                        throw new ArgumentNullException(nameof(esCommand.Document));
+                    var indexRes = await _client.IndexAsync(esCommand.Document,
+                        idx => idx.Index(esCommand.IndexName).Id(esCommand.Id));
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(indexRes.IsValidResponse,
+                        NetJsonMode.ToJson(indexRes.Id), null));
 
                 case EElasticSearchCommand.Get:
-                    if (esCommand.Id == null) return new ElasticSearchWrapperResult(new ElasticSearchContainer(null)).SetFail(EDbError.CommandParam);
-                    // We need a type for GetAsync usually. For generic wrapper, we might need to fetch as generic object or JsonNode
-                    // This part is tricky without a specific T. 
-                    // For now, let's assume we are fetching a dynamic/object if possible or return the raw response wrapper
-                    // Elastic.Clients.Elasticsearch is strongly typed.
-                    // We might need to use a specific method or helper to get raw JSON or a generic dictionary.
-                    // For simplicity in this structure, let's assume we return the ID or success status if we can't deserialize to T here.
-                    // Ideally, the command should carry the Type info or we use a "dynamic" equivalent.
-                    
-                    // Workaround: Use object or a Dictionary<string, object>
-                    var getResponse = await _client.GetAsync<object>(esCommand.IndexName, esCommand.Id);
-                    return new ElasticSearchWrapperResult(new ElasticSearchContainer(getResponse.Source));
+                    if (string.IsNullOrWhiteSpace(esCommand.Id))
+                        throw new ArgumentNullException(nameof(esCommand.Id));
+                    // use raw output for getting json string directly back via dynamic dictionary representation or raw source
+                    var getRes = await _client.GetAsync<object>(esCommand.Id, idx => idx.Index(esCommand.IndexName));
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(getRes.IsValidResponse,
+                        NetJsonMode.ToJson(getRes.Source), getRes.Source));
 
                 case EElasticSearchCommand.Delete:
-                    if (esCommand.Id == null) return new ElasticSearchWrapperResult(new ElasticSearchContainer(null)).SetFail(EDbError.CommandParam);
-                    var deleteResponse = await _client.DeleteAsync(esCommand.IndexName, esCommand.Id);
-                    return new ElasticSearchWrapperResult(new ElasticSearchContainer(deleteResponse.Result.ToString()));
+                    if (string.IsNullOrWhiteSpace(esCommand.Id))
+                        throw new ArgumentNullException(nameof(esCommand.Id));
+                    var delRes = await _client.DeleteAsync(esCommand.IndexName, esCommand.Id);
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(delRes.IsValidResponse));
 
                 case EElasticSearchCommand.Search:
-                    // Search is also strongly typed. 
-                    // If Query is provided, we need to construct the search request.
-                    // This is a placeholder for search implementation.
-                    // Real implementation would depend on how 'Query' object is passed (e.g., raw JSON, or a SearchRequest object)
-                    return new ElasticSearchWrapperResult(new ElasticSearchContainer(null)).SetFail(EDbError.CommandNotSupported); // Not fully implemented
+                    // Using raw query or SearchRequest. Passing generic object allows flexible queries.
+                    // For truly dynamic user search, they either pass SearchRequest or a string query
+                    if (esCommand.Query is Action<SearchRequestDescriptor<object>> queryAction)
+                    {
+                        var searchObjRes = await _client.SearchAsync(esCommand.IndexName, queryAction);
+                        return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(
+                            searchObjRes.IsValidResponse, NetJsonMode.ToJson(searchObjRes.Documents),
+                            searchObjRes.Documents));
+                    }
+
+                    if (esCommand.Query is string stringQuery)
+                    {
+                        var searchStrRes = await _client.SearchAsync<object>(s =>
+                            s.Index(esCommand.IndexName).Query(q => q.QueryString(qs => qs.Query(stringQuery))));
+                        return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(
+                            searchStrRes.IsValidResponse, NetJsonMode.ToJson(searchStrRes.Documents),
+                            searchStrRes.Documents));
+                    }
+
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(
+                        "Invalid Search Query type");
+
+                case EElasticSearchCommand.IndexMany:
+                    if (esCommand.Documents == null) throw new ArgumentNullException(nameof(esCommand.Documents));
+                    var bulkRes =
+                        await _client.BulkAsync(b => b.Index(esCommand.IndexName).IndexMany(esCommand.Documents));
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(bulkRes.IsValidResponse));
+
+                case EElasticSearchCommand.GetMany:
+                    if (esCommand.Ids == null || esCommand.Ids.Length == 0)
+                        throw new ArgumentNullException(nameof(esCommand.Ids));
+                    var getManyRes = await _client.SearchAsync<object>(s => s
+                        .Index(esCommand.IndexName)
+                        .Query(q => q.Ids(i => i.Values(esCommand.Ids))));
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(getManyRes.IsValidResponse,
+                        NetJsonMode.ToJson(getManyRes.Documents), getManyRes.Documents));
 
                 default:
-                    return new ElasticSearchWrapperResult(new ElasticSearchContainer(null))
-                        .SetFail(EDbError.CommandNotSupported);
+                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(
+                        EDbError.CommandNotSupported);
             }
         }
         catch (Exception ex)
         {
-            return new ElasticSearchWrapperResult(new ElasticSearchContainer(null)).SetFail(EDbError.ElasticSearchExecute);
+            return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(ex);
         }
     }
 }

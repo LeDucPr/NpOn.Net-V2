@@ -1,9 +1,10 @@
-﻿using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
+using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.DbFactories.NpOn.GenericDbFactory.FactoryResults;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
+using Common.Infrastructures.NpOn.ElasticSearchExtCm.Connections;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Connections;
 using Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
@@ -66,6 +67,10 @@ public class GenericDbDriverFactoryCreator
                 break;
             case EDb.Redis:
                 _connectOptions = new RedisConnectOption().SetConnectionString(connectString);
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
+                break;
+            case EDb.ElasticSearch:
+                _connectOptions = new ElasticSearchConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
         }
