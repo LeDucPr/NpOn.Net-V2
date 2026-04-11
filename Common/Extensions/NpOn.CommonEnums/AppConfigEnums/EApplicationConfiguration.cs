@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums.MarkerAttributes;
 
 namespace Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
@@ -21,6 +21,9 @@ public enum EApplicationConfiguration
     [Display(Name = "RedisConnectString")] RedisConnectString, // - string
     [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int
     [Display(Name = "IsUseRedisCache")] IsUseRedisCache, // - bool
+    [Display(Name = "ElasticSearchConnectString")] ElasticSearchConnectString, // - string
+    [Display(Name = "ElasticSearchConnectionNumber")] ElasticSearchConnectionNumber, // - int
+    [Display(Name = "IsUseElasticSearch")] IsUseElasticSearch, // - bool
 
     
     // Connection Settings
