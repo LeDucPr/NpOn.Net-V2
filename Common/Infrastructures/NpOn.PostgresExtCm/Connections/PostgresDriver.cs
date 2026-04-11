@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonDb.DbTransactions;
@@ -16,11 +16,11 @@ namespace Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 
 public class PostgresDriver : NpOnDbDriver
 {
-    private NpgsqlConnection? _connection;
-    private readonly IObjectPool<PostgresResultSetWrapper>? _resultSetPool;
+    protected NpgsqlConnection? _connection;
+    protected readonly IObjectPool<PostgresResultSetWrapper>? _resultSetPool;
 
-    public sealed override string Name { get; set; } = "NpOn-V2.PostgresDriver";
-    public sealed override string Version { get; set; } = "1.0";
+    public override string Name { get; set; } = "NpOn-V2.PostgresDriver";
+    public override string Version { get; set; } = "1.0";
 
     public override bool IsValidSession => _connection is { State: ConnectionState.Open };
 
@@ -117,7 +117,7 @@ public class PostgresDriver : NpOnDbDriver
 
     #region private
 
-    private INpOnWrapperResult CreateFailResult(EDbError error)
+    protected INpOnWrapperResult CreateFailResult(EDbError error)
     {
         if (_resultSetPool != null)
         {
@@ -131,7 +131,7 @@ public class PostgresDriver : NpOnDbDriver
         return new PostgresResultSetWrapper().SetFail(error);
     }
 
-    private INpOnWrapperResult CreateFailResult(Exception ex)
+    protected INpOnWrapperResult CreateFailResult(Exception ex)
     {
         if (_resultSetPool != null)
         {
@@ -145,7 +145,7 @@ public class PostgresDriver : NpOnDbDriver
         return new PostgresResultSetWrapper().SetFail(ex);
     }
 
-    private async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(
+    protected async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(
         string commandText,
         IEnumerable<INpOnDbCommandParam>? parameters,
         INpOnDbTransaction? transaction = null,

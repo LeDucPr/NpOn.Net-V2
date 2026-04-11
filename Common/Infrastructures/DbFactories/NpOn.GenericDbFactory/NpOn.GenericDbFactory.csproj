@@ -16,6 +16,7 @@
       <ProjectReference Include="..\..\NpOn.MssqlExtCm\NpOn.MssqlExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
       <ProjectReference Include="..\..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.YugaByteExtCm\NpOn.YugaByteExtCm.csproj" />
     </ItemGroup>
 
 </Project>

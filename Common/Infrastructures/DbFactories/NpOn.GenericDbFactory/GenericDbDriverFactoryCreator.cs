@@ -9,6 +9,7 @@ using Common.Infrastructures.NpOn.MongoDbExtCm.Connections;
 using Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 using Common.Infrastructures.NpOn.RedisExtCm.Connections;
+using Common.Infrastructures.NpOn.YugaByteExtCm.Connections;
 
 namespace Common.Infrastructures.DbFactories.NpOn.GenericDbFactory;
 
@@ -71,6 +72,10 @@ public class GenericDbDriverFactoryCreator
                 break;
             case EDb.ElasticSearch:
                 _connectOptions = new ElasticSearchConnectOption().SetConnectionString(connectString);
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
+                break;
+            case EDb.YugaBytePg:
+                _connectOptions = new YugaByteConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
         }

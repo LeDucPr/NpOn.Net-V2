@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Infrastructures.DbFactories.NpOn.YugaByteFactory</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Extensions\NpOn.BaseDbFactory\NpOn.BaseDbFactory.csproj" />
+      <ProjectReference Include="..\..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
+      <ProjectReference Include="..\..\NpOn.YugaByteExtCm\NpOn.YugaByteExtCm.csproj" />
+      <ProjectReference Include="..\NpOn.PostgresFactory\NpOn.PostgresFactory.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="FactoryResults\" />
+    </ItemGroup>
+
+</Project>

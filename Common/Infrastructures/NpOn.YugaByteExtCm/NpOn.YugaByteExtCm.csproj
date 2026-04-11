@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Infrastructures.NpOn.YugaByteExtCm</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
+        <ProjectReference Include="..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj"/>
+        <PackageReference Include="NpgsqlYugabyteDB" Version="9.0.2.1" />
+    </ItemGroup>
+
+</Project>

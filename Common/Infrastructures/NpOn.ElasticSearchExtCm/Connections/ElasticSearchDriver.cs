@@ -31,8 +31,13 @@ public class ElasticSearchDriver : NpOnDbDriver
         var connectionString = Option.ConnectionString;
         if (string.IsNullOrWhiteSpace(connectionString)) return;
 
-        // Split multiple endpoints if comma-separated
-        var uris = connectionString.Split(',').Select(u => new Uri(u.Trim())).ToArray();
+        // Split multiple endpoints if comma/semicolon separated
+        var uris = connectionString
+            .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(u => u.Trim())
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Select(u => new Uri(u))
+            .ToArray();
 
         ElasticsearchClientSettings settings;
         if (uris.Length > 1)

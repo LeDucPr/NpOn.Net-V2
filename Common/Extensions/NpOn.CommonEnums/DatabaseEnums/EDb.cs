@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
@@ -12,6 +12,7 @@ public enum EDb : byte
     [Display(Name = "Mssql")] Mssql = 5,
     [Display(Name = "Redis")] Redis = 6,
     [Display(Name = "ElasticSearch")] ElasticSearch = 7,
+    [Display(Name = "YugaBytePg")] YugaBytePg = 8,
 }
 
 public static class EDbExtension
@@ -28,6 +29,7 @@ public static class EDbExtension
             EDb.MongoDb => EDbLanguage.Bson,
             EDb.Redis => EDbLanguage.Json,
             EDb.ElasticSearch => EDbLanguage.Json,
+            EDb.YugaBytePg => EDbLanguage.Sql,
             _ => throw new NotSupportedException($"The database language for '{db}' is not supported."),
         };
     }
@@ -43,6 +45,7 @@ public static class EDbExtension
             EDb.MongoDb,
             EDb.Redis,
             EDb.ElasticSearch,
+            EDb.YugaBytePg,
         ];
         if (validTypes.Contains(dbType)) return true;
         return false;

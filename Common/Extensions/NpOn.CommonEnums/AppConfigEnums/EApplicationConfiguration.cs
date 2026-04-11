@@ -21,9 +21,12 @@ public enum EApplicationConfiguration
     [Display(Name = "RedisConnectString")] RedisConnectString, // - string
     [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int
     [Display(Name = "IsUseRedisCache")] IsUseRedisCache, // - bool
-    [Display(Name = "ElasticSearchConnectString")] ElasticSearchConnectString, // - string
+    [Display(Name = "ElasticSearchConnectStrings")] ElasticSearchConnectStrings, // - string
     [Display(Name = "ElasticSearchConnectionNumber")] ElasticSearchConnectionNumber, // - int
     [Display(Name = "IsUseElasticSearch")] IsUseElasticSearch, // - bool
+    [Display(Name = "YugaBytePgConnectStrings")] YugaBytePgConnectStrings, // - string
+    [Display(Name = "YugaBytePgConnectionNumber")] YugaBytePgConnectionNumber, // - int
+    [Display(Name = "IsUseYugaBytePg")] IsUseYugaBytePg, // - bool
 
     
     // Connection Settings

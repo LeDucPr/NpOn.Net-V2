@@ -16,7 +16,7 @@ public static class ElasticSearchServiceCollectionExtensions
         services.AddSingleton<IElasticSearchFactoryWrapper, ElasticSearchFactoryWrapper>(_ =>
         {
             connectionString ??=
-                EApplicationConfiguration.ElasticSearchConnectString.GetAppSettingConfig().AsDefaultString();
+                EApplicationConfiguration.ElasticSearchConnectStrings.GetAppSettingConfig().AsDefaultString();
             connectionNumber ??= EApplicationConfiguration.ElasticSearchConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             
             IElasticSearchFactoryWrapper factoryWrapper =
