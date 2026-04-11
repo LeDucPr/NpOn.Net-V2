@@ -148,9 +148,18 @@ public class MssqlDriver : NpOnDbDriver
             {
                 foreach (var param in parameters)
                 {
-                    var sqlParam = new SqlParameter(param.ParamName, param.ParamValue ?? DBNull.Value);
+                    var sqlParam = new SqlParameter { ParameterName = param.ParamName };
+                    
+                    var targetSqlDbType = SqlDbType.Variant;
                     if (param is NpOnDbCommandParam<SqlDbType> typedParam)
-                        sqlParam.SqlDbType = typedParam.ParamType;
+                        targetSqlDbType = typedParam.ParamType;
+
+                    var adoNetValue = MssqlUtils.ConvertStringToMssqlType(param.ParamValue, targetSqlDbType);
+
+                    if (targetSqlDbType != SqlDbType.Variant)
+                        sqlParam.SqlDbType = targetSqlDbType;
+
+                    sqlParam.Value = adoNetValue ?? DBNull.Value;
                     sqlCommand.Parameters.Add(sqlParam);
                 }
             }

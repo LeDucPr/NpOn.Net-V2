@@ -1,3 +1,4 @@
+using System.Data;
 using System.Reflection;
 using System.Text;
 using Common.Extensions.NpOn.CommonBaseDomain;
@@ -46,7 +47,7 @@ public static class BaseDomainMssqlExtensions
                 paramNames.Add(param);
 
                 var p = new SqlParameter(param, paramValue ?? DBNull.Value);
-                if (sqlDbType.HasValue) p.SqlDbType = sqlDbType.Value;
+                if (sqlDbType != SqlDbType.Variant) p.SqlDbType = sqlDbType;
                 parameters.Add(p);
             }
 
@@ -87,7 +88,7 @@ public static class BaseDomainMssqlExtensions
                 var (val, sqlType) = MssqlUtils.NormalizeForMssql(raw);
                 string param = $"@v_{i}_{colName.Replace(" ", "_")}";
                 var p = new SqlParameter(param, val ?? DBNull.Value);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
                 parameters.Add(p);
 
                 setClauses.Add($"[{colName}] = {param}");
@@ -105,7 +106,7 @@ public static class BaseDomainMssqlExtensions
 
                 var (pkValue, pkType) = MssqlUtils.NormalizeForMssql(pkVal);
                 var p = new SqlParameter(pkParam, pkValue);
-                if (pkType.HasValue) p.SqlDbType = pkType.Value;
+                if (pkType != SqlDbType.Variant) p.SqlDbType = pkType;
                 parameters.Add(p);
                 pkConditions.Add($"[{pkMember.ColumnName}] = {pkParam}");
             }
@@ -144,7 +145,7 @@ public static class BaseDomainMssqlExtensions
                 var (val, sqlType) = MssqlUtils.NormalizeForMssql(raw);
                 string param = $"@m_{i}_{colName.Replace(" ", "_")}";
                 var p = new SqlParameter(param, val ?? DBNull.Value);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
                 parameters.Add(p);
 
                 allCols.Add($"[{colName}]");
@@ -197,7 +198,7 @@ public static class BaseDomainMssqlExtensions
 
                 var (val, sqlType) = MssqlUtils.NormalizeForMssql(raw);
                 var p = new SqlParameter(pkParam, val);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
                 parameters.Add(p);
                 pkConditions.Add($"[{pkMember.ColumnName}] = {pkParam}");
             }

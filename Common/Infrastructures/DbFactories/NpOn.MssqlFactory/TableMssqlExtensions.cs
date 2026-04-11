@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.MssqlExtCm.Results;
@@ -43,7 +44,7 @@ public static class TableMssqlExtensions
                 row.TryGetValue(colName, out var cell);
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell?.ValueAsObject);
                 var p = new SqlParameter(paramName, paramValue ?? DBNull.Value);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
                 parameters.Add(p);
             }
             sql.Append($"INSERT INTO [{tableName}] ({string.Join(",", columnNames.Select(c => $"[{c}]"))}) VALUES ({string.Join(",", valueParams)});");
@@ -78,7 +79,7 @@ public static class TableMssqlExtensions
                 row.TryGetValue(colName, out var cell);
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell?.ValueAsObject);
                 var p = new SqlParameter(paramName, paramValue ?? DBNull.Value);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
                 parameters.Add(p);
             }
 
@@ -91,7 +92,7 @@ public static class TableMssqlExtensions
                     throw new InvalidOperationException($"PK for '{pkColName}' cannot be null.");
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell.ValueAsObject);
                 var p = new SqlParameter(pkParamName, paramValue);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                // if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
                 parameters.Add(p);
             }
             sql.Append($"UPDATE [{tableName}] SET {string.Join(", ", setClauses)} WHERE {string.Join(" AND ", whereClauses)};");
@@ -108,7 +109,7 @@ public static class TableMssqlExtensions
 
         var pkColumnNames = GetPrimaryKeyColumnNames(firstRow);
         var allColumnNames = firstRow.Keys.ToList();
-        var updateColumnNames = allColumnNames.Except(pkColumnNames).ToList();
+        // var updateColumnNames = allColumnNames.Except(pkColumnNames).ToList();
 
         var parameters = new List<SqlParameter>();
         var sql = new StringBuilder();
@@ -132,7 +133,7 @@ public static class TableMssqlExtensions
                 row.TryGetValue(colName, out var cell);
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell?.ValueAsObject);
                 var p = new SqlParameter(paramName, paramValue ?? DBNull.Value);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
                 parameters.Add(p);
 
                 if (pkColumnNames.Contains(colName))
@@ -175,7 +176,7 @@ public static class TableMssqlExtensions
                     throw new InvalidOperationException($"PK for '{pkColName}' cannot be null.");
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell.ValueAsObject);
                 var p = new SqlParameter(pkParamName, paramValue);
-                if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
+                // if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
                 parameters.Add(p);
             }
             whereClauses.Add($"({string.Join(" AND ", pkConditions)})");
