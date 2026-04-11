@@ -1,7 +1,6 @@
 using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
-using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.DbFactories.NpOn.ElasticSearchFactory.FactoryResults;
 using Common.Infrastructures.NpOn.ElasticSearchExtCm.Commands;
 using Common.Infrastructures.NpOn.ElasticSearchExtCm.Connections;

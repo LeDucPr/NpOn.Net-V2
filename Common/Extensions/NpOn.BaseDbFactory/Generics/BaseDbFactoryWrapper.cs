@@ -92,7 +92,7 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
     {
         return await ExecuteWithConnectionAsync(async connection =>
         {
-            var safeParams = parameters ?? [];
+            // var safeParams = parameters ?? [];
             INpOnDbExecFuncCommand execFuncCommand =
                 new NpOnDbExecFuncCommand(DbType, funcName, parameters);
             return await connection.Driver.Execute(execFuncCommand);

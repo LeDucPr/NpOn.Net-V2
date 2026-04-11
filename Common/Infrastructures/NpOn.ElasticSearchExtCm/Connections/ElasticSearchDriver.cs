@@ -92,24 +92,35 @@ public class ElasticSearchDriver : NpOnDbDriver
                 case EElasticSearchCommand.Index:
                     if (esCommand.Document == null)
                         throw new ArgumentNullException(nameof(esCommand.Document));
+                    // var indexRes = await _client.IndexAsync(esCommand.Document,
+                    //     idx => idx.Index(esCommand.IndexName).Id(esCommand.Id));
                     var indexRes = await _client.IndexAsync(esCommand.Document,
-                        idx => idx.Index(esCommand.IndexName).Id(esCommand.Id));
-                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(indexRes.IsValidResponse,
-                        NetJsonMode.ToJson(indexRes.Id), null));
+                        idx =>
+                        {
+                            if (esCommand.Id != null) idx.Index(esCommand.IndexName).Id(esCommand.Id);
+                        });
+                    var indexContainer = new ElasticSearchValueContainer(indexRes.IsValidResponse,
+                        NetJsonMode.ToJson(indexRes.Id)/*, null*/);
+                    MapMetadata(indexContainer, indexRes);
+                    return new ElasticSearchValueWrapper(indexContainer);
 
                 case EElasticSearchCommand.Get:
                     if (string.IsNullOrWhiteSpace(esCommand.Id))
                         throw new ArgumentNullException(nameof(esCommand.Id));
-                    // use raw output for getting json string directly back via dynamic dictionary representation or raw source
+                    // use raw output for getting JSON string directly back via dynamic dictionary representation or raw source
                     var getRes = await _client.GetAsync<object>(esCommand.Id, idx => idx.Index(esCommand.IndexName));
-                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(getRes.IsValidResponse,
-                        NetJsonMode.ToJson(getRes.Source), getRes.Source));
+                    var getContainer = new ElasticSearchValueContainer(getRes.IsValidResponse,
+                        NetJsonMode.ToJson(getRes.Source), getRes.Source);
+                    MapMetadata(getContainer, getRes);
+                    return new ElasticSearchValueWrapper(getContainer);
 
                 case EElasticSearchCommand.Delete:
                     if (string.IsNullOrWhiteSpace(esCommand.Id))
                         throw new ArgumentNullException(nameof(esCommand.Id));
                     var delRes = await _client.DeleteAsync(esCommand.IndexName, esCommand.Id);
-                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(delRes.IsValidResponse));
+                    var delContainer = new ElasticSearchValueContainer(delRes.IsValidResponse);
+                    MapMetadata(delContainer, delRes);
+                    return new ElasticSearchValueWrapper(delContainer);
 
                 case EElasticSearchCommand.Search:
                     // Using raw query or SearchRequest. Passing generic object allows flexible queries.
@@ -117,18 +128,20 @@ public class ElasticSearchDriver : NpOnDbDriver
                     if (esCommand.Query is Action<SearchRequestDescriptor<object>> queryAction)
                     {
                         var searchObjRes = await _client.SearchAsync(esCommand.IndexName, queryAction);
-                        return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(
-                            searchObjRes.IsValidResponse, NetJsonMode.ToJson(searchObjRes.Documents),
-                            searchObjRes.Documents));
+                        var searchObjContainer = new ElasticSearchValueContainer(searchObjRes.IsValidResponse,
+                            NetJsonMode.ToJson(searchObjRes.Documents), searchObjRes.Documents);
+                        MapMetadata(searchObjContainer, searchObjRes);
+                        return new ElasticSearchValueWrapper(searchObjContainer);
                     }
 
                     if (esCommand.Query is string stringQuery)
                     {
                         var searchStrRes = await _client.SearchAsync<object>(s =>
-                            s.Index(esCommand.IndexName).Query(q => q.QueryString(qs => qs.Query(stringQuery))));
-                        return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(
-                            searchStrRes.IsValidResponse, NetJsonMode.ToJson(searchStrRes.Documents),
-                            searchStrRes.Documents));
+                            s.Indices(esCommand.IndexName).Query(q => q.QueryString(qs => qs.Query(stringQuery))));
+                        var searchStrContainer = new ElasticSearchValueContainer(searchStrRes.IsValidResponse,
+                            NetJsonMode.ToJson(searchStrRes.Documents), searchStrRes.Documents);
+                        MapMetadata(searchStrContainer, searchStrRes);
+                        return new ElasticSearchValueWrapper(searchStrContainer);
                     }
 
                     return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(
@@ -138,16 +151,20 @@ public class ElasticSearchDriver : NpOnDbDriver
                     if (esCommand.Documents == null) throw new ArgumentNullException(nameof(esCommand.Documents));
                     var bulkRes =
                         await _client.BulkAsync(b => b.Index(esCommand.IndexName).IndexMany(esCommand.Documents));
-                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(bulkRes.IsValidResponse));
+                    var bulkContainer = new ElasticSearchValueContainer(bulkRes.IsValidResponse);
+                    MapMetadata(bulkContainer, bulkRes);
+                    return new ElasticSearchValueWrapper(bulkContainer);
 
                 case EElasticSearchCommand.GetMany:
                     if (esCommand.Ids == null || esCommand.Ids.Length == 0)
                         throw new ArgumentNullException(nameof(esCommand.Ids));
                     var getManyRes = await _client.SearchAsync<object>(s => s
-                        .Index(esCommand.IndexName)
+                        .Indices(esCommand.IndexName)
                         .Query(q => q.Ids(i => i.Values(esCommand.Ids))));
-                    return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(getManyRes.IsValidResponse,
-                        NetJsonMode.ToJson(getManyRes.Documents), getManyRes.Documents));
+                    var getManyContainer = new ElasticSearchValueContainer(getManyRes.IsValidResponse,
+                        NetJsonMode.ToJson(getManyRes.Documents), getManyRes.Documents);
+                    MapMetadata(getManyContainer, getManyRes);
+                    return new ElasticSearchValueWrapper(getManyContainer);
 
                 default:
                     return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(
@@ -157,6 +174,51 @@ public class ElasticSearchDriver : NpOnDbDriver
         catch (Exception ex)
         {
             return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(ex);
+        }
+    }
+
+    private static void MapMetadata(ElasticSearchValueContainer container, object? elasticResponse)
+    {
+        if (elasticResponse == null) return;
+
+        try
+        {
+            var type = elasticResponse.GetType();
+
+            var tookProp = type.GetProperty(nameof(ElasticSearchValueContainer.Took));
+            if (tookProp != null)
+            {
+                var tookVal = tookProp.GetValue(elasticResponse);
+                if (tookVal is long tookL) container.Took = tookL;
+            }
+
+            var shardsProp = type.GetProperty(nameof(ElasticSearchValueContainer.Shards));
+            if (shardsProp == null)
+                return;
+            var sourceShards = shardsProp.GetValue(elasticResponse);
+            if (sourceShards == null)
+                return;
+            var shardType = sourceShards.GetType();
+            var total = (int?)shardType.GetProperty(nameof(ElasticSearchValueShardStatistics.Total))
+                ?.GetValue(sourceShards) ?? 0;
+            var successful = (int?)shardType.GetProperty(nameof(ElasticSearchValueShardStatistics.Successful))
+                ?.GetValue(sourceShards) ?? 0;
+            var failed = (int?)shardType.GetProperty(nameof(ElasticSearchValueShardStatistics.Failed))
+                ?.GetValue(sourceShards) ?? 0;
+            var skipped = (int?)shardType.GetProperty(nameof(ElasticSearchValueShardStatistics.Skipped))
+                ?.GetValue(sourceShards) ?? 0;
+
+            container.Shards = new ElasticSearchValueShardStatistics
+            {
+                Total = total,
+                Successful = successful,
+                Failed = failed,
+                Skipped = skipped
+            };
+        }
+        catch
+        {
+            // ignored
         }
     }
 }
