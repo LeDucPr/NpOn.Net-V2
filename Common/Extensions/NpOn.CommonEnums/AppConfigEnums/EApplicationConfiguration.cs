@@ -30,6 +30,9 @@ public enum EApplicationConfiguration
     [Display(Name = "MssqlConnectionString")] MssqlConnectionString, // - string
     [Display(Name = "MssqlConnectionNumber")] MssqlConnectionNumber, // - int
     [Display(Name = "IsUseMssql")] IsUseMssql, // - bool
+    [Display(Name = "ClickhouseConnectionString")] ClickhouseConnectionString, // - string
+    [Display(Name = "ClickhouseConnectionNumber")] ClickhouseConnectionNumber, // - int
+    [Display(Name = "IsUseClickhouse")] IsUseClickhouse, // - bool
 
     
     // Connection Settings

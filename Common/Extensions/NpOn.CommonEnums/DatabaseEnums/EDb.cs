@@ -13,6 +13,7 @@ public enum EDb : byte
     [Display(Name = "Redis")] Redis = 6,
     [Display(Name = "ElasticSearch")] ElasticSearch = 7,
     [Display(Name = "YugaBytePg")] YugaBytePg = 8,
+    [Display(Name = "ClickHouse")] ClickHouse = 9,
 }
 
 public static class EDbExtension
@@ -30,6 +31,7 @@ public static class EDbExtension
             EDb.Redis => EDbLanguage.Json,
             EDb.ElasticSearch => EDbLanguage.Json,
             EDb.YugaBytePg => EDbLanguage.Sql,
+            EDb.ClickHouse => EDbLanguage.Sql,
             _ => throw new NotSupportedException($"The database language for '{db}' is not supported."),
         };
     }
@@ -46,6 +48,7 @@ public static class EDbExtension
             EDb.Redis,
             EDb.ElasticSearch,
             EDb.YugaBytePg,
+            EDb.ClickHouse,
         ];
         if (validTypes.Contains(dbType)) return true;
         return false;

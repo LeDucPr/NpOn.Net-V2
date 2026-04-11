@@ -79,7 +79,7 @@ public enum EDbError
 
     [Display(Name = "Redis Value (Result is null)")]
     RedisValueIsNull,
-    
+
     [Display(Name = "Redis Execute Error")]
     RedisExecute,
 
@@ -88,6 +88,9 @@ public enum EDbError
 
     [Display(Name = "ElasticSearch Execute Error")]
     ElasticSearchExecute,
+
+    [Display(Name = "ClickHouse DataTable (Result is null)")]
+    ClickHouseDataTableNull,
 
     #endregion Result
 }
