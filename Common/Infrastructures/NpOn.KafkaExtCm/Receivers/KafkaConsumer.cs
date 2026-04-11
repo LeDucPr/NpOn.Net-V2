@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.KafkaExtCm.Configs;
@@ -33,11 +33,12 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
         _autoAck = autoAck;
         _prefetchCount = prefetchCount;
 
-        AddHandler(); // same as RabbitMQ: set Handler before assigned consumer
+        var addHandler = AddHandler;
+        addHandler(); // same as RabbitMQ: set Handler before assigned consumer
         UseDefault().GetAwaiter().GetResult();
     }
 
-    public async Task UseDefault(bool isDecompress = false)
+    private async Task UseDefault(bool isDecompress = false)
     {
         if (!IsEnableType) return;
 
@@ -45,18 +46,19 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
 
         foreach (var item in KafkaDefaultConfig.ConsumerConfigs.Values)
         {
-            if (!config.Any(x => x.Key == item.Key))
+            if (config.All(x => x.Key != item.Key))
             {
                 config.Set(item.Key, item.DefaultValue);
             }
         }
 
-        config.AutoOffsetReset = AutoOffsetReset.Earliest;
+        config.AutoOffsetReset = AutoOffsetReset.Latest;
 
         if (string.IsNullOrEmpty(config.GroupId))
-            config.GroupId = $"{TopicName}.{PartitionName}.{IndexerMode.CreateGuid()}";
+            config.GroupId = $"{TopicName}.{PartitionName}"; // ??
+            // config.GroupId = $"{TopicName}.{PartitionName}.{IndexerMode.CreateGuid()}"; // ??
 
-        config.EnableAutoCommit = false; // If the application crashes while running, it's problematic.
+        config.EnableAutoCommit = false; // We commit manually via SafeCommit
 
         _consumer = new ConsumerBuilder<string, byte[]>(config).Build();
         _consumer.Subscribe(TopicName);
@@ -68,63 +70,73 @@ public abstract class KafkaConsumer<T> : KafkaComponent<T>, IKafkaConsumer<T>, I
     private async Task ConsumeLoop(bool isDecompress, CancellationToken token)
     {
         var semaphore = new SemaphoreSlim(_prefetchCount);
-
         try
         {
             while (!token.IsCancellationRequested)
             {
+                await semaphore.WaitAsync(token); // Acquire permit
+
+                ConsumeResult<string, byte[]>? cr = null;
                 try
                 {
-                    await semaphore.WaitAsync(token);
-
-                    var cr = _consumer!.Consume(token);
-                    if (cr == null)
-                    {
-                        semaphore.Release();
-                        continue;
-                    }
-
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var fullEvent =
-                                ProtoBufMode.ProtoBufDeserialize<KafkaEvent<T>>(cr.Message.Value, isDecompress);
-                            if (fullEvent?.MessageContent != null && Handler != null)
-                            {
-                                await HandleMessage(cr, fullEvent.MessageContent);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger?.LogError($"Error deserializing or processing message: {ex.Message}");
-                        }
-                        finally
-                        {
-                            semaphore.Release();
-                        }
-                    }, token);
+                    cr = _consumer!.Consume(token);
                 }
-                catch (OperationCanceledException)
+                catch
                 {
-                    break; // Stop loop gracefully
-                }
-                catch (ConsumeException e)
-                {
-                    _logger?.LogError($"Consume error: {e.Error.Reason}");
+                    // Restore permit if consume fails or gets cancelled
                     semaphore.Release();
+                    throw;
                 }
-                catch (Exception ex)
+
+                if (cr == null)
                 {
-                    _logger?.LogError($"Unexpected error in ConsumeLoop: {ex.Message}");
                     semaphore.Release();
+                    continue;
                 }
+
+                // Fire and forget, passing the semaphore down to be released
+                _ = ProcessMessageAsync(cr, isDecompress, semaphore);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // Stop loop gracefully
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError($"ConsumeLoop error: {ex.Message}");
         }
         finally
         {
             _consumer?.Close();
+            
+            // Gracefully wait until all active spawned tasks are fully completed
+            for (int i = 0; i < _prefetchCount; i++)
+            {
+                await semaphore.WaitAsync(CancellationToken.None);
+            }
+            
             semaphore.Dispose();
+        }
+    }
+
+    private async Task ProcessMessageAsync(ConsumeResult<string, byte[]> cr, bool isDecompress, SemaphoreSlim semaphore)
+    {
+        try
+        {
+            var fullEvent = ProtoBufMode.ProtoBufDeserialize<KafkaEvent<T>>(cr.Message.Value, isDecompress);
+            if (fullEvent?.MessageContent != null && Handler != null)
+            {
+                await HandleMessage(cr, fullEvent.MessageContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError($"Error deserializing or processing message: {ex.Message}");
+        }
+        finally
+        {
+            semaphore.Release();
         }
     }
 
