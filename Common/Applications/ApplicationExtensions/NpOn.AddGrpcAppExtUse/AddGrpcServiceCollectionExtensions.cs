@@ -3,7 +3,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Grpc.Net.Client.Balancer;
 using ProtoBuf.Grpc.Server;
 
-namespace NpOn.AddGrpcAppExtUse;
+namespace Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
 
 public static class AddGrpcServiceCollectionExtensions
 {

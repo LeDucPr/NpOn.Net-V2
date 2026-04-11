@@ -3,7 +3,7 @@ using System.ServiceModel;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 
-namespace NpOn.AddGrpcAppExtUse;
+namespace Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
 
 public static class AutoGenerateGrpcProtoExtensions
 {

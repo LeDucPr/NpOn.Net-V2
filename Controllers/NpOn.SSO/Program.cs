@@ -1,3 +1,4 @@
+using Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Middlewares;
 using Common.Applications.NpOn.CommonApplication.Extensions;
@@ -9,7 +10,6 @@ using Common.Extensions.NpOn.HeaderConfig;
 using Controllers.NpOn.SSO.Controllers;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace Controllers.NpOn.SSO;

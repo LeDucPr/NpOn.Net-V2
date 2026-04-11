@@ -1,3 +1,4 @@
+using Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
@@ -18,7 +19,6 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
-using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;

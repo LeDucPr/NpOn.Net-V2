@@ -1,3 +1,4 @@
+using Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonHttpApplication;
@@ -13,7 +14,6 @@ using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
 // using Microsoft.AspNetCore.Server.Kestrel.Core;
-using NpOn.AddGrpcAppExtUse;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.General.Service.NpOn.GeneralService;

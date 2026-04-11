@@ -1,3 +1,5 @@
+using Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.CassandraAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
@@ -11,8 +13,6 @@ using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.Migration.Service.NpOn.IMigrationService;
 using MicroServices.Migration.Service.NpOn.MigrationService.Services;
 using Microsoft.AspNetCore.Builder;
-using NpOn.AddGrpcAppExtUse;
-using NpOn.CassandraAppExtUse;
 
 namespace MicroServices.Migration.Service.NpOn.MigrationService;
 

@@ -3,7 +3,7 @@ using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.DbFactories.NpOn.CassandraFactory;
 
-namespace NpOn.CassandraAppExtUse;
+namespace Common.Applications.ApplicationsExtensions.NpOn.CassandraAppExtUse;
 
 public static class CassandraServiceCollectionExtensions
 {
