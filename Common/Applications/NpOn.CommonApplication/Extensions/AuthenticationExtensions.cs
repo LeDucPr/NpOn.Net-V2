@@ -52,11 +52,12 @@ public static class AuthenticationExtensions
                 string jwtKey = EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig().AsDefaultString();
                 byte[] key = Encoding.ASCII.GetBytes(jwtKey);
                 string[] validIssuers = EApplicationConfiguration.ValidIssuers.GetAppSettingConfig()
-                    ?.AsEmptyString().Split(",").Select(x => x.AsEmptyString()).ToArray() ?? [];
+                    ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
                 string[] validAudiences = EApplicationConfiguration.ValidAudiences.GetAppSettingConfig()
-                    ?.AsEmptyString().Split(",").Select(x => x.AsEmptyString()).ToArray() ?? [];
-                bool isUseValidIssuers = validIssuers is { Length: > 0 };
-                bool isUseValidAudiences = validAudiences is { Length: > 0 };
+                    ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+
+                bool isUseValidIssuers = validIssuers.Length > 0;
+                bool isUseValidAudiences = validAudiences.Length > 0;
 
                 options.RequireHttpsMetadata = false; // Use false only in dev environment
                 options.SaveToken = true;
@@ -64,10 +65,10 @@ public static class AuthenticationExtensions
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = isUseValidIssuers, // Customize if you have specific issuers
-                    ValidateAudience = isUseValidAudiences, // Customize if you have specific audiences
-                    ValidIssuers = validIssuers,
-                    ValidAudiences = validAudiences,
+                    ValidateIssuer = isUseValidIssuers,
+                    ValidateAudience = isUseValidAudiences,
+                    ValidIssuers = isUseValidIssuers ? validIssuers : null,
+                    ValidAudiences = isUseValidAudiences ? validAudiences : null,
                     // ValidateLifetime = true,
                 };
             })
