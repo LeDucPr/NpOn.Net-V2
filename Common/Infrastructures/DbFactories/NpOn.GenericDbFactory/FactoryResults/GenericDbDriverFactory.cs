@@ -3,6 +3,8 @@ using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.NpOn.CassandraExtCm.Connections;
+using Common.Infrastructures.NpOn.ClickHouseExtCm.Connections;
+using Common.Infrastructures.NpOn.ElasticSearchExtCm.Connections;
 using Common.Infrastructures.NpOn.MongoDbExtCm.Connections;
 using Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 using Common.Infrastructures.NpOn.PostgresExtCm.Connections;
@@ -27,12 +29,13 @@ public class GenericDbDriverFactory : BaseDbDriverFactory
 
         return DbType switch
         {
-            EDb.Cassandra => CreateCassandraConnection(Option),
-            EDb.ScyllaDb => CreateCassandraConnection(Option),
+            EDb.Cassandra or EDb.ScyllaDb => CreateCassandraConnection(Option),
             EDb.Postgres => CreatePostgresConnection(Option),
             EDb.MongoDb => CreateMongoDbConnection(Option),
             EDb.Mssql => CreateMssqlDbConnection(Option),
             EDb.Redis => CreateRedisDbConnection(Option),
+            EDb.ClickHouse => CreateClickHouseDbConnection(Option),
+            EDb.ElasticSearch => CreateElasticSearchConnection(Option),
             _ => throw new NotSupportedException($"The database type '{DbType}' is not supported.")
         };
     }
@@ -176,4 +179,61 @@ public class GenericDbDriverFactory : BaseDbDriverFactory
     }
 
     #endregion Redis
+
+
+    #region ClickHouse
+
+    private NpOnDbConnection CreateClickHouseDbConnection(INpOnConnectOption option)
+    {
+        if (option is not ClickHouseConnectOption clickHouseOptions)
+        {
+            throw new ArgumentException("Invalid options for ClickHouse. Expected ClickHouseConnectOptions.",
+                nameof(option));
+        }
+
+        INpOnDbDriver driver = CreateClickHouseDriver(clickHouseOptions);
+        return new NpOnDbConnection<ClickHouseDriver>(driver);
+    }
+
+    private INpOnDbDriver CreateClickHouseDriver(INpOnConnectOption option)
+    {
+        if (option is not ClickHouseConnectOption clickHouseOptions)
+        {
+            throw new ArgumentException("Invalid options provided for ClickHouse. Expected ClickHouseConnectOptions.",
+                nameof(option));
+        }
+
+        return new ClickHouseDriver(clickHouseOptions);
+    }
+
+    #endregion ClickHouse
+
+
+    #region ElasticSearch
+
+    private NpOnDbConnection CreateElasticSearchConnection(INpOnConnectOption option)
+    {
+        if (option is not ElasticSearchConnectOption elasticOptions)
+        {
+            throw new ArgumentException("Invalid options for ElasticSearch. Expected ElasticSearchConnectOptions.",
+                nameof(option));
+        }
+
+        INpOnDbDriver driver = CreateElasticSearchDriver(elasticOptions);
+        return new NpOnDbConnection<ElasticSearchDriver>(driver);
+    }
+
+    private INpOnDbDriver CreateElasticSearchDriver(INpOnConnectOption option)
+    {
+        if (option is not ElasticSearchConnectOption elasticOptions)
+        {
+            throw new ArgumentException(
+                "Invalid options provided for ElasticSearch. Expected ElasticSearchConnectOptions.",
+                nameof(option));
+        }
+
+        return new ElasticSearchDriver(elasticOptions);
+    }
+
+    #endregion ElasticSearch
 }
