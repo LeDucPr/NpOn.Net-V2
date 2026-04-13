@@ -24,6 +24,7 @@ public sealed class AccountLoginRModel : BaseAccountRModelFromGrpcTable
     [ProtoMember(17)] public ETokenStatus TokenStatus { get; set; } = ETokenStatus.Inactive;
     [ProtoMember(18)] public string? Email { get; set; }
     [ProtoMember(19)] public string? AvatarUrl { get; set; }
+    [ProtoMember(20)] public string? Cookies { get; set; }
     // [ProtoMember(18)] public string? ReturnUrl { get; set; }
 
     protected override void FieldMapper()

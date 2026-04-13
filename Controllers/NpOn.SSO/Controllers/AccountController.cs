@@ -169,23 +169,35 @@ public class AccountController(
                 IsEnableMultiDevice = isUseMultiDevice
             };
             var accountLoginResponse = await authenticationService.Login(inputQuery);
+            var authData = accountLoginResponse.Data;
             if (!accountLoginResponse.Status)
             {
                 response.SetFail(accountLoginResponse.ErrorMessages);
                 return;
             }
 
-            if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
+            if (authData == null || string.IsNullOrEmpty(authData.Token))
             {
                 response.SetFail("Login fail");
                 return;
             }
 
-            // response.Data = await LoginProcess(tokenResult.Data);
+            if (!string.IsNullOrEmpty(authData.Cookies))
+                Response.Headers.Append("Set-Cookie", authData.Cookies);
+            
+            // Set Authorization Header (Bearer - nonuse browser)
+            if (!string.IsNullOrEmpty(authData.Token))
+            {
+                Response.Headers.Append("Authorization", $"Bearer {authData.Token}");
+                // Access-Control-Expose-Headers -- CORS
+                Response.Headers.Append("Access-Control-Expose-Headers", "Authorization");
+            }
+
             response.Data = new AccountLoginResponseWrapper
             {
-                Model = accountLoginResponse.Data.ToModel(),
+                Model = authData.ToModel(),
             };
+            response.SetSuccess();
             response.SetSuccess();
         });
     }
@@ -213,22 +225,27 @@ public class AccountController(
                 ProcessUId = _contextService.GetAccountIdAsString(),
             };
             var accountLoginResponse = await authenticationService.RefreshToken(inputQuery);
-            if (!accountLoginResponse.Status)
+            var authData = accountLoginResponse.Data;
+            if (!accountLoginResponse.Status || authData == null)
             {
                 response.SetFail(accountLoginResponse.ErrorMessages);
                 return;
             }
-
-            if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
+            
+            if (!string.IsNullOrEmpty(authData.Cookies))
+                Response.Headers.Append("Set-Cookie", authData.Cookies);
+            
+            // Set Authorization Header (Bearer - nonuse browser)
+            if (!string.IsNullOrEmpty(authData.Token))
             {
-                response.SetFail("Login invalid");
-                return;
+                Response.Headers.Append("Authorization", $"Bearer {authData.Token}");
+                // Access-Control-Expose-Headers -- CORS
+                Response.Headers.Append("Access-Control-Expose-Headers", "Authorization");
             }
 
-            // response.Data = await LoginProcess(tokenResult.Data);
-            response.Data = new
+            response.Data = new AccountLoginResponseWrapper
             {
-                Model = accountLoginResponse.Data.ToModel(),
+                Model = authData.ToModel(),
             };
             response.SetSuccess();
         });
@@ -347,6 +364,7 @@ public class AccountController(
 
 
     #region private func
+    
 
     [Obsolete("Obsolete")]
     private string CreateHashPassword(string password, bool isAddMd5 = true)

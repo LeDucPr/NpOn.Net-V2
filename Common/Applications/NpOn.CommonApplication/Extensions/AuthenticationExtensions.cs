@@ -14,6 +14,8 @@ public static class AuthenticationExtensions
 {
     public static IServiceCollection UseDefaultAuthenticationMode(this IServiceCollection services)
     {
+        string cookieName = EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
+
         services.AddAuthentication(options =>
             {
                 options.DefaultScheme = "BearerOrCookie";
@@ -27,8 +29,7 @@ public static class AuthenticationExtensions
                         ? CookieSecurePolicy.SameAsRequest
                         : CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Unspecified;
-                options.Cookie.Name =
-                    EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
+                options.Cookie.Name = cookieName;
                 options.LoginPath = string.Empty; //"api/Account/Login";
                 options.LogoutPath = string.Empty; //"api/Account/Logout";
                 options.AccessDeniedPath = string.Empty;
@@ -71,14 +72,37 @@ public static class AuthenticationExtensions
                     ValidAudiences = isUseValidAudiences ? validAudiences : null,
                     // ValidateLifetime = true,
                 };
+
+                // Add support for reading token from Cookie
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (string.IsNullOrEmpty(context.Token))
+                        {
+                            var token = context.Request.Cookies[cookieName];
+                            if (!string.IsNullOrEmpty(token))
+                            {
+                                context.Token = token;
+                            }
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             })
             .AddPolicyScheme("BearerOrCookie", "Bearer or Cookie", options =>
             {
                 options.ForwardDefaultSelector = context =>
                 {
+                    // Prefer Header Bearer
                     string? authorization = context.Request.Headers[HeaderNames.Authorization];
                     if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
                         return JwtBearerDefaults.AuthenticationScheme;
+                    
+                    // If no Header, check for Cookie
+                    if (context.Request.Cookies.ContainsKey(cookieName))
+                        return JwtBearerDefaults.AuthenticationScheme;
+
                     return CookieAuthenticationDefaults.AuthenticationScheme;
                 };
             });

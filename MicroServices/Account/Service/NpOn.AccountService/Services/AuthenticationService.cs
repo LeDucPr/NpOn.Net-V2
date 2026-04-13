@@ -134,12 +134,12 @@ public class AuthenticationService(
             //     response.Data = false;
             //     return;
             // }
-            
+
             await pipelineScope.Next(
                 new NpOnDbTransactionPipeline()
-                .Register(baseRepository)
-                .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update)));
-            
+                    .Register(baseRepository)
+                    .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update)));
+
 
             if (command.AccountStatus != EAccountStatus.Active)
             {
@@ -240,10 +240,10 @@ public class AuthenticationService(
             if (query.IsEnableMultiDevice)
             {
             }
-            
+
             if (_isReadTokenImmediate)
                 await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
-            
+
             kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
             {
                 MessageContent = accountLoginRModel.ToLoginEvent()
@@ -497,7 +497,7 @@ public class AuthenticationService(
 
         // set
         AccountLoginRModel accountLogin =
-            new AccountLoginRModel
+            GetAuthCookieString(new AccountLoginRModel
             {
                 // Id = default,
                 AccountId = account.Id,
@@ -515,9 +515,29 @@ public class AuthenticationService(
                 Permission = account.Permission,
                 TokenStatus = ETokenStatus.Active,
                 Token = tokenValue,
-            };
+            });
 
         return accountLogin;
+    }
+
+    private static AccountLoginRModel GetAuthCookieString(AccountLoginRModel accountRModel)
+    {
+        string cookieName = EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
+        string cookieDomain = EApplicationConfiguration.CookieDomain.GetAppSettingConfig().AsDefaultString();
+        bool isDev = EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool();
+        string safeToken = Uri.EscapeDataString(accountRModel.Token.AsDefaultString());
+        var sb = new StringBuilder($"{cookieName}={safeToken}; Path=/; HttpOnly");
+        if (!isDev) sb.Append("; Secure"); // HTTPS
+        sb.Append("; SameSite=Lax");
+
+        if (!string.IsNullOrEmpty(cookieDomain))
+            sb.Append($"; Domain={cookieDomain}");
+        var expiresDate = DateTimeOffset.UtcNow.AddMinutes(accountRModel.MinuteExpire);
+        sb.Append($"; Expires={expiresDate:R}");
+        sb.Append($"; Max-Age={accountRModel.MinuteExpire * 60}");
+
+        accountRModel.Cookies = sb.ToString();
+        return accountRModel;
     }
 
     #endregion Private Method

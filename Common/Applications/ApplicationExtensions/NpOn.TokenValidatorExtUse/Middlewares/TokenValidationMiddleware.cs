@@ -36,10 +36,23 @@ public class TokenValidationMiddleware(RequestDelegate next)
             }
         }
 
+        string? token = null;
+
+        // 1. Try get from Authorization Header
         string? authorizationHeader = context.Request.Headers[HeaderNames.Authorization];
         if (!string.IsNullOrEmpty(authorizationHeader) && authorizationHeader.StartsWith("Bearer "))
         {
-            var token = authorizationHeader["Bearer ".Length..].Trim();
+            token = authorizationHeader["Bearer ".Length..].Trim();
+        }
+        else
+        {
+            // 2. Try get from Cookie if Header is missing
+            string cookieName = EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
+            token = context.Request.Cookies[cookieName];
+        }
+
+        if (!string.IsNullOrEmpty(token))
+        {
             if (contextService.ValidateToken(token, out var claimsPrincipal))
             {
                 if (claimsPrincipal == null)
@@ -91,7 +104,7 @@ public class TokenValidationMiddleware(RequestDelegate next)
         else
         {
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-            await context.Response.WriteAsync("Authorization header is missing or malformed.");
+            await context.Response.WriteAsync("Authorization header or cookie is missing.");
             return; // stop pipeline
         }
 

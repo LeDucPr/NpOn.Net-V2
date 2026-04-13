@@ -16,4 +16,4 @@ public class AccountLoginOutputModel
     [DataMember(Order = 8)] public DateTime? CreatedAt { get; set; }
     [DataMember(Order = 9)] public required string SessionId { get; set; }
     [DataMember(Order = 10)] public int MinuteExpire { get; set; }
-}
+}
