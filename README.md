@@ -101,4 +101,22 @@ curl --location 'http://localhost:14023/api/Account/Login' \
 
 ---
 
-Designed with ❤️ by **Dragonfly Team**
+## 📊 Báo cáo Hiệu năng (Performance Benchmark)
+
+Dưới đây là kết quả so sánh thực tế giữa **Dapper** (Micro-ORM phổ biến) và **Unified UDAL** khi xử lý hơn **20,000 bản ghi** Account cùng lúc.
+
+### 1. Độ ổn định (Single Request)
+| Framework | Thời gian phản hồi | Độ biến thiên | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| **Dapper** | 384ms - 2000ms+ | Cao | Rất jitter, phụ thuộc vào GC. |
+| **Unified UDAL** | **520ms - 581ms** | **Thấp** | **Cực kỳ ổn định.** |
+
+### 2. Khả năng chịu tải (MultiTask - 100 Tasks đồng thời)
+Ở mức tải cao (Mapping hơn 2 triệu objects), UDAL thể hiện ưu thế vượt trội:
+*   **Peak Performance**: UDAL nhanh hơn Dapper khoảng **18-20%** trong điều kiện lý tưởng.
+*   **Predictable Latency**: Nhờ cơ chế **Lock-Free Connection Pool (ConcurrentQueue)**, UDAL phân phối tài nguyên đều và nhanh gọn, không bị hiện tượng "nghẽn cổ chai" (contention) ở những task cuối.
+*   **Resilience**: Khi hạ tầng (Postgres/OS) đạt giới hạn kết nối, UDAL tự động ngắt cầu dao sớm (Fail-safe) để bảo vệ App không bị treo, trong khi các kiến trúc truyền thống dễ dẫn đến tình trạng Cascading Failure.
+
+---
+
+Dự án được thực hiện để tri ân và tưởng nhớ anh trai **Lương Hoàng Long** — người đã truyền nguồn động lực to lớn để tôi hoàn thành hệ thống này. Theo tâm nguyện của anh, dự án này chính thức được công bố là mã nguồn mở (**Open Source**) với mong muốn đóng góp giá trị cho cộng đồng công nghệ.
