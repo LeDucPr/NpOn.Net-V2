@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.72" />
+    <PackageReference Include="Npgsql" Version="9.0.2" />
+    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+    <ProjectReference Include="..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
+    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
+    <ProjectReference Include="..\..\Common\Infrastructures\DbFactories\NpOn.PostgresFactory\NpOn.PostgresFactory.csproj" />
+    <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceReadModel\NpOn.AccountServiceReadModel.csproj" />
+  </ItemGroup>
+
+</Project>

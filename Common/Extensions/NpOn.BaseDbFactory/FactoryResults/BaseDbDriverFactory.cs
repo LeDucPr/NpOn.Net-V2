@@ -180,8 +180,8 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
         // 1. Wait until a slot is available.
         // If the pool is full (count = 0), this line will suspend (await) until another thread calls ReleaseConnection.
         await _poolSemaphore.WaitAsync();
-        _logger.LogInformation("({dbType}) Remaining available connections: {Count}", DbType, _poolSemaphore.CurrentCount);
-        Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
+        // _logger.LogInformation("({dbType}) Remaining available connections: {Count}", DbType, _poolSemaphore.CurrentCount);
+        // Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
 
         try
         {
