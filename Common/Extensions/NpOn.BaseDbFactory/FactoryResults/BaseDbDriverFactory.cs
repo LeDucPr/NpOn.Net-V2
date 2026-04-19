@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
@@ -56,7 +56,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     private int? _connectionNumber;
 
     // ConcurrentDictionary để theo dõi trạng thái kết nối (true = using, false = relaxing)
-    private readonly ConcurrentDictionary<NpOnDbConnection, bool> _connectionStates = new();
+    private readonly ConcurrentQueue<NpOnDbConnection> _idleConnections = new();
     private SemaphoreSlim? _poolSemaphore;
 
     #endregion private parameters
@@ -67,7 +67,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     private readonly ILogger<BaseDbDriverFactory> _logger = new Logger<BaseDbDriverFactory>(new NullLoggerFactory());
     private List<NpOnDbConnection>? _connections;
     public int GetAliveConnectionNumbers => _connections?.Count(c => c.Driver.IsValidSession) ?? 0;
-    public int GetConnectionNumbers => _connectionStates.Count;
+    public int GetConnectionNumbers => _connections?.Count ?? 0;
     public EDb GetDbType() => DbType ?? EDb.Unknown;
 
     public List<NpOnDbConnection>? ValidConnections =>
@@ -177,63 +177,32 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     {
         if (_poolSemaphore == null) return null;
 
-        // 1. Wait until a slot is available.
-        // If the pool is full (count = 0), this line will suspend (await) until another thread calls ReleaseConnection.
+        // 1. Wait until a slot is available logically (Semaphore count)
         await _poolSemaphore.WaitAsync();
-        // _logger.LogInformation("({dbType}) Remaining available connections: {Count}", DbType, _poolSemaphore.CurrentCount);
-        // Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
 
         try
         {
-            // Use a lock object (or _connectionStates itself) to ensure exclusive access when retrieving a connection.
-            // Since the Semaphore has granted access, there must be at least one available connection (from a logical counting perspective).
-            lock (_connectionStates)
+            // 2. Dequeue an available connection from the ConcurrentQueue (Lock-free O(1))
+            if (_idleConnections.TryDequeue(out var connection))
             {
-                // Find an available and valid connection
-                var availablePair =
-                    _connectionStates.FirstOrDefault(pair => !pair.Value && pair.Key.Driver.IsValidSession);
-
-                if (availablePair.Key != null)
+                // Verify and open if the session is no longer valid
+                if (!connection.Driver.IsValidSession)
                 {
-                    _connectionStates[availablePair.Key] = true; // using connection 
-                    return availablePair.Key;
+                    // OpenAsync is handled asynchronously outside of any global lock
+                    await connection.OpenAsync();
                 }
-
-                // If no valid free connection is found, try to find a free but invalid connection to reopen it.
-                var invalidConnection = _connectionStates
-                    .FirstOrDefault(pair => !pair.Value && !pair.Key.Driver.IsValidSession).Key;
-                if (invalidConnection != null)
-                {
-                    // Mark as in-use first to reserve its spot within the lock.
-                    _connectionStates[invalidConnection] = true;
-
-                    // return if need faster 
-                    // OpenAsync can be time-consuming, so it should be handled carefully.
-                    // We will open it directly here for simplicity (note that the lock will block other threads from searching).
-                    try
-                    {
-                        // safe with status of Dictionary.
-                        // OpenAsync within a lock might slightly slow down other threads' searches, but it's safe for the Dictionary's state.
-                        invalidConnection.OpenAsync().GetAwaiter().GetResult();
-                        return invalidConnection;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to open connection.");
-                        _connectionStates[invalidConnection] = false; // Trả lại trạng thái rảnh nếu lỗi
-                        // Revert to free state if an error occurs.
-                        throw; // Throw the error for the catch block below to release the Semaphore.
-                    }
-                }
+                return connection;
             }
 
-            // Nếu tất cả kết nối đều đang bận hoặc không thể mở, trả về null
-            _logger.LogWarning("No available connections in the pool.");
+            // If we reach here, it means the queue was empty despite the semaphore granting access.
+            _logger.LogWarning("Queue was empty despite semaphore granting access.");
+            _poolSemaphore.Release();
             return null;
         }
-        catch
+        catch (Exception ex)
         {
-            _poolSemaphore.Release(); // return slot 
+            _logger.LogError(ex, "Failed to acquire or open a connection.");
+            _poolSemaphore.Release(); // Return slot to pool on failure
             throw;
         }
     }
@@ -242,30 +211,21 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     {
         if (connection == null) return;
 
-        if (_connectionStates.ContainsKey(connection))
+        // Return connection to the idle queue and release the semaphore slot
+        _idleConnections.Enqueue(connection);
+        
+        if (_poolSemaphore != null)
         {
-            bool wasInUse = _connectionStates[connection];
-            _connectionStates[connection] = false; // Mark as relaxing
-
-            // If the connection was actually in use and returned, we return a slot to the Semaphore.
-            // This will wake up a thread waiting in WaitAsync() above.
-            if (wasInUse && _poolSemaphore != null)
+            try
             {
-                try
-                {
-                    _poolSemaphore.Release();
-                    _logger.LogInformation("({dbType}) Remaining available connections: {Count}", DbType, _poolSemaphore.CurrentCount);
-                    Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
-                }
-                catch (SemaphoreFullException)
-                {
-                    // Ignore if releasing more than the capacity (usually due to incorrect logic, but caught for safety)
-                }
+                _poolSemaphore.Release();
+                // Logging high-frequency events should be avoided in performance critical paths
+                // _logger.LogInformation("({dbType}) Remaining available connections: {Count}", DbType, _poolSemaphore.CurrentCount);
             }
-        }
-        else
-        {
-            _logger.LogWarning("Attempted to release a connection that does not belong to this pool.");
+            catch (SemaphoreFullException)
+            {
+                // Safe guard against incorrect concurrent releases
+            }
         }
     }
 
@@ -308,7 +268,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
             }
 
             _connections = new List<NpOnDbConnection>();
-            _connectionStates.Clear();
+            while (_idleConnections.TryDequeue(out _)) { } // Clear the queue
 
             // Initialize the Semaphore with the number of permits equal to the maximum number of connections
             _poolSemaphore?.Dispose();
@@ -316,13 +276,12 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
 
             for (int i = 0; i < _connectionNumber; i++)
             {
-                // logger.LogInformation("Creating a database driver for {DatabaseType}", eDb);
                 NpOnDbConnection? connection = InitConnection();
                 if (connection == null)
                     throw new NotSupportedException($"The database type '{DbType}' is not supported.");
-                _connections?.Add(connection);
-                _connectionStates.TryAdd(connection, false); // Add to the pool with a relaxing state
-                // logger.LogInformation("Successfully created a {DriverType}", driver.GetType().Name);
+                
+                _connections.Add(connection);
+                _idleConnections.Enqueue(connection);
             }
         }
         catch (ArgumentException exception)

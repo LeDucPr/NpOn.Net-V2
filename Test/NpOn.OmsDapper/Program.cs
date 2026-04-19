@@ -24,16 +24,25 @@ internal class Program
 
         Console.WriteLine("=== NpOn.Net Performance Benchmark: Dapper vs Unified UDAL ===");
 
-        // --- CHỌN BẬT/TẮT CÁC BÀI TEST TẠI ĐÂY (Ctrl + F5 để chạy) ---
+        // for single
+        if (false)
+        {
+            var runner = new BenchmarkRunner(connectionString, udalWrapper, 14023);
+            await runner.Warmup();
+            await MultiTaskDapperOnlyTest(1); // Dapper
+            await MultiTaskUdalOnlyTest(1); // UDAL
+        }
+        else
+        {
+            // 1. Chạy so sánh song song (Cũ)
+            // await MultiTaskComparisonTest(10); 
 
-        // 1. Chạy so sánh song song (Cũ)
-        // await MultiTaskComparisonTest(10); 
+            // 2. Chạy Độc lập Dapper (Để xem Dapper max load)
+            // await MultiTaskDapperOnlyTest(100);
 
-        // 2. Chạy Độc lập Dapper (Để xem Dapper max load)
-        // await MultiTaskDapperOnlyTest(20);
-
-        // 3. Chạy Độc lập UDAL (Để xem UDAL max load - Không bị Dapper gây nghẽn)
-        await MultiTaskUdalOnlyTest(20);
+            // 3. Chạy Độc lập UDAL (Để xem UDAL max load - Không bị Dapper gây nghẽn)
+            await MultiTaskUdalOnlyTest(100);
+        }
 
         // ------------------------------------------------------------
 
