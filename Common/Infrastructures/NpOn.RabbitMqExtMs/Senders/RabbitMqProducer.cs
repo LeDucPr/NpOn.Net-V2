@@ -8,7 +8,7 @@ namespace Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 
 public class RabbitMqProducer(IRabbitMqConnection rabbitMqConnection) : IRabbitMqProducer
 {
-    private static readonly IWrapperCacheStore<Type, (string QueueName, string RoutingKey)> _componentCache = 
+    private static readonly IWrapperCacheStore<Type, (string QueueName, string RoutingKey)> ComponentCache = 
         new WrapperCacheStore<Type, (string QueueName, string RoutingKey)>();
     public void AddEvent(IRabbitMqEvent @event, bool isCompress = false)
     {
@@ -22,7 +22,7 @@ public class RabbitMqProducer(IRabbitMqConnection rabbitMqConnection) : IRabbitM
             eventType.GetGenericTypeDefinition() != typeof(RabbitMqEvent<>))
             return;
 
-        var (queueName, routingKey) = _componentCache.GetOrAdd(eventType, t =>
+        var (queueName, routingKey) = ComponentCache.GetOrAdd(eventType, t =>
         {
             var messageContentType = t.GetGenericArguments()[0];
             var componentType = typeof(RabbitMqComponent<>).MakeGenericType(messageContentType);
