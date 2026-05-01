@@ -27,11 +27,11 @@ public class SharedGrpcInterceptor(
             _headerConfig.Replace(DefaultHeaderConstant.GrpcInternalCallerSessionCode, sessionKey);
 
         string? authenKey = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
-                x.Key.Equals(DefaultHeaderConstant.GrpcInteralCallerAuthentication,
+                x.Key.Equals(DefaultHeaderConstant.GrpcInternalCallerAuthentication,
                     StringComparison.CurrentCultureIgnoreCase))
             .Value;
         if (authenKey?.Length > 0)
-            _headerConfig.Replace(DefaultHeaderConstant.GrpcInteralCallerAuthentication, authenKey);
+            _headerConfig.Replace(DefaultHeaderConstant.GrpcInternalCallerAuthentication, authenKey);
 
         // Forward External Authorization Header (e.g. Bearer token) if present
         string? authorizationExt = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
