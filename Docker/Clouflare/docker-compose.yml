@@ -1,0 +1,23 @@
+services:
+  cf_node:
+    # Đây là image thật, tích hợp sẵn WARP + tự động mở SOCKS5 proxy ở cổng 1080
+    image: caomingjun/warp:latest
+    restart: always
+    # Bắt buộc phải có 2 khối dưới đây để WARP có quyền can thiệp card mạng ảo của Docker
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+    expose:
+      - "1080" # Mở cổng 1080 nội bộ cho Nginx thấy
+
+  nginx_balancer:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "24000:24000"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cf_node
