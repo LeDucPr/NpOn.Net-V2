@@ -55,8 +55,8 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     protected INpOnConnectOption? Option;
     private int? _connectionNumber;
 
-    // ConcurrentDictionary để theo dõi trạng thái kết nối (true = using, false = relaxing)
-    private readonly ConcurrentQueue<NpOnDbConnection> _idleConnections = new();
+    // ConcurrentStack to keep hot connections (LIFO)
+    private readonly ConcurrentStack<NpOnDbConnection> _idleConnections = new();
     private SemaphoreSlim? _poolSemaphore;
 
     #endregion private parameters
@@ -182,8 +182,8 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
 
         try
         {
-            // 2. Dequeue an available connection from the ConcurrentQueue (Lock-free O(1))
-            if (_idleConnections.TryDequeue(out var connection))
+            // 2. Pop an available connection from the ConcurrentStack (Lock-free O(1))
+            if (_idleConnections.TryPop(out var connection))
             {
                 // Verify and open if the session is no longer valid
                 if (!connection.Driver.IsValidSession)
@@ -211,8 +211,8 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     {
         if (connection == null) return;
 
-        // Return connection to the idle queue and release the semaphore slot
-        _idleConnections.Enqueue(connection);
+        // Return connection to the idle stack and release the semaphore slot
+        _idleConnections.Push(connection);
         
         if (_poolSemaphore != null)
         {
@@ -220,7 +220,8 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
             {
                 _poolSemaphore.Release();
                 // Logging high-frequency events should be avoided in performance critical paths
-                // _logger.LogInformation("({dbType}) Remaining available connections: {Count}", DbType, _poolSemaphore.CurrentCount);
+                // _logger.LogInformation($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
+                Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
             }
             catch (SemaphoreFullException)
             {
@@ -268,7 +269,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
             }
 
             _connections = new List<NpOnDbConnection>();
-            while (_idleConnections.TryDequeue(out _)) { } // Clear the queue
+            _idleConnections.Clear(); // Clear the stack
 
             // Initialize the Semaphore with the number of permits equal to the maximum number of connections
             _poolSemaphore?.Dispose();
@@ -281,7 +282,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
                     throw new NotSupportedException($"The database type '{DbType}' is not supported.");
                 
                 _connections.Add(connection);
-                _idleConnections.Enqueue(connection);
+                _idleConnections.Push(connection);
             }
         }
         catch (ArgumentException exception)
