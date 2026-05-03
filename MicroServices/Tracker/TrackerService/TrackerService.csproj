@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>MicroServices.Tracker.Service.NpOn.TrackerService</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.64.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Services\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj" />
+      <ProjectReference Include="..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
+      <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
+      <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
+      <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\..\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
+      <ProjectReference Include="..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />
+    </ItemGroup>
+
+</Project>
