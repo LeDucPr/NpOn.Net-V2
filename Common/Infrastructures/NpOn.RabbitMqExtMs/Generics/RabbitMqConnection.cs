@@ -57,13 +57,53 @@ public class RabbitMqConnection : IRabbitMqConnection, IDisposable
         
         if (!_queueProperties.ContainsKey(dictKey))
         {
-            // Declare the exchange
-            await _channel.ExchangeDeclareAsync(
-                exchange: newQueueProperty.ExchangeName,
-                type: newQueueProperty.ExchangeType.GetDisplayName(),
-                durable: newQueueProperty.Durable,
-                autoDelete: newQueueProperty.AutoDelete,
-                arguments: newQueueProperty.DictArgument);
+            bool recreateRequired = false;
+            bool skipMainChannelDeclare = false;
+            
+            // Use a temporary channel to safely declare the exchange without risking the main channel
+            try
+            {
+                using var tempChannel = await _connection.CreateChannelAsync();
+                await tempChannel.ExchangeDeclareAsync(
+                    exchange: newQueueProperty.ExchangeName,
+                    type: newQueueProperty.ExchangeType.GetDisplayName(),
+                    durable: newQueueProperty.Durable,
+                    autoDelete: newQueueProperty.AutoDelete,
+                    arguments: newQueueProperty.DictArgument);
+            }
+            catch (RabbitMQ.Client.Exceptions.OperationInterruptedException ex) when (ex.ShutdownReason?.ReplyCode == 406)
+            {
+                // 406 PRECONDITION_FAILED means the exchange exists but has a different type or parameters.
+                if (isCreateNewExchangeWhenExisted)
+                    recreateRequired = true;
+                else
+                    // Do not recreate. Accept the existing exchange type.
+                    // Must skip main channel declaration to avoid crashing the main channel.
+                    skipMainChannelDeclare = true;
+            }
+
+            if (recreateRequired)
+            {
+                await using var tempChannel = await _connection.CreateChannelAsync();
+                await tempChannel.ExchangeDeleteAsync(newQueueProperty.ExchangeName);
+                await tempChannel.ExchangeDeclareAsync(
+                    exchange: newQueueProperty.ExchangeName,
+                    type: newQueueProperty.ExchangeType.GetDisplayName(),
+                    durable: newQueueProperty.Durable,
+                    autoDelete: newQueueProperty.AutoDelete,
+                    arguments: newQueueProperty.DictArgument);
+            }
+
+            if (!skipMainChannelDeclare)
+            {
+                // Declare on the main channel (idempotent, guaranteed to succeed now)
+                await _channel.ExchangeDeclareAsync(
+                    exchange: newQueueProperty.ExchangeName,
+                    type: newQueueProperty.ExchangeType.GetDisplayName(),
+                    durable: newQueueProperty.Durable,
+                    autoDelete: newQueueProperty.AutoDelete,
+                    arguments: newQueueProperty.DictArgument);
+            }
 
             // Declare the queue
             await _channel.QueueDeclareAsync(queue: actualQueueName,

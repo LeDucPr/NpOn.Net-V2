@@ -1,4 +1,5 @@
-﻿using Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
+﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Receivers;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Events;
 using MicroServices.Account.Service.NpOn.IAccountService;
@@ -9,7 +10,7 @@ public class AccountSaveLoginRabbitMqConsumer(
     IAuthenticationService authenticationService,
     IRabbitMqConnection rabbitMqConnection,
     ILogger<AccountSaveLoginRabbitMqConsumer> logger //, bool autoAck = true
-) : RabbitMqConsumer<AccountSaveLoginEvent>(rabbitMqConnection, logger)
+) : RabbitMqConsumer<AccountSaveLoginEvent>(rabbitMqConnection, logger, exchangeType: ERabbitMqExchangeType.Direct)
 {
     public override void AddHandler()
     {

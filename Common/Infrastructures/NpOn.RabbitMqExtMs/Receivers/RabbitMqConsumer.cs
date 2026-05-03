@@ -64,6 +64,7 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
             return;
         var routingKey =
             await _rabbitMqConnection.AddDefaultQueue(_rabbitMqConnection.ExchangeName /* ?? ExchangeName*/, QueueName,
+                isCreateNewQueueWhenExisted: true,
                 topicRoutingKey: _routeKey, exchangeType: _exchangeType);
         IChannel channel = _rabbitMqConnection.Channel;
         var consumer = new AsyncEventingBasicConsumer(channel);
