@@ -1,0 +1,42 @@
+#prerun 
+#  docker volume create mysql_shared_data
+#  docker volume create phpmyadmin_shared_data
+
+name: mysql
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: np_on_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_shared_data:/var/lib/mysql
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_ui
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    volumes:
+      - phpmyadmin_shared_data:/sessions
+    restart: always
+
+volumes:
+  mysql_shared_data:
+    external: true
+  phpmyadmin_shared_data:
+    external: true

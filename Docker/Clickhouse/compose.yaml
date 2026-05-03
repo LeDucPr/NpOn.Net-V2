@@ -1,0 +1,39 @@
+#prerun 
+#  docker volume create clickhouse_shared_data
+#  docker volume create grafana_shared_data
+
+name: clickhouse
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse_db
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: np_on_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "8123:8123" # HTTP port
+      - "9000:9000" # Native client port
+    volumes:
+      - clickhouse_shared_data:/var/lib/clickhouse
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_dashboard
+    environment:
+      GF_SECURITY_ADMIN_USER: npon_grafana
+      GF_SECURITY_ADMIN_PASSWORD: npon_grafana_pass
+    ports:
+      - "3001:3000" # Map to port 3001
+    volumes:
+      - grafana_shared_data:/var/lib/grafana
+    restart: always
+
+volumes:
+  clickhouse_shared_data:
+    external: true
+  grafana_shared_data:
+    external: true
