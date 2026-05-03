@@ -91,6 +91,9 @@ public enum EDbError
 
     [Display(Name = "ClickHouse DataTable (Result is null)")]
     ClickHouseDataTableNull,
+    
+    [Display(Name = "MySql DataTable (Result is null)")]
+    MySqlDataTableNull,
 
     #endregion Result
 }

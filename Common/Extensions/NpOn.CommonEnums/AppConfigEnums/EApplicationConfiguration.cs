@@ -33,6 +33,9 @@ public enum EApplicationConfiguration
     [Display(Name = "ClickhouseConnectionString")] ClickhouseConnectionString, // - string
     [Display(Name = "ClickhouseConnectionNumber")] ClickhouseConnectionNumber, // - int
     [Display(Name = "IsUseClickhouse")] IsUseClickhouse, // - bool
+    [Display(Name = "MySqlConnectionString")] MySqlConnectionString, // - string
+    [Display(Name = "MySqlConnectionNumber")] MySqlConnectionNumber, // - int
+    [Display(Name = "IsUseMySql")] IsUseMySql, // - bool
 
     
     // Connection Settings

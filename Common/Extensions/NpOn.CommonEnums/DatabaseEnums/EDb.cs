@@ -14,6 +14,7 @@ public enum EDb : byte
     [Display(Name = "ElasticSearch")] ElasticSearch = 7,
     [Display(Name = "YugaBytePg")] YugaBytePg = 8,
     [Display(Name = "ClickHouse")] ClickHouse = 9,
+    [Display(Name = "MySql")] MySql = 10,
 }
 
 public static class EDbExtension
