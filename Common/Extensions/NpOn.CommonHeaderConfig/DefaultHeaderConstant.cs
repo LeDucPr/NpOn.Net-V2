@@ -10,5 +10,5 @@ public static class DefaultHeaderConstant
     public static readonly string GrpcInternalCallerSessionCodeDefaultValue = string.Empty;
     
     // general
-    public static readonly string GrpcInteralCallerAuthentication = "authenticaion";
+    public static readonly string GrpcInternalCallerAuthentication = "authenticaion";
 }

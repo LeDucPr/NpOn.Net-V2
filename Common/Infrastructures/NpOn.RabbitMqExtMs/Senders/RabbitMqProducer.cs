@@ -1,4 +1,5 @@
-﻿using Common.Extensions.NpOn.CommonMode;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
+using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
 using RabbitMQ.Client;
@@ -7,6 +8,8 @@ namespace Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 
 public class RabbitMqProducer(IRabbitMqConnection rabbitMqConnection) : IRabbitMqProducer
 {
+    private static readonly IWrapperCacheStore<Type, (string QueueName, string RoutingKey)> ComponentCache = 
+        new WrapperCacheStore<Type, (string QueueName, string RoutingKey)>();
     public void AddEvent(IRabbitMqEvent @event, bool isCompress = false)
     {
         FireAndForget(() => PublishAsync(@event, isCompress));
@@ -19,12 +22,13 @@ public class RabbitMqProducer(IRabbitMqConnection rabbitMqConnection) : IRabbitM
             eventType.GetGenericTypeDefinition() != typeof(RabbitMqEvent<>))
             return;
 
-        var messageContentType = eventType.GetGenericArguments()[0];
-        var componentType = typeof(RabbitMqComponent<>).MakeGenericType(messageContentType);
-        dynamic component = Activator.CreateInstance(componentType)!;
-
-        string queueName = component.QueueName;
-        string routingKey = component.RoutingKey;
+        var (queueName, routingKey) = ComponentCache.GetOrAdd(eventType, t =>
+        {
+            var messageContentType = t.GetGenericArguments()[0];
+            var componentType = typeof(RabbitMqComponent<>).MakeGenericType(messageContentType);
+            dynamic component = Activator.CreateInstance(componentType)!;
+            return ((string)component.QueueName, (string)component.RoutingKey);
+        });
 
         string exchangeName = rabbitMqConnection.ExchangeName;
         await rabbitMqConnection.AddDefaultQueue(exchangeName, queueName);

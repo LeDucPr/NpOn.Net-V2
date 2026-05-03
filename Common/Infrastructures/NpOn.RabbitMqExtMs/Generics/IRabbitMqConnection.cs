@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Common.Extensions.NpOn.CommonEnums;
+using RabbitMQ.Client;
 
 namespace Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
 
@@ -9,7 +10,8 @@ public interface IRabbitMqConnection
     public string ExchangeName { get; }
 
     Task<string> AddDefaultQueue(string exchangeName, string queueName,
-        bool isCreateNewExchangeWhenExisted = false, bool isCreateNewQueueWhenExisted = false);
+        bool isCreateNewExchangeWhenExisted = false, bool isCreateNewQueueWhenExisted = false,
+        string? topicRoutingKey = null, ERabbitMqExchangeType exchangeType = ERabbitMqExchangeType.Direct);
 
     Task AddQueue(RabbitMqQueueProperty property, bool isCreateNewExchangeWhenExisted = false,
         bool isCreateNewQueueWhenExisted = false);

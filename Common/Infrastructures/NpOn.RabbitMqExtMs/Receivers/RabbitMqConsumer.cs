@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
@@ -20,6 +20,8 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
     protected Func<T, Task>? Handler;
     private readonly bool _autoAck; // = true;
     private readonly bool _isExternalConnection;
+    protected readonly ERabbitMqExchangeType _exchangeType;
+    protected readonly string? _routeKey;
 
     public ERabbitMqResponseType ResponseType
     {
@@ -28,7 +30,9 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
     }
 
     public RabbitMqConsumer(IRabbitMqConnection rabbitMqConnection, ILogger<RabbitMqConsumer<T>>? logger = null,
-        bool autoAck = true, ushort prefetchCount = 20
+        bool autoAck = true, ushort prefetchCount = 20,
+        ERabbitMqExchangeType exchangeType = ERabbitMqExchangeType.Direct,
+        string? routeKey = null
     ) // : base()
     {
         _rabbitMqConnection = rabbitMqConnection;
@@ -38,7 +42,8 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
         _logger = logger;
         _autoAck = autoAck;
         _prefetchCount = prefetchCount;
-
+        _exchangeType = exchangeType;
+        _routeKey = routeKey;
 
         // Call the abstract method to ensure the handler is set by the derived class *before* listening starts.
         AddHandler();
@@ -58,7 +63,9 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
         if (!IsEnableType)
             return;
         var routingKey =
-            await _rabbitMqConnection.AddDefaultQueue(_rabbitMqConnection.ExchangeName /* ?? ExchangeName*/, QueueName);
+            await _rabbitMqConnection.AddDefaultQueue(_rabbitMqConnection.ExchangeName /* ?? ExchangeName*/, QueueName,
+                isCreateNewQueueWhenExisted: true,
+                topicRoutingKey: _routeKey, exchangeType: _exchangeType);
         IChannel channel = _rabbitMqConnection.Channel;
         var consumer = new AsyncEventingBasicConsumer(channel);
 

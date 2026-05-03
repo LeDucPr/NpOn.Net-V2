@@ -1,4 +1,5 @@
-﻿using Common.Extensions.NpOn.CommonMode;
+using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonMode;
 using RabbitMQ.Client;
 
 namespace Common.Infrastructures.NpOn.RabbitMqExtMs.Generics;
@@ -35,29 +36,77 @@ public class RabbitMqConnection : IRabbitMqConnection, IDisposable
     public string ExchangeName => _exchangeName;
 
     public async Task<string> AddDefaultQueue(string exchangeName, string queueName,
-        bool isCreateNewExchangeWhenExisted = false, bool isCreateNewQueueWhenExisted = false)
+        bool isCreateNewExchangeWhenExisted = false, bool isCreateNewQueueWhenExisted = false,
+        string? topicRoutingKey = null, ERabbitMqExchangeType exchangeType = ERabbitMqExchangeType.Direct)
     {
         RabbitMqQueueProperty newQueueProperty = new RabbitMqQueueProperty
         {
             ExchangeName = exchangeName,
             QueueName = queueName,
+            ExchangeType = exchangeType
         };
         
-        var routingKey = newQueueProperty.RoutingKey; // routingKey is queueName
+        var actualQueueName = newQueueProperty.RoutingKey; // default deterministic queue name (e.g. ExchangeName.QueueName)
+        var actualRoutingKey = string.IsNullOrEmpty(topicRoutingKey) ? actualQueueName : topicRoutingKey;
+        
         _exchangeName = exchangeName;
-        // Logic was inverted. We should declare the queue if it does NOT exist.
-        if (!_queueProperties.ContainsKey(routingKey))
+
+        // Ensure we track the declare appropriately; queue can have multiple bindings but typically one exchange declare is enough
+        var keys = new[] { exchangeName, queueName, actualRoutingKey }.Where(k => !string.IsNullOrEmpty(k));
+        var dictKey = string.Join("_", keys);
+        
+        if (!_queueProperties.ContainsKey(dictKey))
         {
-            // Declare the exchange
-            await _channel.ExchangeDeclareAsync(
-                exchange: newQueueProperty.ExchangeName,
-                type: newQueueProperty.ExchangeType.GetDisplayName(),
-                durable: newQueueProperty.Durable,
-                autoDelete: newQueueProperty.AutoDelete,
-                arguments: newQueueProperty.DictArgument);
+            bool recreateRequired = false;
+            bool skipMainChannelDeclare = false;
+            
+            // Use a temporary channel to safely declare the exchange without risking the main channel
+            try
+            {
+                using var tempChannel = await _connection.CreateChannelAsync();
+                await tempChannel.ExchangeDeclareAsync(
+                    exchange: newQueueProperty.ExchangeName,
+                    type: newQueueProperty.ExchangeType.GetDisplayName(),
+                    durable: newQueueProperty.Durable,
+                    autoDelete: newQueueProperty.AutoDelete,
+                    arguments: newQueueProperty.DictArgument);
+            }
+            catch (RabbitMQ.Client.Exceptions.OperationInterruptedException ex) when (ex.ShutdownReason?.ReplyCode == 406)
+            {
+                // 406 PRECONDITION_FAILED means the exchange exists but has a different type or parameters.
+                if (isCreateNewExchangeWhenExisted)
+                    recreateRequired = true;
+                else
+                    // Do not recreate. Accept the existing exchange type.
+                    // Must skip main channel declaration to avoid crashing the main channel.
+                    skipMainChannelDeclare = true;
+            }
+
+            if (recreateRequired)
+            {
+                await using var tempChannel = await _connection.CreateChannelAsync();
+                await tempChannel.ExchangeDeleteAsync(newQueueProperty.ExchangeName);
+                await tempChannel.ExchangeDeclareAsync(
+                    exchange: newQueueProperty.ExchangeName,
+                    type: newQueueProperty.ExchangeType.GetDisplayName(),
+                    durable: newQueueProperty.Durable,
+                    autoDelete: newQueueProperty.AutoDelete,
+                    arguments: newQueueProperty.DictArgument);
+            }
+
+            if (!skipMainChannelDeclare)
+            {
+                // Declare on the main channel (idempotent, guaranteed to succeed now)
+                await _channel.ExchangeDeclareAsync(
+                    exchange: newQueueProperty.ExchangeName,
+                    type: newQueueProperty.ExchangeType.GetDisplayName(),
+                    durable: newQueueProperty.Durable,
+                    autoDelete: newQueueProperty.AutoDelete,
+                    arguments: newQueueProperty.DictArgument);
+            }
 
             // Declare the queue
-            await _channel.QueueDeclareAsync(queue: routingKey,
+            await _channel.QueueDeclareAsync(queue: actualQueueName,
                 durable: newQueueProperty.Durable,
                 exclusive: newQueueProperty.Exclusive,
                 autoDelete: newQueueProperty.AutoDelete,
@@ -65,14 +114,14 @@ public class RabbitMqConnection : IRabbitMqConnection, IDisposable
 
             // Bind the queue to the exchange
             await _channel.QueueBindAsync(
-                queue: routingKey,
+                queue: actualQueueName,
                 exchange: newQueueProperty.ExchangeName,
-                routingKey: routingKey);
+                routingKey: actualRoutingKey);
 
-            _queueProperties.Add(routingKey, newQueueProperty);
+            _queueProperties.Add(dictKey, newQueueProperty);
         }
 
-        return routingKey;
+        return actualQueueName;
     }
 
     public async Task AddQueue(RabbitMqQueueProperty property, bool isCreateNewExchangeWhenExisted = false,
