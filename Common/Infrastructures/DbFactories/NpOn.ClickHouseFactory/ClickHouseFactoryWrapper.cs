@@ -111,4 +111,11 @@ public class ClickHouseFactoryWrapper : BaseDbFactoryWrapper, IClickHouseFactory
 
         return new NpOnDbCommand(DbType, commandText, parameters);
     }
+
+    public async Task<INpOnWrapperResult?> Execute(NpOnDbExecuteCommand npOnExecuteCommand)
+    {
+        INpOnDbCommand dbCommand = new NpOnDbCommand(DbType, npOnExecuteCommand.CommandText,
+            npOnExecuteCommand.Parameters?.ToList() ?? new List<INpOnDbCommandParam>());
+        return await ExecuteAsync(dbCommand);
+    }
 }

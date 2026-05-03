@@ -10,6 +10,7 @@ using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
+using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
 
@@ -37,7 +38,6 @@ public sealed class Program : HttpCommonProgram
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
-        // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore();
         services.AddSingleton<IObjectPoolStore>(sp => 
         {
@@ -48,51 +48,26 @@ public sealed class Program : HttpCommonProgram
             return store;
         });
         services.AddSingleton(store);
-        // services
-        //     .AddPostgres(poolStore: store)
-        //     .AddRedis();
-
-        if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
-        {
-            // services.AddHostedService<HostingApp>();
-        }
-
-        // // rabbitMq
-        // bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
-        // if (isUseRabbitMq)
-        // {
-        //     services.AddRabbitMq(); // rabbitMq
-        //     services.AddTransient<AccountSaveLoginRabbitMqConsumer>()
-        //         .AddHostedService<ConsumerHostedService<AccountSaveLoginRabbitMqConsumer>>();
-        //     services.AddTransient<AccountSaveLogoutRabbitMqConsumer>()
-        //         .AddHostedService<ConsumerHostedService<AccountSaveLogoutRabbitMqConsumer>>();
-        // }
-
-        // // kafka
-        // bool isUseKafka = EApplicationConfiguration.IsUseKafka.GetAppSettingConfig().AsDefaultBool();
-        // if (isUseKafka)
-        // {
-        //     services.AddKafka(); // kafka
-        //     services.AddTransient<AccountSaveLoginKafkaConsumer>()
-        //         .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
-        // }
+        
+        services.AddClickHouse(poolStore: store);
 
         // Add Service
-        // services.AddTransient<IAccountInfoService, AccountInfoService>();
-
-        // Add Repository
-        // services.AddTransient<IAccountInfoStorageAdapter, AccountInfoStorageAdapter>();
+        services.AddTransient<MicroServices.Tracker.Service.NpOn.ITrackerService.Contracts.ITrackerLogService, Services.TrackerLogService>();
 
         return Task.CompletedTask;
     }
 
-    // protected override void ConfigureBasePipeline(WebApplication app)
-    // { app.MapGet("/", () => "NpOn.AccountService"); base.ConfigureBasePipeline(app); }
-
     protected override Task ConfigurePipeline(WebApplication app)
     {
         // Add Map Grpc Service
-        // app.MapGrpcService<AccountInfoService>();
+        app.MapGrpcService<Services.TrackerLogService>();
+        
+        // Initialize ClickHouse Schema
+        Task.Run(async () => {
+            using var scope = app.Services.CreateScope();
+            await Database.ClickHouseLogSchema.InitializeAsync(scope.ServiceProvider);
+        });
+
         return Task.CompletedTask;
     }
 }

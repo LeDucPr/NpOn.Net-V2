@@ -12,4 +12,5 @@ public interface IClickHouseFactoryWrapper : IDbFactoryWrapper, IBaseDbCommandBu
     Task<INpOnWrapperResult?> Update<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false) where T : BaseDomain;
     Task<INpOnWrapperResult?> Merge<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false) where T : BaseDomain;
     Task<INpOnWrapperResult?> Delete<T>(IEnumerable<T> domains) where T : BaseDomain;
+    Task<INpOnWrapperResult?> Execute(NpOnDbExecuteCommand npOnExecuteCommand);
 }

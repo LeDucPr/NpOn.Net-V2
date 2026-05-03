@@ -24,6 +24,8 @@
       <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
       <ProjectReference Include="..\..\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
       <ProjectReference Include="..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />
+      <ProjectReference Include="..\ITrackerService\ITrackerService.csproj" />
+      <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.ClickHouseAppExtUse\NpOn.ClickHouseAppExtUse.csproj" />
     </ItemGroup>
 
 </Project>
