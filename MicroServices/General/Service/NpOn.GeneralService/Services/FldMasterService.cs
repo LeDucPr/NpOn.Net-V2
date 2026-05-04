@@ -1,4 +1,5 @@
-﻿using System.Collections;
+using System.Collections;
+using System.Data;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
@@ -15,20 +16,20 @@ using Common.Extensions.NpOn.ICommonDb.DbResults.Grpc;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Commands;
 using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
-using MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
 using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 using MicroServices.General.Definitions.NpOn.GeneralConstant;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using MySqlConnector;
 using Npgsql;
 using NpgsqlTypes;
 
 namespace MicroServices.General.Service.NpOn.GeneralService.Services
 {
-    public class FldMasterPgService(
+    public class FldMasterService(
         IWrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>> internalCache,
         IPostgresFactoryWrapper postgresFactoryWrapper,
         ILogger<CommonService> logger
-    ) : CommonService(logger), IFldMasterPgService
+    ) : CommonService(logger), IFldMasterService
     {
         public async Task<CommonResponse> ExecuteDomainAction(DomainActionCommand command)
         {
@@ -68,13 +69,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 };
 
                 List<INpOnDbCommandParam> parameters = npgsqlParameters
-                    .Select(p => new NpOnDbCommandParam<NpgsqlDbType>
-                    {
-                        ParamName = p.ParameterName,
-                        ParamValue = p.Value ?? DBNull.Value,
-                        ParamType = p.NpgsqlDbType
-                    })
-                    .Cast<INpOnDbCommandParam>()
+                    .Select(p => (INpOnDbCommandParam)new NpOnDbCommandParam<NpgsqlDbType>(p.ParameterName, p.Value ?? DBNull.Value, p.NpgsqlDbType))
                     .ToList();
 
                 INpOnDbCommand dbCommand =
@@ -105,22 +100,12 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 if (executionCommand.Code != null)
                 {
                     queryBuilder = queryBuilder.WhereCode(executionCommand.Code);
-                    parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
-                    {
-                        ParamName = nameof(executionCommand.Code),
-                        ParamValue = executionCommand.Code,
-                        ParamType = NpgsqlDbType.Varchar
-                    });
+                    parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>(nameof(executionCommand.Code), executionCommand.Code, NpgsqlDbType.Varchar));
                 }
                 else if (executionCommand.TblMaterId != null)
                 {
                     queryBuilder = queryBuilder.WhereTblMasterId(executionCommand.TblMaterId);
-                    parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
-                    {
-                        ParamName = nameof(executionCommand.TblMaterId),
-                        ParamValue = executionCommand.Code,
-                        ParamType = NpgsqlDbType.Uuid
-                    });
+                    parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>(nameof(executionCommand.TblMaterId), executionCommand.TblMaterId, NpgsqlDbType.Uuid));
                 }
 
                 var (queryBuilderString, _) = queryBuilder.Build();
@@ -187,32 +172,29 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 }
 
                 EDb databaseType = (EDb)tblFldRModelFirst.DataBaseType;
-                Type? deserializeParamType = null;
-                if (databaseType == EDb.Postgres)
+                Type? deserializeParamType = databaseType switch
                 {
-                    deserializeParamType = typeof(NpOnDbCommandParamGrpc<NpgsqlDbType>);
-                }
-                // else {} // other db type 
+                    EDb.Postgres or EDb.YugaBytePg => typeof(NpgsqlDbType),
+                    EDb.ClickHouse => typeof(EClickHouseDbType),
+                    EDb.MySql => typeof(MySqlDbType),
+                    EDb.Mssql => typeof(SqlDbType),
+                    EDb.Cassandra or EDb.ScyllaDb => typeof(ECassandraDbType),
+                    EDb.Redis => typeof(ERedisCommand),
+                    EDb.ElasticSearch => typeof(EElasticSearchCommand),
+                    _ => null
+                };
 
                 List<NpOnDbCommandParamGrpc> parameters = [];
                 foreach (var paramObj in tblFldObjects)
                 {
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
-                    string? stringValue =
-                        executionCommand.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
-                    NpOnDbCommandParamGrpc? commandParam = null;
-                    if (databaseType == EDb.Postgres)
-                        commandParam = new NpOnDbCommandParamGrpc<NpgsqlDbType>
-                        {
-                            ParamName = paramObj.FieldName,
-                            ParamValue = stringValue.AsDefaultString(),
-                            ParamType = paramObj.FieldType ?? paramObj.FieldDbType ?? NpgsqlDbType.Unknown,
-                        };
-                    // else {} // other db type
-
-                    if (commandParam != null)
-                        parameters.Add(commandParam);
+                    
+                    parameters.Add(new NpOnDbCommandParamGrpc
+                    {
+                        ParamName = paramObj.FieldName,
+                        ParamType = (int?)(paramObj.FieldType ?? paramObj.FieldDbType)
+                    });
                 }
 
                 EExecType execType = (EExecType)tblFldRModelFirst.ExecType;
@@ -256,15 +238,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     {
                         if (string.IsNullOrEmpty(paramObj.FieldName))
                             break;
-                        string? stringValue =
-                            executionCommand.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
-                        NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
-                        {
-                            ParamName = paramObj.FieldName,
-                            ParamValue = stringValue.AsDefaultString(),
-                            ParamType = paramObj.FieldDbType ?? NpgsqlDbType.Unknown,
-                        };
-                        parameters.Add(commandParam);
+                        parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>(paramObj.FieldName, null, paramObj.FieldDbType ?? NpgsqlDbType.Unknown));
                     }
 
                     try
@@ -286,15 +260,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     {
                         if (string.IsNullOrEmpty(paramObj.FieldName))
                             break;
-                        string? stringValue =
-                            executionCommand.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
-                        NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
-                        {
-                            ParamName = paramObj.FieldName,
-                            ParamValue = stringValue.AsDefaultString(),
-                            ParamType = paramObj.FieldType ?? paramObj.FieldDbType ?? NpgsqlDbType.Unknown,
-                        };
-                        parameters.Add(commandParam);
+                        parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>(paramObj.FieldName, null, paramObj.FieldType ?? paramObj.FieldDbType ?? NpgsqlDbType.Unknown));
                     }
 
                     try

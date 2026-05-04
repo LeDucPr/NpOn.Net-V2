@@ -41,4 +41,10 @@
         </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="MySqlConnector">
+        <HintPath>..\..\..\..\..\..\..\.nuget\packages\mysqlconnector\2.5.0\lib\net10.0\MySqlConnector.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

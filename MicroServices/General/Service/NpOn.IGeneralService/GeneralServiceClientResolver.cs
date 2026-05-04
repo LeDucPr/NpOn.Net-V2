@@ -8,7 +8,7 @@ public class GeneralServiceClientResolver : SharedGrpcClientResolver
     protected override Func<IServiceCollection, string, Task> RegistrationAction =>
         (services, url) =>
         {
-            services.RegisterGrpcClientLoadBalancing<IFldMasterPgService>(url);
+            services.RegisterGrpcClientLoadBalancing<IFldMasterService>(url);
             return Task.CompletedTask;
         };
 }

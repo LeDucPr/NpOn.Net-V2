@@ -11,54 +11,34 @@ namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AccountPermissionStorageAdapter(
     IPostgresFactoryWrapper postgresFactoryWrapper,
-    IFldMasterPgService fldMasterPgService
+    IFldMasterService fldMasterService
 ) : IAccountPermissionStorageAdapter
 {
     public async Task<List<AccountPermissionExceptionRModel>?> AccountPermissionExceptionGetByAccountId(
         string accountId)
     {
-        var execution = new TblFldExecutionCommand
-        {
-            Code = AccountPermissionServiceQueryCode.AccountExceptionControllersGetByAccountId,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "account_id",
-                    StringValue = accountId
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(execution);
+        var execution =
+            new TblFldExecutionCommand(AccountPermissionServiceQueryCode.AccountExceptionControllersGetByAccountId);
+        var commandResponse = await fldMasterService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("account_id", accountId)
+            .ToCommand());
         return result.ToList<AccountPermissionExceptionRModel>();
     }
 
     public async Task<bool> AccountPermissionExceptionDeleteOldVersionByHostCode(string hostCode, string versionId)
     {
-        var execution = new TblFldExecutionCommand
-        {
-            Code = AccountPermissionServiceQueryCode.AccountExceptionControllersDeleteOldVersionByHostCode,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "host_code",
-                    StringValue = hostCode
-                },
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "version_id",
-                    StringValue = versionId
-                }
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(execution);
+        var execution = new TblFldExecutionCommand(
+            AccountPermissionServiceQueryCode.AccountExceptionControllersDeleteOldVersionByHostCode);
+        var commandResponse = await fldMasterService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return false;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("host_code", hostCode)
+            .AddParameterValue("version_id", versionId)
+            .ToCommand());
         return result?.Status ?? false;
     }
 
@@ -67,26 +47,14 @@ public class AccountPermissionStorageAdapter(
             string accountId, string[] controllerCodes)
     {
         var execution = new TblFldExecutionCommand
-        {
-            Code = AccountPermissionServiceQueryCode.AccountExceptionControllersGetByAccountIdAndControllerCodes,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "account_id",
-                    StringValue = accountId
-                },
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "controller_codes",
-                    StringValue = controllerCodes.AsArrayJoin()
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(execution);
+            (AccountPermissionServiceQueryCode.AccountExceptionControllersGetByAccountIdAndControllerCodes);
+        var commandResponse = await fldMasterService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("account_id", accountId)
+            .AddParameterValue("controller_codes", controllerCodes.AsArrayJoin())
+            .ToCommand());
         return result.ToList<AccountPermissionExceptionRModel>();
     }
 
@@ -95,21 +63,13 @@ public class AccountPermissionStorageAdapter(
         if (codes is not { Length: > 0 })
             return null;
         var execution = new TblFldExecutionCommand
-        {
-            Code = AccountPermissionServiceQueryCode.AccountPermissionControllerGetByCodes,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "codes",
-                    StringValue = codes.AsArrayJoin()
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(execution);
+            (AccountPermissionServiceQueryCode.AccountPermissionControllerGetByCodes);
+        var commandResponse = await fldMasterService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("codes", codes.AsArrayJoin())
+            .ToCommand());
         return result.ToList<AccountPermissionControllerRModel>();
     }
 }

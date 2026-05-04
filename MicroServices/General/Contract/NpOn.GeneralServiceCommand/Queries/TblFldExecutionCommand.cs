@@ -5,6 +5,15 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
 [ProtoContract]
 public class TblFldExecutionCommand : BaseGeneralCommand
 {
+    public TblFldExecutionCommand()
+    {
+    }
+
+    public TblFldExecutionCommand(string code)
+    {
+        Code = code;
+    }
+
     [ProtoMember(1)] public string? TblMaterId { get; set; }
     [ProtoMember(2)] public string? Code { get; set; }
     [ProtoMember(3)] public TblFldExecutionParamCommand[]? ExecParams { get; set; }
@@ -17,14 +26,10 @@ public class TblFldExecutionParamCommand
     {
     }
 
-    public TblFldExecutionParamCommand(string paramName, string stringValue)
+    public TblFldExecutionParamCommand(string paramName)
     {
         ParamName = paramName;
-        StringValue = stringValue;
     }
 
     [ProtoMember(1)] public required string ParamName { get; set; }
-
-    [ProtoMember(2)] public string? StringValue { get; set; }
-    // [ProtoMember(3)] public Type? ParamType { get; set; } // if null => string 
 }

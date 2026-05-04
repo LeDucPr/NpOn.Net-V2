@@ -1,46 +1,37 @@
-﻿using Common.Extensions.NpOn.CommonDb.DbCommands;
-using NpgsqlTypes;
+using Common.Extensions.NpOn.CommonDb.DbCommands;
 using ProtoBuf;
 
-namespace MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
+namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 
 [ProtoContract]
-[ProtoInclude(1000, typeof(NpOnDbCommandParamGrpc<NpgsqlDbType>))]
 public class NpOnDbCommandParamGrpc
 {
     [ProtoMember(1)] public required string ParamName { get; set; }
     [ProtoMember(2)] public string? ParamValue { get; set; }
+    [ProtoMember(3)] public int? ParamType { get; set; }
+
+    public NpOnDbCommandParam ToDbParam(Type? enumType = null)
+    {
+        if (enumType != null && enumType.IsEnum && ParamType.HasValue)
+        {
+            var enumValue = Enum.ToObject(enumType, ParamType.Value);
+            var genericType = typeof(NpOnDbCommandParam<>).MakeGenericType(enumType);
+            return (NpOnDbCommandParam)Activator.CreateInstance(genericType, ParamName, ParamValue, enumValue)!;
+        }
+
+        return new NpOnDbCommandParam(ParamName, ParamValue);
+    }
 }
 
-[ProtoContract]
-public class NpOnDbCommandParamGrpc<TEnum> : NpOnDbCommandParamGrpc where TEnum : Enum
-{
-    [ProtoMember(3)] public required TEnum ParamType { get; set; }
-}
 
 public static class NpOnDbCommandParamGrpcExtensions
 {
-    public static NpOnDbCommandParam ToDbParam(this NpOnDbCommandParamGrpc gRpcParam)
+    public static NpOnDbCommandParam ToDbParam(this NpOnDbCommandParamGrpc gRpcParam, Type? enumType = null)
     {
-        // generic grpc param
-        if (gRpcParam is NpOnDbCommandParamGrpc<NpgsqlDbType> typed)
-        {
-            return new NpOnDbCommandParam<NpgsqlDbType>
-            {
-                ParamName = typed.ParamName,
-                ParamValue = typed.ParamValue,
-                ParamType = typed.ParamType
-            };
-        }
-
-        // base param
-        return new NpOnDbCommandParam
-        {
-            ParamName = gRpcParam.ParamName,
-            ParamValue = gRpcParam.ParamValue
-        };
+        return gRpcParam.ToDbParam(enumType);
     }
 }
+
 
 [ProtoContract]
 public class NpOnDbCommandParamGrpcList

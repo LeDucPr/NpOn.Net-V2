@@ -8,7 +8,7 @@ using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 namespace MicroServices.General.Service.NpOn.IGeneralService;
 
 [ServiceContract]
-public interface IFldMasterPgService
+public interface IFldMasterService
 {
     [OperationContract]
     Task<CommonResponse> ExecuteDomainAction(DomainActionCommand command);

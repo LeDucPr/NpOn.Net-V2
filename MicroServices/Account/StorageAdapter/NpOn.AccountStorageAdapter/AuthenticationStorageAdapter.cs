@@ -11,148 +11,83 @@ namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AuthenticationStorageAdapter(
     IPostgresFactoryWrapper postgresFactoryWrapper,
-    IFldMasterPgService fldMasterPgService
+    IFldMasterService fldMasterService
 ) : IAuthenticationStorageAdapter
 {
     public async Task<List<AccountRModel>?> AccountGetByNumberPhoneOrEmailOrUsername(string phoneNumber,
         string email, string username)
     {
-        var checkExistExecution = new TblFldExecutionCommand
-        {
-            Code = AuthenServiceQueryCode.AccountGetByUsernameOrPhoneNumberOrEmail,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "phone_number",
-                    StringValue = phoneNumber
-                },
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "email",
-                    StringValue = email
-                },
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "username",
-                    StringValue = username
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(checkExistExecution);
+        var checkExistExecution =
+            new TblFldExecutionCommand(AuthenServiceQueryCode.AccountGetByUsernameOrPhoneNumberOrEmail);
+        var commandResponse = await fldMasterService.GetExecCommand(checkExistExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("phone_number", phoneNumber)
+            .AddParameterValue("email", email)
+            .AddParameterValue("username", username)
+            .ToCommand());
         return result.ToList<AccountRModel>();
     }
 
     public async Task<AccountRModel?> AccountGetByUsernameAndPassword(string username, string password)
     {
-        var execution = new TblFldExecutionCommand
-        {
-            Code = AuthenServiceQueryCode.AccountGetByUsernameAndPassword,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "username",
-                    StringValue = username
-                },
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "password",
-                    StringValue = password
-                }
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(execution);
+        var execution = new TblFldExecutionCommand(AuthenServiceQueryCode.AccountGetByUsernameAndPassword);
+        var commandResponse = await fldMasterService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("username", username)
+            .AddParameterValue("password", password)
+            .ToCommand());
         return result.ToFirstOrDefault<AccountRModel>();
     }
 
     public async Task<List<AccountLoginRModel>?> AccountLoginInfoGetByRefreshToken(string refreshToken)
     {
-        var execution = new TblFldExecutionCommand
-        {
-            Code = AuthenServiceQueryCode.AccountLoginInfoGetByRefreshToken,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "refresh_token",
-                    StringValue = refreshToken
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(execution);
+        var execution = new TblFldExecutionCommand(AuthenServiceQueryCode.AccountLoginInfoGetByRefreshToken);
+        var commandResponse = await fldMasterService.GetExecCommand(execution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("refresh_token", refreshToken)
+            .ToCommand());
         return result.ToList<AccountLoginRModel>();
     }
 
     public async Task<AccountRModel?> AccountGetById(string accountId) // Guid
     {
-        var accountExecution = new TblFldExecutionCommand
-        {
-            Code = AuthenServiceQueryCode.AccountGetById,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "id",
-                    StringValue = accountId,
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(accountExecution);
+        var accountExecution = new TblFldExecutionCommand(AuthenServiceQueryCode.AccountGetById);
+        var commandResponse = await fldMasterService.GetExecCommand(accountExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("id", accountId)
+            .ToCommand());
         return result.ToFirstOrDefault<AccountRModel>();
     }
 
     public async Task<List<AccountRModel>?> AccountGetByIds(string[]? accountIds) // Guids
     {
-        var accountExecution = new TblFldExecutionCommand
-        {
-            Code = AuthenServiceQueryCode.AccountGetByIds,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "ids",
-                    StringValue = accountIds.AsArrayJoin(),
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(accountExecution);
+        var accountExecution = new TblFldExecutionCommand(AuthenServiceQueryCode.AccountGetByIds);
+        var commandResponse = await fldMasterService.GetExecCommand(accountExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("ids", accountIds.AsArrayJoin())
+            .ToCommand());
         return result.ToList<AccountRModel>();
     }
 
     public async Task<AccountLoginRModel?> AccountLoginInfoGetBySessionId(string sessionId)
     {
-        var logoutExecution = new TblFldExecutionCommand
-        {
-            Code = AuthenServiceQueryCode.AccountLoginInfoGetBySessionId,
-            ExecParams =
-            [
-                new TblFldExecutionParamCommand
-                {
-                    ParamName = "session_id",
-                    StringValue = sessionId
-                },
-            ]
-        };
-        var commandResponse = await fldMasterPgService.GetExecCommand(logoutExecution);
+        var logoutExecution = new TblFldExecutionCommand(AuthenServiceQueryCode.AccountLoginInfoGetBySessionId);
+        var commandResponse = await fldMasterService.GetExecCommand(logoutExecution);
         if (!commandResponse.Status || commandResponse.Data == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data.ToCommand());
+        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+            .AddParameterValue("session_id", sessionId)
+            .ToCommand());
         return result.ToFirstOrDefault<AccountLoginRModel>();
     }
 }

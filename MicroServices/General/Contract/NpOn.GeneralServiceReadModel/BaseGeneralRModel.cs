@@ -1,5 +1,4 @@
 ﻿using Common.Extensions.NpOn.HandleFlow;
-using MicroServices.General.Contract.NpOn.GeneralServiceContract.ReadModels;
 using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 using ProtoBuf;
 

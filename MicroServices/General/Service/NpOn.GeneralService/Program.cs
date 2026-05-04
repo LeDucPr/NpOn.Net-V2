@@ -62,7 +62,7 @@ public sealed class Program : HttpCommonProgram
             services.AddHostedService<HostingApp>();
         }
 
-        services.AddTransient<IFldMasterPgService, FldMasterPgService>();
+        services.AddTransient<IFldMasterService, FldMasterService>();
 
         return Task.CompletedTask;
     }
@@ -72,7 +72,7 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
-        app.MapGrpcService<FldMasterPgService>();
+        app.MapGrpcService<FldMasterService>();
         return Task.CompletedTask;
     }
 }
