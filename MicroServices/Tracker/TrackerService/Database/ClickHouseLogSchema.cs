@@ -1,7 +1,6 @@
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Database;
 

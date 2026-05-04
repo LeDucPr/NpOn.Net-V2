@@ -17,12 +17,12 @@ public class AccountInfoStorageAdapter(
     // info
     public async Task<AccountInfoRModel?> AccountInfoActiveGetByAccountId(string accountId)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountServiceQueryCode.AccountInfoActiveGetByAccountId,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "account_id",
                     StringValue = accountId
@@ -38,12 +38,12 @@ public class AccountInfoStorageAdapter(
 
     public async Task<List<AccountInfoRModel>?> AccountInfoActiveGetByAccountIds(string[] accountIds)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountServiceQueryCode.AccountInfoActiveGetByAccountIds,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "account_ids",
                     StringValue = accountIds.AsArrayJoin()
@@ -61,12 +61,12 @@ public class AccountInfoStorageAdapter(
     // address
     public async Task<List<AccountAddressRModel>?> AccountAddressesGetByIds(string[] accountIds)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountServiceQueryCode.AccountAddressesGetByIds,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "ids",
                     StringValue = accountIds.AsArrayJoin()
@@ -82,12 +82,12 @@ public class AccountInfoStorageAdapter(
 
     public async Task<List<AccountAddressRModel>?> AccountAddressesDefaultGetByAccountIds(string[] accountIds)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountServiceQueryCode.AccountAddressesDefaultGetByAccountIds,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "account_ids",
                     StringValue = accountIds.AsArrayJoin()

@@ -7,7 +7,7 @@ using ProtoBuf;
 namespace MicroServices.General.Contract.NpOn.GeneralServiceCommand;
 
 [ProtoContract]
-[ProtoInclude(100, typeof(TblFldExecution))]
+[ProtoInclude(100, typeof(TblFldExecutionCommand))]
 [ProtoInclude(200, typeof(DomainActionCommand))]
 public abstract class BaseGeneralCommand : CommonAbsQuery
 {

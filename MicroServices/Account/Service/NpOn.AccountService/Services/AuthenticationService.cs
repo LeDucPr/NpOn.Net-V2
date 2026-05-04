@@ -8,8 +8,6 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.CommonScope;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
-using Common.Infrastructures.NpOn.KafkaExtCm.Events;
-using Common.Infrastructures.NpOn.KafkaExtCm.Senders;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;

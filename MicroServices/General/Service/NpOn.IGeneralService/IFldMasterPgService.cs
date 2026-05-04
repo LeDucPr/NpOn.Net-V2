@@ -14,11 +14,11 @@ public interface IFldMasterPgService
     Task<CommonResponse> ExecuteDomainAction(DomainActionCommand command);
 
     [OperationContract]
-    Task<CommonResponse<List<TblFldRModel>>> GetExecution(TblFldExecution execution);
+    Task<CommonResponse<List<TblFldRModel>>> GetExecution(TblFldExecutionCommand executionCommand);
 
     [OperationContract]
-    Task<CommonResponse<CommandRModel?>> GetExecCommand(TblFldExecution execution);
+    Task<CommonResponse<CommandRModel?>> GetExecCommand(TblFldExecutionCommand executionCommand);
 
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecution execution);
+    Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecutionCommand executionCommand);
 }

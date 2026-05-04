@@ -17,22 +17,22 @@ public class AccountGroupStorageAdapter(
     public async Task<List<AccountGroupRModel>?> AccountGroupGetByGroupIds(
         string[] groupIds, int pageSize, int pageIndex) // Guids
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountGroupServiceCode.AccountGroupGetByGroupIds,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "group_ids",
                     StringValue = groupIds.AsArrayJoin()
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "page_size",
                     StringValue = pageSize.AsDefaultString()
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "page_index",
                     StringValue = pageIndex.AsDefaultString()

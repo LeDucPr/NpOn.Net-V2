@@ -25,7 +25,7 @@ using NpgsqlTypes;
 namespace MicroServices.General.Service.NpOn.GeneralService.Services
 {
     public class FldMasterPgService(
-        IWrapperCacheStore<TblFldExecution, List<TblFldRModel>> internalCache,
+        IWrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>> internalCache,
         IPostgresFactoryWrapper postgresFactoryWrapper,
         ILogger<CommonService> logger
     ) : CommonService(logger), IFldMasterPgService
@@ -90,11 +90,11 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
             });
         }
 
-        public async Task<CommonResponse<List<TblFldRModel>>> GetExecution(TblFldExecution execution)
+        public async Task<CommonResponse<List<TblFldRModel>>> GetExecution(TblFldExecutionCommand executionCommand)
         {
             return await CommonProcess<List<TblFldRModel>>(async (response) =>
             {
-                if (execution.ExecFunc == null && execution.Code == null && execution.TblMaterId == null)
+                if (executionCommand.Code == null && executionCommand.TblMaterId == null)
                 {
                     response.SetFail("Invalid query");
                     return;
@@ -102,34 +102,24 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
 
                 List<INpOnDbCommandParam> parameters = new List<INpOnDbCommandParam>();
                 var queryBuilder = new TblFldMasterQueryBuilder();
-                if (execution.Code != null)
+                if (executionCommand.Code != null)
                 {
-                    queryBuilder = queryBuilder.WhereCode(execution.Code);
+                    queryBuilder = queryBuilder.WhereCode(executionCommand.Code);
                     parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
                     {
-                        ParamName = nameof(execution.Code),
-                        ParamValue = execution.Code,
+                        ParamName = nameof(executionCommand.Code),
+                        ParamValue = executionCommand.Code,
                         ParamType = NpgsqlDbType.Varchar
                     });
                 }
-                else if (execution.TblMaterId != null)
+                else if (executionCommand.TblMaterId != null)
                 {
-                    queryBuilder = queryBuilder.WhereTblMasterId(execution.TblMaterId);
+                    queryBuilder = queryBuilder.WhereTblMasterId(executionCommand.TblMaterId);
                     parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
                     {
-                        ParamName = nameof(execution.TblMaterId),
-                        ParamValue = execution.Code,
+                        ParamName = nameof(executionCommand.TblMaterId),
+                        ParamValue = executionCommand.Code,
                         ParamType = NpgsqlDbType.Uuid
-                    });
-                }
-                else if (execution.ExecFunc != null)
-                {
-                    queryBuilder = queryBuilder.WhereExecFunc(execution.ExecFunc);
-                    parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
-                    {
-                        ParamName = nameof(execution.ExecFunc),
-                        ParamValue = execution.Code,
-                        ParamType = NpgsqlDbType.Varchar
                     });
                 }
 
@@ -158,17 +148,17 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
             });
         }
 
-        public async Task<CommonResponse<CommandRModel?>> GetExecCommand(TblFldExecution execution)
+        public async Task<CommonResponse<CommandRModel?>> GetExecCommand(TblFldExecutionCommand executionCommand)
         {
             return await CommonProcess<CommandRModel?>(async (response) =>
             {
                 List<TblFldRModel> tblFldObjects;
                 if (EApplicationConfiguration.IsUseCachingExecutionGeneralService.GetAppSettingConfig().AsDefaultBool())
-                    tblFldObjects = await internalCache.GetOrAddAsync(execution,
-                        async _ => (await GetExecution(execution)).Data ?? [],
+                    tblFldObjects = await internalCache.GetOrAddAsync(executionCommand,
+                        async _ => (await GetExecution(executionCommand)).Data ?? [],
                         TimeSpan.FromSeconds(30));
                 else
-                    tblFldObjects = (await GetExecution(execution)).Data ?? [];
+                    tblFldObjects = (await GetExecution(executionCommand)).Data ?? [];
 
                 if (tblFldObjects is not { Count: > 0 })
                 {
@@ -210,7 +200,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
                     string? stringValue =
-                        execution.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                        executionCommand.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                     NpOnDbCommandParamGrpc? commandParam = null;
                     if (databaseType == EDb.Postgres)
                         commandParam = new NpOnDbCommandParamGrpc<NpgsqlDbType>
@@ -244,11 +234,11 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
             });
         }
 
-        public async Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecution execution)
+        public async Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecutionCommand executionCommand)
         {
             return await CommonProcess<INpOnGrpcObject>(async (response) =>
             {
-                List<TblFldRModel>? tblFldObjects = (await GetExecution(execution)).Data;
+                List<TblFldRModel>? tblFldObjects = (await GetExecution(executionCommand)).Data;
                 if (tblFldObjects is not { Count: > 0 })
                 {
                     response.SetFail("FldMasterObject not found");
@@ -267,7 +257,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                         if (string.IsNullOrEmpty(paramObj.FieldName))
                             break;
                         string? stringValue =
-                            execution.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                            executionCommand.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                         NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
                         {
                             ParamName = paramObj.FieldName,
@@ -297,7 +287,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                         if (string.IsNullOrEmpty(paramObj.FieldName))
                             break;
                         string? stringValue =
-                            execution.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                            executionCommand.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                         NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
                         {
                             ParamName = paramObj.FieldName,

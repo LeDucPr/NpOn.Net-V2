@@ -17,12 +17,12 @@ public class AccountPermissionStorageAdapter(
     public async Task<List<AccountPermissionExceptionRModel>?> AccountPermissionExceptionGetByAccountId(
         string accountId)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountPermissionServiceQueryCode.AccountExceptionControllersGetByAccountId,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "account_id",
                     StringValue = accountId
@@ -38,17 +38,17 @@ public class AccountPermissionStorageAdapter(
 
     public async Task<bool> AccountPermissionExceptionDeleteOldVersionByHostCode(string hostCode, string versionId)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountPermissionServiceQueryCode.AccountExceptionControllersDeleteOldVersionByHostCode,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "host_code",
                     StringValue = hostCode
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "version_id",
                     StringValue = versionId
@@ -66,17 +66,17 @@ public class AccountPermissionStorageAdapter(
         AccountPermissionExceptionGetByAccountIdAndControllerCodes(
             string accountId, string[] controllerCodes)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountPermissionServiceQueryCode.AccountExceptionControllersGetByAccountIdAndControllerCodes,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "account_id",
                     StringValue = accountId
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "controller_codes",
                     StringValue = controllerCodes.AsArrayJoin()
@@ -94,12 +94,12 @@ public class AccountPermissionStorageAdapter(
     {
         if (codes is not { Length: > 0 })
             return null;
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AccountPermissionServiceQueryCode.AccountPermissionControllerGetByCodes,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "codes",
                     StringValue = codes.AsArrayJoin()

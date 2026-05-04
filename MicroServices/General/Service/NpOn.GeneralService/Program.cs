@@ -52,8 +52,8 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton(store);
         services.AddPostgres(poolStore: store);
 
-        services.AddSingleton<IWrapperCacheStore<TblFldExecution, List<TblFldRModel>>>(_ =>
-            new WrapperCacheStore<TblFldExecution, List<TblFldRModel>>()
+        services.AddSingleton<IWrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>>>(_ =>
+            new WrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>>()
         );
 
 

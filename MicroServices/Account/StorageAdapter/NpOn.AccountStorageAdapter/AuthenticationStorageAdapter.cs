@@ -17,22 +17,22 @@ public class AuthenticationStorageAdapter(
     public async Task<List<AccountRModel>?> AccountGetByNumberPhoneOrEmailOrUsername(string phoneNumber,
         string email, string username)
     {
-        var checkExistExecution = new TblFldExecution
+        var checkExistExecution = new TblFldExecutionCommand
         {
             Code = AuthenServiceQueryCode.AccountGetByUsernameOrPhoneNumberOrEmail,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "phone_number",
                     StringValue = phoneNumber
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "email",
                     StringValue = email
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "username",
                     StringValue = username
@@ -48,17 +48,17 @@ public class AuthenticationStorageAdapter(
 
     public async Task<AccountRModel?> AccountGetByUsernameAndPassword(string username, string password)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AuthenServiceQueryCode.AccountGetByUsernameAndPassword,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "username",
                     StringValue = username
                 },
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "password",
                     StringValue = password
@@ -74,12 +74,12 @@ public class AuthenticationStorageAdapter(
 
     public async Task<List<AccountLoginRModel>?> AccountLoginInfoGetByRefreshToken(string refreshToken)
     {
-        var execution = new TblFldExecution
+        var execution = new TblFldExecutionCommand
         {
             Code = AuthenServiceQueryCode.AccountLoginInfoGetByRefreshToken,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "refresh_token",
                     StringValue = refreshToken
@@ -95,12 +95,12 @@ public class AuthenticationStorageAdapter(
 
     public async Task<AccountRModel?> AccountGetById(string accountId) // Guid
     {
-        var accountExecution = new TblFldExecution
+        var accountExecution = new TblFldExecutionCommand
         {
             Code = AuthenServiceQueryCode.AccountGetById,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "id",
                     StringValue = accountId,
@@ -116,12 +116,12 @@ public class AuthenticationStorageAdapter(
 
     public async Task<List<AccountRModel>?> AccountGetByIds(string[]? accountIds) // Guids
     {
-        var accountExecution = new TblFldExecution
+        var accountExecution = new TblFldExecutionCommand
         {
             Code = AuthenServiceQueryCode.AccountGetByIds,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "ids",
                     StringValue = accountIds.AsArrayJoin(),
@@ -137,12 +137,12 @@ public class AuthenticationStorageAdapter(
 
     public async Task<AccountLoginRModel?> AccountLoginInfoGetBySessionId(string sessionId)
     {
-        var logoutExecution = new TblFldExecution
+        var logoutExecution = new TblFldExecutionCommand
         {
             Code = AuthenServiceQueryCode.AccountLoginInfoGetBySessionId,
             ExecParams =
             [
-                new TblFldExecutionParam
+                new TblFldExecutionParamCommand
                 {
                     ParamName = "session_id",
                     StringValue = sessionId
