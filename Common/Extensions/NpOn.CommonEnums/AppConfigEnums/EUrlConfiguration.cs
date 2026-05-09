@@ -9,4 +9,5 @@ public enum EUrlConfiguration
     AccountServiceUrl, // - string
     GeneralServiceUrl, // - string
     MigrationService, // - string
+    TrackerServiceUrl, // - string
 }

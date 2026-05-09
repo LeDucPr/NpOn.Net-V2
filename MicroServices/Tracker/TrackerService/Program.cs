@@ -11,6 +11,8 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
+using MicroServices.Tracker.Service.NpOn.ITrackerService;
+using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
 
@@ -36,7 +38,8 @@ public sealed class Program : HttpCommonProgram
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
-                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl)
+                .AddConnectService(new TrackerServiceClientResolver(), null, EUrlConfiguration.TrackerServiceUrl);
 
         IObjectPoolStore store = new ObjectPoolStore();
         services.AddSingleton<IObjectPoolStore>(sp => 
@@ -49,10 +52,11 @@ public sealed class Program : HttpCommonProgram
         });
         services.AddSingleton(store);
         
-        services.AddClickHouse(poolStore: store);
+        if (EApplicationConfiguration.IsUseClickhouse.GetAppSettingConfig().AsDefaultBool())
+            services.AddClickHouse(poolStore: store);
 
         // Add Service
-        services.AddTransient<MicroServices.Tracker.Service.NpOn.ITrackerService.Contracts.ITrackerLogService, Services.TrackerLogService>();
+        services.AddTransient<ITrackerLogService, TrackerLogService>();
 
         return Task.CompletedTask;
     }
@@ -60,7 +64,7 @@ public sealed class Program : HttpCommonProgram
     protected override Task ConfigurePipeline(WebApplication app)
     {
         // Add Map Grpc Service
-        app.MapGrpcService<Services.TrackerLogService>();
+        app.MapGrpcService<TrackerLogService>();
         
         // Initialize ClickHouse Schema
         Task.Run(async () => {

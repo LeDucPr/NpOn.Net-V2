@@ -17,15 +17,15 @@ JwtTokensKey: "h987HG&H&G$T*h*8Yo8Y!&iy8ttg*I$%U_YhKJ$#uG8Q7T_G^87!G@H9QN87*tyh&
 IsStartAsync: false
 IsUseGrpcStandardMode: true
 IsUseEnableUnencryptedMode: true
-HostPort: 40004
+HostPort: 40003
 HostDomain: "http://0.0.0.0"
 WorkerThreadMin: 2500
   
-IsUsePostgres: true
-PostgresConnectionString: "Host=192.168.1.11;Port=5432;Username=postgres;Password=password;Database=account;"
-PostgresConnectionNumber: 100 #00
+IsUseClickhouse: true
+ClickHouseConnectionString: "Host=192.168.1.11;Port=8123;User=default;Password=password;Database=np_on_db;"
+ClickhouseConnectionNumber: 100 #00
 
-IsUseRedisCache: true
+IsUseRedisCache: false
 RedisConnectString: "192.168.1.11:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 200 #00
 
@@ -45,13 +45,11 @@ KafkaTopicName: NpOn_V2.AccountService
 SaslUsername: npon_admin
 SaslPassword: npon_admin_pass
 
-IsUseRabbitMq: true
+IsUseRabbitMq: false
 RabbitMqConnection: "amqp://rabbitmq:password@192.168.1.11:5672/"
 RabbitMqExchangeName: NpOn_V2.AccountService
-
-LoginTokenExpiresTime: 1
-RefreshTokenExpiredTime: 16
 
 IsUseMiddlewareLogger: true
 GeneralServiceUrl: "http://localhost:40000"
 AccountServiceUrl: "http://localhost:40004"
+TrackerServiceUrl: "http://localhost:40003"

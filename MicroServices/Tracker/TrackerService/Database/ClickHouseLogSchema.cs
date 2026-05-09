@@ -9,19 +9,25 @@ public static class ClickHouseLogSchema
     public static async Task InitializeAsync(IServiceProvider serviceProvider)
     {
         var factoryWrapper = serviceProvider.GetRequiredService<IClickHouseFactoryWrapper>();
-        
         var sql = @"
             CREATE TABLE IF NOT EXISTS SystemLogs (
-                Timestamp DateTime64(3),
+                Created_At DateTime64(3),
+                -- Thêm cột Date để tối ưu Index theo ngày (giảm chi phí CPU khi lọc)
+                EventDate Date MATERIALIZED toDate(Created_At), 
                 Level LowCardinality(String),
+                Log_Type Int16, -- Đổi Int2 thành Int16 (ClickHouse dùng Int8, 16, 32...)
                 Source String,
                 Message String,
-                Attributes Map(String, String)
+                
+                -- 1. Index phụ (Skipping Index) cho Log_Type
+                INDEX idx_log_type Log_Type TYPE minmax GRANULARITY 3
             ) ENGINE = MergeTree()
-            PARTITION BY toYYYYMM(Timestamp)
-            ORDER BY (Source, Level, Timestamp);
-        ";
-
+            -- Partition theo tháng để quản lý file vật lý
+            PARTITION BY toYYYYMM(Created_At)
+            -- ORDER BY là Index chính: Sắp xếp để tìm nhanh theo Source và Ngày
+            ORDER BY (Source, EventDate, Created_At)
+            -- Thiết lập mặc định để truy vấn mới nhất lên đầu (cho các công cụ UI)
+            SETTINGS index_granularity = 8192;";
         await factoryWrapper.Execute(new NpOnDbExecuteCommand
         {
             CommandText = sql,

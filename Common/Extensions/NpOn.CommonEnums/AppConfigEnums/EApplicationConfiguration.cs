@@ -15,9 +15,11 @@ public enum EApplicationConfiguration
     [Display(Name = "HostDomain")] HostDomain, // - string
     [Display(Name = "PostgresConnectionString")] PostgresConnectionString, // - string
     [Display(Name = "PostgresConnectionNumber")] PostgresConnectionNumber, // - int
+    [Display(Name = "IsUsePostgres")] IsUsePostgres, // - bool
     [Display(Name = "CassandraConnectionString")] CassandraConnectionString, // - string
     [Display(Name = "CassandraKeySpace")] CassandraKeySpace, // - int
     [Display(Name = "CassandraConnectionNumber")] CassandraConnectionNumber, // - int
+    [Display(Name = "IsUseCassandra")] IsUseCassandra, // - bool
     [Display(Name = "RedisConnectString")] RedisConnectString, // - string
     [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int
     [Display(Name = "IsUseRedisCache")] IsUseRedisCache, // - bool

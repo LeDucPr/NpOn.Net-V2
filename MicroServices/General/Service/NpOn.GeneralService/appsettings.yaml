@@ -20,6 +20,7 @@ HostPort: 40000
 HostDomain: "http://0.0.0.0"
 IsUseCachingExecutionGeneralService: true
 
+IsUsePostgres: true
 PostgresConnectionString: "Host=192.168.1.11;Port=5432;Username=postgres;Password=password;Database=general;"
 PostgresConnectionNumber: 100
 WorkerThreadMin: 2500

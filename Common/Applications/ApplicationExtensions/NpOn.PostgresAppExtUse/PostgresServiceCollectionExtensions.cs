@@ -10,6 +10,9 @@ public static class PostgresServiceCollectionExtensions
     public static IServiceCollection AddPostgres(this IServiceCollection services,
         string? connectionString = null, int? connectionNumber = null, IObjectPoolStore? poolStore = null)
     {
+        var isUse = EApplicationConfiguration.IsUsePostgres.GetAppSettingConfig().AsDefaultBool();
+        if (!isUse) return services;
+        
         services.AddSingleton<IPostgresFactoryWrapper, PostgresFactoryWrapper>(sp =>
         {
             connectionString ??=

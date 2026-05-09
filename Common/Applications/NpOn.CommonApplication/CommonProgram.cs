@@ -34,7 +34,7 @@ public abstract class CommonProgram
             return services;
         });
 
-        var app = builder.Build();
+            var app = builder.Build();
 
         await app.AddAppConfig(async (appConfig) =>
         {

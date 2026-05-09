@@ -28,4 +28,10 @@
       <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.ClickHouseAppExtUse\NpOn.ClickHouseAppExtUse.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Update="appsettings.yaml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

@@ -113,7 +113,7 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
         }
     }
 
-    public async Task ChangeDriverAsync(T newDbDriver, string connectionString,
+    public async Task ChangeDriverAsync(T newDbDriver, string? connectionString,
         CancellationToken? cancellationToken = default)
     {
         try

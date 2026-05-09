@@ -3,8 +3,7 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
-using MicroServices.Tracker.Service.NpOn.ITrackerService.Contracts;
-using MicroServices.Tracker.Service.NpOn.ITrackerService.Models;
+using MicroServices.Tracker.Service.NpOn.ITrackerService;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
