@@ -10,5 +10,5 @@ public interface ITrackerLogService
     Task<CommonResponse> PushLogAsync(TrackerLogCommand command);
 
     [OperationContract]
-    Task<CommonResponse> PushLogsAsync(List<TrackerLogCommand> commands);
+    Task<CommonResponse> PushLogsAsync(TrackerLogCommand[]? commands);
 }

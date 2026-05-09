@@ -18,13 +18,13 @@ public class TrackerLogService : ITrackerLogService
 
     public async Task<CommonResponse> PushLogAsync(TrackerLogCommand command)
     {
-        return await PushLogsAsync(new List<TrackerLogCommand> { command });
+        return await PushLogsAsync([command]);
     }
 
-    public async Task<CommonResponse> PushLogsAsync(List<TrackerLogCommand> commands)
+    public async Task<CommonResponse> PushLogsAsync(TrackerLogCommand[]? commands)
     {
         var response = new CommonResponse();
-        if (commands == null || commands.Count == 0)
+        if (commands is not { Length : > 0 })
         {
             response.SetSuccess();
             return response;

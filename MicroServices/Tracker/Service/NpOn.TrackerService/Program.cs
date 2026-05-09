@@ -13,6 +13,8 @@ using NpOn.CommonGrpcCall;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
+using NpOn.ITrackerStorageAdapter;
+using NpOn.TrackerStorageAdapter;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
 
@@ -54,9 +56,17 @@ public sealed class Program : HttpCommonProgram
         
         if (EApplicationConfiguration.IsUseClickhouse.GetAppSettingConfig().AsDefaultBool())
             services.AddClickHouse(poolStore: store);
-
+        
+        if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
+        {
+            services.AddHostedService<HostingApp>();
+        }
+        
         // Add Service
         services.AddTransient<ITrackerLogService, TrackerLogService>();
+        
+        // Add StorageAdapter
+        services.AddTransient<ISystemLogStorageAdapter, SystemLogStorageAdapter>();
 
         return Task.CompletedTask;
     }
@@ -66,11 +76,11 @@ public sealed class Program : HttpCommonProgram
         // Add Map Grpc Service
         app.MapGrpcService<TrackerLogService>();
         
-        // Initialize ClickHouse Schema
-        Task.Run(async () => {
-            using var scope = app.Services.CreateScope();
-            await Database.ClickHouseLogSchema.InitializeAsync(scope.ServiceProvider);
-        });
+        // // Initialize ClickHouse Schema (static func)
+        // Task.Run(async () => {
+        //     using var scope = app.Services.CreateScope();
+        //     await Database.ClickHouseLogSchema.InitializeAsync(scope.ServiceProvider);
+        // });
 
         return Task.CompletedTask;
     }

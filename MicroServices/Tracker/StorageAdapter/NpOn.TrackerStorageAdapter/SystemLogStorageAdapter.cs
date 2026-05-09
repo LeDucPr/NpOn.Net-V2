@@ -1,14 +1,16 @@
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
+using NpOn.ITrackerStorageAdapter;
 
-namespace MicroServices.Tracker.Service.NpOn.TrackerService.Database;
+namespace NpOn.TrackerStorageAdapter;
 
-public static class ClickHouseLogSchema
+public class SystemLogStorageAdapter(
+    IClickHouseFactoryWrapper clickHouseFactoryWrapper
+) : ISystemLogStorageAdapter
 {
-    public static async Task InitializeAsync(IServiceProvider serviceProvider)
+    public async Task<bool> InitializeSystemLogsTableAsync()
     {
-        var factoryWrapper = serviceProvider.GetRequiredService<IClickHouseFactoryWrapper>();
         var sql = @"
             CREATE TABLE IF NOT EXISTS SystemLogs (
                 Created_At DateTime64(3),
@@ -28,10 +30,10 @@ public static class ClickHouseLogSchema
             ORDER BY (Source, EventDate, Created_At)
             -- Thiết lập mặc định để truy vấn mới nhất lên đầu (cho các công cụ UI)
             SETTINGS index_granularity = 8192;";
-        await factoryWrapper.Execute(new NpOnDbExecuteCommand
+        return (await clickHouseFactoryWrapper.Execute(new NpOnDbExecuteCommand
         {
             CommandText = sql,
             ExecType = EExecType.Query
-        });
+        }))?.Status ?? false;
     }
 }
