@@ -173,9 +173,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.IMigrationService", "M
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.MigrationService", "MicroServices\Migration\NpOn.MigrationService\NpOn.MigrationService.csproj", "{5408F03D-2585-411A-BC61-3DDF989D1856}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITrackerService", "MicroServices\Tracker\ITrackerService\ITrackerService.csproj", "{E0163050-3EA1-4323-98AA-0A1007AE71D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ITrackerService", "MicroServices\Tracker\NpOn.ITrackerService\NpOn.ITrackerService.csproj", "{E0163050-3EA1-4323-98AA-0A1007AE71D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackerService", "MicroServices\Tracker\TrackerService\TrackerService.csproj", "{306C61FA-FFAD-497C-B8C4-42654E478682}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.TrackerService", "MicroServices\Tracker\NpOn.TrackerService\NpOn.TrackerService.csproj", "{306C61FA-FFAD-497C-B8C4-42654E478682}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.MySqlExtCm", "Common\Infrastructures\NpOn.MySqlExtCm\NpOn.MySqlExtCm.csproj", "{D0DBB46B-130C-4B57-830A-2768606D3E7A}"
 EndProject
