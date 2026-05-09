@@ -175,6 +175,10 @@ public class ElasticSearchDriver : NpOnDbDriver
         {
             return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(ex);
         }
+        finally
+        {
+            ResetSessionTimeout();
+        }
     }
 
     private static void MapMetadata(ElasticSearchValueContainer container, object? elasticResponse)

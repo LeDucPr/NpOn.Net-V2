@@ -141,7 +141,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 if (EApplicationConfiguration.IsUseCachingExecutionGeneralService.GetAppSettingConfig().AsDefaultBool())
                     tblFldObjects = await internalCache.GetOrAddAsync(executionCommand,
                         async _ => (await GetExecution(executionCommand)).Data ?? [],
-                        TimeSpan.FromSeconds(30));
+                        TimeSpan.FromSeconds(600));
                 else
                     tblFldObjects = (await GetExecution(executionCommand)).Data ?? [];
 

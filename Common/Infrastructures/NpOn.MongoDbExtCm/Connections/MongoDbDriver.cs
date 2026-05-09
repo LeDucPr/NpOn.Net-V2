@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonDb.Connections;
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -28,14 +28,12 @@ public class MongoDbDriver : NpOnDbDriver
     /// <summary>
     /// Establishes a connection to the MongoDB server and gets the specified collection.
     /// </summary>
-    public override async Task ConnectAsync(CancellationToken cancellationToken = default)
+    public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
         if (IsValidSession)
         {
             return;
         }
-
-        await DisconnectAsync();
 
         try
         {
@@ -55,7 +53,7 @@ public class MongoDbDriver : NpOnDbDriver
             Version = buildInfo["version"].AsString;
             Name = $"MongoDB {Version}";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _client = null;
             _collection = null;
@@ -84,14 +82,18 @@ public class MongoDbDriver : NpOnDbDriver
             var documents = await _collection.Find(filter).ToListAsync(cancellationToken);
             return new MongoResultSetWrapper(documents);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return new MongoResultSetWrapper().SetFail(EDbError.CommandText);
         }
+        finally
+        {
+            ResetSessionTimeout();
+        }
     }
-
-    protected override async ValueTask DisposeAsyncCore()
-    {
-        await DisconnectAsync();
-    }
+    
+    // protected override async ValueTask DisposeAsyncCore()
+    // {
+    //     await DisconnectAsync();
+    // }
 }

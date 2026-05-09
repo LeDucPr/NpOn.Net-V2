@@ -198,6 +198,10 @@ public class PostgresDriver : NpOnDbDriver
         {
             return CreateFailResult(ex);
         }
+        finally
+        {
+            ResetSessionTimeout();
+        }
     }
 
     private static (string CommandText, List<INpOnDbCommandParam>? Parameters) CommandCustomBuilder(

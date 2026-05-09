@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
@@ -250,6 +250,8 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
         _currentConnectionTime = DateTime.Now;
         _expiredConnectionTime = DateTime.Now + TimeSpan.FromSeconds(_secondsTimeout);
     }
+
+    public bool IsExpired => DateTime.Now >= _expiredConnectionTime;
 
     public long ConnectionTimeoutSessions => _secondsTimeout;
 

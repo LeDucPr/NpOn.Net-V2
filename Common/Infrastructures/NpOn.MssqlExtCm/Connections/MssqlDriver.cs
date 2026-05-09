@@ -37,7 +37,6 @@ public class MssqlDriver : NpOnDbDriver
     {
         if (IsValidSession) return;
 
-        await DisconnectAsync();
         Connection = new SqlConnection(Option.ConnectionString);
         await Connection.OpenAsync(cancellationToken);
         
@@ -185,6 +184,10 @@ public class MssqlDriver : NpOnDbDriver
         catch (Exception ex)
         {
             return CreateFailResult(ex);
+        }
+        finally
+        {
+            ResetSessionTimeout();
         }
     }
 

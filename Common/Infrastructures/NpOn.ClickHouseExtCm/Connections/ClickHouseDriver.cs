@@ -37,7 +37,6 @@ public class ClickHouseDriver : NpOnDbDriver
     {
         if (IsValidSession) return;
 
-        await DisconnectAsync();
         Connection = new ClickHouseConnection(Option.ConnectionString);
         await Connection.OpenAsync(cancellationToken);
 
@@ -163,6 +162,10 @@ public class ClickHouseDriver : NpOnDbDriver
         catch (Exception ex)
         {
             return CreateFailResult(ex);
+        }
+        finally
+        {
+            ResetSessionTimeout();
         }
     }
 

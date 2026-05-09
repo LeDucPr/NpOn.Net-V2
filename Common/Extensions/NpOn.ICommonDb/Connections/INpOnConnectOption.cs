@@ -33,5 +33,6 @@ public interface INpOnConnectOption
 
     INpOnConnectOption SetSessionTimeout(long secondsTimeout);
     void ResetSessionTimeout();
+    bool IsExpired { get; }
     long ConnectionTimeoutSessions { get; }
 }

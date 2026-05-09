@@ -31,12 +31,7 @@ public class CassandraDriver : NpOnDbDriver
     {
         if (IsValidSession)
         {
-            if (Option.IsWaitNextTransaction)
-            {
-                return;
-            }
-
-            await DisconnectAsync().ConfigureAwait(false);
+            return;
         }
 
         if (_cluster == null)
@@ -140,6 +135,10 @@ public class CassandraDriver : NpOnDbDriver
         {
             return CreateFailResult(ex);
         }
+        finally
+        {
+            ResetSessionTimeout();
+        }
     }
 
     private INpOnWrapperResult CreateFailResult(EDbError error)
@@ -187,9 +186,9 @@ public class CassandraDriver : NpOnDbDriver
 
         return primaryKeys;
     }
-
-    protected override async ValueTask DisposeAsyncCore()
-    {
-        await DisconnectAsync().ConfigureAwait(false);
-    }
+    
+    // protected override async ValueTask DisposeAsyncCore()
+    // {
+    //     await DisconnectAsync().ConfigureAwait(false);
+    // }
 }

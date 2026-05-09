@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonDb.Connections;
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
@@ -28,7 +28,6 @@ public class RedisDriver : NpOnDbDriver
             return;
         }
 
-        await DisconnectAsync();
         if (Option.ConnectionString != null)
             _connection ??= await ConnectionMultiplexer.ConnectAsync(Option.ConnectionString); // 
 
@@ -86,6 +85,10 @@ public class RedisDriver : NpOnDbDriver
         catch (Exception ex)
         {
             return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.RedisExecute);
+        }
+        finally
+        {
+            ResetSessionTimeout();
         }
     }
 

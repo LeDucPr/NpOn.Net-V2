@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
@@ -15,6 +15,34 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public abstract bool IsValidSession { get; }
     public virtual INpOnConnectOption Option { get; }
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
+    private Timer? _idleTimer;
+    private readonly object _timerLock = new object();
+
+    protected void StartSelfDestructTimer()
+    {
+        var timeoutSeconds = Option.ConnectionTimeoutSessions;
+        if (timeoutSeconds <= 0) return;
+
+        lock (_timerLock)
+        {
+            _idleTimer ??= new Timer(CheckIdleTimeout, null, TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(timeoutSeconds));
+        }
+    }
+
+    private void CheckIdleTimeout(object? state)
+    {
+        if (Option.IsExpired && IsValidSession)
+        {
+            _ = DisconnectAsync();
+        }
+    }
+
+    public void ResetSessionTimeout()
+    {
+        Option.ResetSessionTimeout();
+    }
+
+
     public abstract Task DisconnectAsync();
 
     public virtual Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
@@ -34,7 +62,9 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
         if (!option.IsValid() && !option.IsValidRequireFromBase(EConnectLink.SelfValidateConnection.GetDisplayName()))
             return;
         Option = option;
+        StartSelfDestructTimer();
     }
+
 
     public async ValueTask DisposeAsync()
     {
@@ -49,9 +79,16 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
             return;
         }
 
+        lock (_timerLock)
+        {
+            _idleTimer?.Dispose();
+            _idleTimer = null;
+        }
+
         await DisconnectAsync();
         _disposed = true;
     }
+
 
     public virtual Task<bool> IsAliveAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(IsValidSession && !_disposed);
