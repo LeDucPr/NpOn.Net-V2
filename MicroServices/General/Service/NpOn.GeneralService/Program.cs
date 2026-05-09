@@ -44,8 +44,7 @@ public sealed class Program : HttpCommonProgram
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
-        IObjectPoolStore store = new ObjectPoolStore();
-        store.PreAllocate(
+        IObjectPoolStore store = new ObjectPoolStore().PreAllocate(
             () => new NpOnWrapperResult(),
             EApplicationConfiguration.PostgresConnectionNumber.GetAppSettingConfig().AsDefaultInt()
         );

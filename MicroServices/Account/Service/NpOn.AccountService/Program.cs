@@ -48,15 +48,11 @@ public sealed class Program : HttpCommonProgram
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
-        IObjectPoolStore store = new ObjectPoolStore();
-        services.AddSingleton<IObjectPoolStore>(sp => 
-        {
-            store.PreAllocate(
-                () => new NpOnWrapperResult(),
-                100
-            );
-            return store;
-        });
+        IObjectPoolStore store = new ObjectPoolStore().PreAllocate(
+            () => new NpOnWrapperResult(),
+            100
+        );
+        services.AddSingleton<IObjectPoolStore>(sp => store);
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)

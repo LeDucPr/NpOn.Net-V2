@@ -43,15 +43,11 @@ public sealed class Program : HttpCommonProgram
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl)
                 .AddConnectService(new TrackerServiceClientResolver(), null, EUrlConfiguration.TrackerServiceUrl);
 
-        IObjectPoolStore store = new ObjectPoolStore();
-        services.AddSingleton<IObjectPoolStore>(sp => 
-        {
-            store.PreAllocate(
-                () => new NpOnWrapperResult(),
-                100
-            );
-            return store;
-        });
+        IObjectPoolStore store = new ObjectPoolStore().PreAllocate(
+            () => new NpOnWrapperResult(),
+            100
+        );
+        services.AddSingleton<IObjectPoolStore>(_ => store);
         services.AddSingleton(store);
         
         if (EApplicationConfiguration.IsUseClickhouse.GetAppSettingConfig().AsDefaultBool())
