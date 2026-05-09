@@ -19,7 +19,7 @@ public interface INpOnConnectOption
     INpOnConnectOption? SetDatabaseName(string databaseName);
     string? DatabaseName { get; }
 
-    INpOnConnectOption? SetCollectionName<T>(string keyspace) where T : INpOnDbDriver;
+    INpOnConnectOption? SetCollectionName /*<T>*/(string keyspace); /*where T : INpOnDbDriver;*/
     string? CollectionName { get; }
 
     INpOnConnectOption SetContactAddresses /*<T>*/(string[]? contactAddresses); /* where T : INpOnDbDriver;*/

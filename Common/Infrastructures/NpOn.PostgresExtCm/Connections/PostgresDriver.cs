@@ -16,20 +16,20 @@ namespace Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 
 public class PostgresDriver : NpOnDbDriver
 {
-    protected NpgsqlConnection? _connection;
-    protected readonly IObjectPool<PostgresResultSetWrapper>? _resultSetPool;
+    protected NpgsqlConnection? Connection;
+    protected readonly IObjectPool<PostgresResultSetWrapper>? ResultSetPool;
 
     public override string Name { get; set; } = "NpOn-V2.PostgresDriver";
     public override string Version { get; set; } = "1.0";
 
-    public override bool IsValidSession => _connection is { State: ConnectionState.Open };
+    public override bool IsValidSession => Connection is { State: ConnectionState.Open };
 
     public PostgresDriver(INpOnConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
         // Get the pool for PostgresResultSetWrapper if store is provided.
         if (objectPoolStore != null)
         {
-            _resultSetPool = objectPoolStore.GetPool(() => new PostgresResultSetWrapper());
+            ResultSetPool = objectPoolStore.GetPool(() => new PostgresResultSetWrapper());
         }
     }
 
@@ -41,39 +41,39 @@ public class PostgresDriver : NpOnDbDriver
         }
 
         // await DisconnectAsync();
-        _connection ??= new NpgsqlConnection(Option.ConnectionString);
-        await _connection.OpenAsync(cancellationToken);
-        Version = _connection.PostgreSqlVersion.ToString();
-        if (_connection.Host != null)
-            Name = _connection.Host;
+        Connection ??= new NpgsqlConnection(Option.ConnectionString);
+        await Connection.OpenAsync(cancellationToken);
+        Version = Connection.PostgreSqlVersion.ToString();
+        if (Connection.Host != null)
+            Name = Connection.Host;
         else
-            Name = $"PostgresSql {_connection.PostgreSqlVersion.Major}"; // ?????????????
+            Name = $"PostgresSql {Connection.PostgreSqlVersion.Major}"; // ?????????????
     }
 
     public override async Task DisconnectAsync()
     {
-        if (_connection != null)
+        if (Connection != null)
         {
-            await _connection.CloseAsync();
-            await _connection.DisposeAsync();
-            _connection = null;
+            await Connection.CloseAsync();
+            await Connection.DisposeAsync();
+            Connection = null;
         }
     }
 
     protected override async Task<INpOnDbTransaction> CreateTransaction(CancellationToken cancellationToken = default)
     {
-        if (!IsValidSession || _connection == null)
+        if (!IsValidSession || Connection == null)
         {
             throw new InvalidOperationException("Connection is not open.");
         }
 
-        var npgsqlTransaction = await _connection.BeginTransactionAsync(cancellationToken);
+        var npgsqlTransaction = await Connection.BeginTransactionAsync(cancellationToken);
         return new NpOnDbTransaction(npgsqlTransaction);
     }
 
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
-        if (!IsValidSession || _connection == null)
+        if (!IsValidSession || Connection == null)
         {
             return CreateFailResult(EDbError.Connection);
         }
@@ -119,12 +119,12 @@ public class PostgresDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(EDbError error)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(error);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
 
@@ -133,12 +133,12 @@ public class PostgresDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(Exception ex)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(ex);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
 
@@ -153,7 +153,7 @@ public class PostgresDriver : NpOnDbDriver
     {
         try
         {
-            await using var pgCommand = new NpgsqlCommand(commandText, _connection);
+            await using var pgCommand = new NpgsqlCommand(commandText, Connection);
             if (transaction?.DbTransaction is NpgsqlTransaction dbTransaction) // use transaction 
             {
                 pgCommand.Transaction = dbTransaction;
@@ -183,12 +183,12 @@ public class PostgresDriver : NpOnDbDriver
             CommandBehavior commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
             await using var reader = await pgCommand.ExecuteReaderAsync(commandBehavior);
 
-            if (_resultSetPool != null)
+            if (ResultSetPool != null)
             {
-                var wrapper = _resultSetPool.Get();
+                var wrapper = ResultSetPool.Get();
                 wrapper.Reset();
                 wrapper.Init(reader);
-                wrapper.ReturnToPool = w => _resultSetPool.Return(w); // Set return action
+                wrapper.ReturnToPool = w => ResultSetPool.Return(w); // Set return action
                 return wrapper;
             }
 

@@ -125,7 +125,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     private string? _collection = string.Empty; // mongoDb
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption SetCollectionName<T>(string collection) where T : INpOnDbDriver
+    public virtual INpOnConnectOption SetCollectionName/*<T>*/(string collection)/* where T : INpOnDbDriver*/
     {
         try
         {

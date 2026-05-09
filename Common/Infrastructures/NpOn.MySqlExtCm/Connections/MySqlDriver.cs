@@ -15,20 +15,20 @@ namespace Common.Infrastructures.NpOn.MySqlExtCm.Connections;
 
 public class MySqlDriver : NpOnDbDriver
 {
-    protected MySqlConnection? _connection;
-    protected readonly IObjectPool<MySqlResultSetWrapper>? _resultSetPool;
+    protected MySqlConnection? Connection;
+    protected readonly IObjectPool<MySqlResultSetWrapper>? ResultSetPool;
 
     public override string Name { get; set; } = "NpOn-V2.MySqlDriver";
     public override string Version { get; set; } = "1.0";
 
-    public override bool IsValidSession => _connection is { State: ConnectionState.Open };
+    public override bool IsValidSession => Connection is { State: ConnectionState.Open };
 
     public MySqlDriver(INpOnConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
         // Get the pool for MySqlResultSetWrapper if store is provided.
         if (objectPoolStore != null)
         {
-            _resultSetPool = objectPoolStore.GetPool(() => new MySqlResultSetWrapper());
+            ResultSetPool = objectPoolStore.GetPool(() => new MySqlResultSetWrapper());
         }
     }
 
@@ -40,38 +40,38 @@ public class MySqlDriver : NpOnDbDriver
         }
 
         // await DisconnectAsync();
-        _connection ??= new MySqlConnection(Option.ConnectionString);
-        await _connection.OpenAsync(cancellationToken);
-        Version = _connection.ServerVersion;
-            Name = _connection.Database;
+        Connection ??= new MySqlConnection(Option.ConnectionString);
+        await Connection.OpenAsync(cancellationToken);
+        Version = Connection.ServerVersion;
+            Name = Connection.Database;
         // else
         //     Name = $"MySqlSql {_connection.ServerVersion}"; // ?????????????
     }
 
     public override async Task DisconnectAsync()
     {
-        if (_connection != null)
+        if (Connection != null)
         {
-            await _connection.CloseAsync();
-            await _connection.DisposeAsync();
-            _connection = null;
+            await Connection.CloseAsync();
+            await Connection.DisposeAsync();
+            Connection = null;
         }
     }
 
     protected override async Task<INpOnDbTransaction> CreateTransaction(CancellationToken cancellationToken = default)
     {
-        if (!IsValidSession || _connection == null)
+        if (!IsValidSession || Connection == null)
         {
             throw new InvalidOperationException("Connection is not open.");
         }
 
-        var npgsqlTransaction = await _connection.BeginTransactionAsync(cancellationToken);
+        var npgsqlTransaction = await Connection.BeginTransactionAsync(cancellationToken);
         return new NpOnDbTransaction(npgsqlTransaction);
     }
 
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
-        if (!IsValidSession || _connection == null)
+        if (!IsValidSession || Connection == null)
         {
             return CreateFailResult(EDbError.Connection);
         }
@@ -117,12 +117,12 @@ public class MySqlDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(EDbError error)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(error);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
 
@@ -131,12 +131,12 @@ public class MySqlDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(Exception ex)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(ex);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
 
@@ -151,7 +151,7 @@ public class MySqlDriver : NpOnDbDriver
     {
         try
         {
-            await using var pgCommand = new MySqlCommand(commandText, _connection);
+            await using var pgCommand = new MySqlCommand(commandText, Connection);
             if (transaction?.DbTransaction is MySqlTransaction dbTransaction) // use transaction 
             {
                 pgCommand.Transaction = dbTransaction;
@@ -181,12 +181,12 @@ public class MySqlDriver : NpOnDbDriver
             CommandBehavior commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
             await using var reader = await pgCommand.ExecuteReaderAsync(commandBehavior);
 
-            if (_resultSetPool != null)
+            if (ResultSetPool != null)
             {
-                var wrapper = _resultSetPool.Get();
+                var wrapper = ResultSetPool.Get();
                 wrapper.Reset();
                 wrapper.Init(reader);
-                wrapper.ReturnToPool = w => _resultSetPool.Return(w); // Set return action
+                wrapper.ReturnToPool = w => ResultSetPool.Return(w); // Set return action
                 return wrapper;
             }
 

@@ -16,19 +16,19 @@ namespace Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 
 public class MssqlDriver : NpOnDbDriver
 {
-    protected SqlConnection? _connection;
-    protected readonly IObjectPool<MssqlResultSetWrapper>? _resultSetPool;
+    protected SqlConnection? Connection;
+    protected readonly IObjectPool<MssqlResultSetWrapper>? ResultSetPool;
 
     public sealed override string Name { get; set; } = "NpOn-V2.MssqlDriver";
     public sealed override string Version { get; set; } = "1.0";
 
-    public override bool IsValidSession => _connection is { State: ConnectionState.Open };
+    public override bool IsValidSession => Connection is { State: ConnectionState.Open };
 
     public MssqlDriver(INpOnConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
         if (objectPoolStore != null)
         {
-            _resultSetPool = objectPoolStore.GetPool(() => new MssqlResultSetWrapper());
+            ResultSetPool = objectPoolStore.GetPool(() => new MssqlResultSetWrapper());
 
         }
     }
@@ -38,25 +38,25 @@ public class MssqlDriver : NpOnDbDriver
         if (IsValidSession) return;
 
         await DisconnectAsync();
-        _connection = new SqlConnection(Option.ConnectionString);
-        await _connection.OpenAsync(cancellationToken);
+        Connection = new SqlConnection(Option.ConnectionString);
+        await Connection.OpenAsync(cancellationToken);
         
-        Version = _connection.ServerVersion.AsEmptyString();
-        Name = $"MSSQL Server {_connection.DataSource}";
+        Version = Connection.ServerVersion.AsEmptyString();
+        Name = $"MSSQL Server {Connection.DataSource}";
     }
 
     public override async Task DisconnectAsync()
     {
-        if (_connection != null)
+        if (Connection != null)
         {
-            await _connection.DisposeAsync();
-            _connection = null;
+            await Connection.DisposeAsync();
+            Connection = null;
         }
     }
 
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
-        if (!IsValidSession || _connection == null)
+        if (!IsValidSession || Connection == null)
             return CreateFailResult(EDbError.Connection);
 
         var (commandText, parameters) = CommandCustomBuilder(command);
@@ -92,9 +92,9 @@ public class MssqlDriver : NpOnDbDriver
     protected override async Task<INpOnDbTransaction> CreateTransaction(CancellationToken cancellationToken = default)
     {
         if (!IsValidSession) await ConnectAsync(cancellationToken);
-        if (_connection == null) throw new InvalidOperationException("Could not open connection for transaction");
+        if (Connection == null) throw new InvalidOperationException("Could not open connection for transaction");
         
-        var sqlTransaction = (SqlTransaction)await _connection.BeginTransactionAsync(cancellationToken);
+        var sqlTransaction = (SqlTransaction)await Connection.BeginTransactionAsync(cancellationToken);
         return new NpOnDbTransaction(sqlTransaction);
     }
 
@@ -102,12 +102,12 @@ public class MssqlDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(EDbError error)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(error);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
         return new MssqlResultSetWrapper().SetFail(error);
@@ -115,12 +115,12 @@ public class MssqlDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(Exception ex)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(ex);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
         return new MssqlResultSetWrapper().SetFail(ex);
@@ -138,7 +138,7 @@ public class MssqlDriver : NpOnDbDriver
 
         try
         {
-            using var sqlCommand = _connection!.CreateCommand();
+            using var sqlCommand = Connection!.CreateCommand();
             sqlCommand.CommandText = commandText;
             
             if (transaction != null)
@@ -168,11 +168,11 @@ public class MssqlDriver : NpOnDbDriver
             using var reader = await sqlCommand.ExecuteReaderAsync(behavior);
             
             MssqlResultSetWrapper resultSet;
-            if (_resultSetPool != null)
+            if (ResultSetPool != null)
             {
-                resultSet = _resultSetPool.Get();
+                resultSet = ResultSetPool.Get();
                 resultSet.Reset();
-                resultSet.ReturnToPool = w => _resultSetPool.Return(w);
+                resultSet.ReturnToPool = w => ResultSetPool.Return(w);
             }
             else
             {

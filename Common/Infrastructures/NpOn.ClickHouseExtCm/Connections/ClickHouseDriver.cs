@@ -17,19 +17,19 @@ namespace Common.Infrastructures.NpOn.ClickHouseExtCm.Connections;
 
 public class ClickHouseDriver : NpOnDbDriver
 {
-    protected ClickHouseConnection? _connection;
-    protected readonly IObjectPool<ClickHouseResultSetWrapper>? _resultSetPool;
+    protected ClickHouseConnection? Connection;
+    protected readonly IObjectPool<ClickHouseResultSetWrapper>? ResultSetPool;
 
     public sealed override string Name { get; set; } = "NpOn-V2.ClickHouseDriver";
     public sealed override string Version { get; set; } = "1.0";
 
-    public override bool IsValidSession => _connection is { State: ConnectionState.Open };
+    public override bool IsValidSession => Connection is { State: ConnectionState.Open };
 
     public ClickHouseDriver(INpOnConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
         if (objectPoolStore != null)
         {
-            _resultSetPool = objectPoolStore.GetPool(() => new ClickHouseResultSetWrapper());
+            ResultSetPool = objectPoolStore.GetPool(() => new ClickHouseResultSetWrapper());
         }
     }
 
@@ -38,25 +38,25 @@ public class ClickHouseDriver : NpOnDbDriver
         if (IsValidSession) return;
 
         await DisconnectAsync();
-        _connection = new ClickHouseConnection(Option.ConnectionString);
-        await _connection.OpenAsync(cancellationToken);
+        Connection = new ClickHouseConnection(Option.ConnectionString);
+        await Connection.OpenAsync(cancellationToken);
 
-        Version = _connection.ServerVersion.AsEmptyString();
-        Name = $"ClickHouse Server {_connection.DataSource}";
+        Version = Connection.ServerVersion.AsEmptyString();
+        Name = $"ClickHouse Server {Connection.DataSource}";
     }
 
     public override async Task DisconnectAsync()
     {
-        if (_connection != null)
+        if (Connection != null)
         {
-            await _connection.DisposeAsync();
-            _connection = null;
+            await Connection.DisposeAsync();
+            Connection = null;
         }
     }
 
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
-        if (!IsValidSession || _connection == null)
+        if (!IsValidSession || Connection == null)
             return CreateFailResult(EDbError.Connection);
 
         var (commandText, parameters) = CommandCustomBuilder(command);
@@ -83,12 +83,12 @@ public class ClickHouseDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(EDbError error)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(error);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
         return new ClickHouseResultSetWrapper().SetFail(error);
@@ -96,12 +96,12 @@ public class ClickHouseDriver : NpOnDbDriver
 
     protected INpOnWrapperResult CreateFailResult(Exception ex)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(ex);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
         return new ClickHouseResultSetWrapper().SetFail(ex);
@@ -118,7 +118,7 @@ public class ClickHouseDriver : NpOnDbDriver
 
         try
         {
-            using var chCommand = _connection!.CreateCommand();
+            using var chCommand = Connection!.CreateCommand();
             chCommand.CommandText = commandText;
 
             if (parameters != null)
@@ -146,11 +146,11 @@ public class ClickHouseDriver : NpOnDbDriver
             using var reader = (ClickHouseDataReader)await chCommand.ExecuteReaderAsync();
 
             ClickHouseResultSetWrapper resultSet;
-            if (_resultSetPool != null)
+            if (ResultSetPool != null)
             {
-                resultSet = _resultSetPool.Get();
+                resultSet = ResultSetPool.Get();
                 resultSet.Reset();
-                resultSet.ReturnToPool = w => _resultSetPool.Return(w);
+                resultSet.ReturnToPool = w => ResultSetPool.Return(w);
             }
             else
             {

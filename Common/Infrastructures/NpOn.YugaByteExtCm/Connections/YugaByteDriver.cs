@@ -1,4 +1,3 @@
-using System.Data;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.ICommonDb.Connections;
@@ -51,22 +50,22 @@ public class YugaByteDriver : PostgresDriver
             finalConnString = finalConnString.TrimEnd(';') + ";Load Balance=true;";
         }
 
-        _connection ??= new NpgsqlConnection(finalConnString);
-        await _connection.OpenAsync(cancellationToken);
+        Connection ??= new NpgsqlConnection(finalConnString);
+        await Connection.OpenAsync(cancellationToken);
         
-        Version = _connection.PostgreSqlVersion.ToString();
-        Name = $"YugabyteDB Cluster ({_connection.Host})";
+        Version = Connection.PostgreSqlVersion.ToString();
+        Name = $"YugabyteDB Cluster ({Connection.Host})";
     }
 
     // Override fail result creators to use YugaByte specific wrappers
     protected new INpOnWrapperResult CreateFailResult(EDbError error)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(error);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
 
@@ -75,12 +74,12 @@ public class YugaByteDriver : PostgresDriver
 
     protected new INpOnWrapperResult CreateFailResult(Exception ex)
     {
-        if (_resultSetPool != null)
+        if (ResultSetPool != null)
         {
-            var wrapper = _resultSetPool.Get();
+            var wrapper = ResultSetPool.Get();
             wrapper.Reset();
             wrapper.SetFail(ex);
-            wrapper.ReturnToPool = w => _resultSetPool.Return(w);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
             return wrapper;
         }
 
