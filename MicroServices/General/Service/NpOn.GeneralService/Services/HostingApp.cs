@@ -1,5 +1,3 @@
-using MicroServices.General.Service.NpOn.IGeneralService;
-
 namespace MicroServices.General.Service.NpOn.GeneralService.Services;
 
 public class HostingApp(
