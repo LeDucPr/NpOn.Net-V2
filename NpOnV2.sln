@@ -197,6 +197,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ITrackerStorageAdapter
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.TrackerStorageAdapter", "MicroServices\Tracker\StorageAdapter\NpOn.TrackerStorageAdapter\NpOn.TrackerStorageAdapter.csproj", "{A7207E22-F219-4C4E-9B07-AC676610BB0A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Definitions", "Definitions", "{D4998A72-37CC-4683-AEC5-0111CCB9154B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.TrackerEnum", "MicroServices\Tracker\Definitions\NpOn.TrackerEnum\NpOn.TrackerEnum.csproj", "{FA77F870-33F9-4AD7-9809-3A996252859F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -499,6 +503,10 @@ Global
 		{A7207E22-F219-4C4E-9B07-AC676610BB0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7207E22-F219-4C4E-9B07-AC676610BB0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7207E22-F219-4C4E-9B07-AC676610BB0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA77F870-33F9-4AD7-9809-3A996252859F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA77F870-33F9-4AD7-9809-3A996252859F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA77F870-33F9-4AD7-9809-3A996252859F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA77F870-33F9-4AD7-9809-3A996252859F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -598,5 +606,7 @@ Global
 		{1BDC8965-7472-4EFA-915A-C3D018E29A10} = {494DE85A-19DE-40C3-8DFF-FF87F943AE85}
 		{1CDC4842-CEBC-4D4E-B4CE-B6D0E24D51B5} = {78C8E1D1-2C28-4678-9395-311E875157A9}
 		{A7207E22-F219-4C4E-9B07-AC676610BB0A} = {78C8E1D1-2C28-4678-9395-311E875157A9}
+		{D4998A72-37CC-4683-AEC5-0111CCB9154B} = {F5DA1F02-8028-4E67-989B-655754D46885}
+		{FA77F870-33F9-4AD7-9809-3A996252859F} = {D4998A72-37CC-4683-AEC5-0111CCB9154B}
 	EndGlobalSection
 EndGlobal

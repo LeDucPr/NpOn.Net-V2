@@ -1,5 +1,6 @@
 
 CREATE TABLE IF NOT EXISTS system_log (
+    id UUID DEFAULT generateUUIDv4(),
     created_at DateTime64(3),
     -- Cột ảo tự động chuyển đổi để tối ưu hóa việc quét dữ liệu theo ngày
     event_date Date MATERIALIZED toDate(created_at), 
@@ -7,7 +8,7 @@ CREATE TABLE IF NOT EXISTS system_log (
     log_type Int16,
     source String,
     message String,
-    
+    process_uid UUID,
     -- Index phụ để tăng tốc khi lọc theo loại log (Log_Type)
     INDEX idx_log_type log_type TYPE minmax GRANULARITY 3
 ) ENGINE = MergeTree()

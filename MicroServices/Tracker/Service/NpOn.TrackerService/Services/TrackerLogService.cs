@@ -1,68 +1,35 @@
-using Common.Extensions.NpOn.CommonDb.DbCommands;
-using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
-using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
-using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand;
+using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
+using MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain.Domains;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
-public class TrackerLogService : ITrackerLogService
+public class TrackerLogService(
+    IClickHouseFactoryWrapper clickHouseFactoryWrapper,
+    ILogger<CommonService> logger
+) : CommonService(logger), ITrackerLogService
 {
-    private readonly IClickHouseFactoryWrapper _clickHouseFactory;
-
-    public TrackerLogService(IClickHouseFactoryWrapper clickHouseFactory)
+    public async Task<CommonResponse> PushLogs(TrackerLogAddCommand[]? commands)
     {
-        _clickHouseFactory = clickHouseFactory;
-    }
-
-    public async Task<CommonResponse> PushLogAsync(TrackerLogCommand command)
-    {
-        return await PushLogsAsync([command]);
-    }
-
-    public async Task<CommonResponse> PushLogsAsync(TrackerLogCommand[]? commands)
-    {
-        var response = new CommonResponse();
-        if (commands is not { Length : > 0 })
+        return await CommonProcess(async (response) =>
         {
-            response.SetSuccess();
-            return response;
-        }
-
-        try
-        {
-            var sql = @"
-                INSERT INTO SystemLogs (Timestamp, Level, Source, Message, Attributes) 
-                VALUES (@Timestamp, @Level, @Source, @Message, @Attributes)
-            ";
-
-            foreach (var log in commands)
+            if (commands is not { Length : > 0 })
             {
-                var execCommand = new NpOnDbExecuteCommand
-                {
-                    CommandText = sql,
-                    ExecType = EExecType.Query,
-                    Parameters = new INpOnDbCommandParam[]
-                    {
-                        new NpOnDbCommandParam { ParamName = "@Timestamp", ParamValue = log.Timestamp },
-                        new NpOnDbCommandParam { ParamName = "@Level", ParamValue = log.Level },
-                        new NpOnDbCommandParam { ParamName = "@Source", ParamValue = log.Source },
-                        new NpOnDbCommandParam { ParamName = "@Message", ParamValue = log.Message },
-                        new NpOnDbCommandParam { ParamName = "@Attributes", ParamValue = log.Attributes }
-                    }
-                };
-                await _clickHouseFactory.Execute(execCommand);
+                response.SetSuccess();
+                return;
+            }
+
+            IEnumerable<SystemLog> systemLogs = commands.Select(x => new SystemLog(x));
+            if (!(await clickHouseFactoryWrapper.Add(systemLogs))?.Status ?? false)
+            {
+                response.SetFail("Push logs to ClickHouse failed");
+                return;
             }
 
             response.SetSuccess();
-            return response;
-        }
-        catch (Exception ex)
-        {
-            response.SetFail(ex);
-            return response;
-        }
+        });
     }
 }

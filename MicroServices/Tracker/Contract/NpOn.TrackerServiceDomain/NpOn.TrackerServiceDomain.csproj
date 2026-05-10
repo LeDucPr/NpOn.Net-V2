@@ -7,4 +7,11 @@
         <RootNamespace>MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.TrackerEnum\NpOn.TrackerEnum.csproj" />
+      <ProjectReference Include="..\NpOn.TrackerServiceCommand\NpOn.TrackerServiceCommand.csproj" />
+      <ProjectReference Include="..\NpOn.TrackerServiceReadModel\NpOn.TrackerServiceReadModel.csproj" />
+    </ItemGroup>
+
 </Project>

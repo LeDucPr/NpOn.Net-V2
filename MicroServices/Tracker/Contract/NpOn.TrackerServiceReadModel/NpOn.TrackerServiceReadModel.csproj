@@ -7,4 +7,15 @@
         <RootNamespace>MicroServices.Tracker.Contract.NpOn.TrackerServiceReadModel</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Reference Include="protobuf-net.Core">
+        <HintPath>..\..\..\..\..\..\..\.nuget\packages\protobuf-net.core\3.2.56\lib\net8.0\protobuf-net.Core.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.TrackerEnum\NpOn.TrackerEnum.csproj" />
+    </ItemGroup>
+
 </Project>

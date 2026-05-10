@@ -1,6 +1,7 @@
 using System.ServiceModel;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand;
+using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
 
 namespace MicroServices.Tracker.Service.NpOn.ITrackerService;
 
@@ -8,8 +9,5 @@ namespace MicroServices.Tracker.Service.NpOn.ITrackerService;
 public interface ITrackerLogService
 {
     [OperationContract]
-    Task<CommonResponse> PushLogAsync(TrackerLogCommand command);
-
-    [OperationContract]
-    Task<CommonResponse> PushLogsAsync(TrackerLogCommand[]? commands);
+    Task<CommonResponse> PushLogs(TrackerLogAddCommand[]? commands);
 }
