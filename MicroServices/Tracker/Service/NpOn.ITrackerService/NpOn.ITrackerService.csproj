@@ -15,5 +15,6 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+        <ProjectReference Include="..\..\Contract\NpOn.TrackerServiceCommand\NpOn.TrackerServiceCommand.csproj" />
     </ItemGroup>
 </Project>

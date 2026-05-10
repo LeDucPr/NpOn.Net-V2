@@ -1,6 +1,6 @@
 using System.Runtime.Serialization;
 
-namespace MicroServices.Tracker.Service.NpOn.ITrackerService;
+namespace MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand;
 
 [DataContract]
 public class TrackerLogCommand

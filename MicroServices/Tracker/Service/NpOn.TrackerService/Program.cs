@@ -13,8 +13,8 @@ using NpOn.CommonGrpcCall;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
-using NpOn.ITrackerStorageAdapter;
-using NpOn.TrackerStorageAdapter;
+using MicroServices.Tracker.StorageAdapter.NpOn.ITrackerStorageAdapter;
+using MicroServices.Tracker.StorageAdapter.NpOn.TrackerStorageAdapter;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
 

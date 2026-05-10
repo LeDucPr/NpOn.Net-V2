@@ -21,6 +21,7 @@
       <ProjectReference Include="..\..\..\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
       <ProjectReference Include="..\..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.ClickHouseAppExtUse\NpOn.ClickHouseAppExtUse.csproj" />
+      <ProjectReference Include="..\..\Contract\NpOn.TrackerServiceCommand\NpOn.TrackerServiceCommand.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.ITrackerStorageAdapter\NpOn.ITrackerStorageAdapter.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.TrackerStorageAdapter\NpOn.TrackerStorageAdapter.csproj" />
       <ProjectReference Include="..\NpOn.ITrackerService\NpOn.ITrackerService.csproj" />
@@ -28,6 +29,9 @@
 
     <ItemGroup>
       <Content Update="appsettings.yaml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="SqlScripts\**\*.sql">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

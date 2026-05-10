@@ -1,5 +1,6 @@
 using System.ServiceModel;
 using Common.Extensions.NpOn.CommonGrpcContract;
+using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand;
 
 namespace MicroServices.Tracker.Service.NpOn.ITrackerService;
 
