@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS system_log (
     log_type Int16,
     source String,
     message String,
-    process_uid UUID,
+    process_uid Nullable(UUID),
     -- Index phụ để tăng tốc khi lọc theo loại log (Log_Type)
     INDEX idx_log_type log_type TYPE minmax GRANULARITY 3
 ) ENGINE = MergeTree()
