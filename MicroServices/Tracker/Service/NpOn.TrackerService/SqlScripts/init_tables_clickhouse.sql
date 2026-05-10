@@ -10,12 +10,14 @@ CREATE TABLE IF NOT EXISTS system_log (
     message String,
     process_uid Nullable(UUID),
     -- Index phụ để tăng tốc khi lọc theo loại log (Log_Type)
-    INDEX idx_log_type log_type TYPE minmax GRANULARITY 3
-) ENGINE = MergeTree()
+    INDEX idx_log_type log_type TYPE minmax GRANULARITY 3,
+    INDEX idx_date event_date TYPE minmax GRANULARITY 3
+) ENGINE = ReplacingMergeTree(created_at)
 -- Chia thư mục vật lý theo tháng
 PARTITION BY toYYYYMM(created_at)
 -- Index chính: Ưu tiên tìm theo Source trước, sau đó đến Ngày
-ORDER BY (source, event_date, created_at)
+ORDER BY id
+-- ORDER BY (source, event_date, created_at)
 -- Cấu hình mặc định cho độ phân giải của index
 SETTINGS index_granularity = 8192;
 

@@ -35,6 +35,7 @@ public class SystemLog : BaseTrackerDomain
 
     public SystemLog(TrackerLogAddCommand command)
     {
+        Id = new Guid("284095d1-2f9c-45a9-a216-9ae4ed686820");
         CreatedAt = command.EventDate ?? DateTime.UtcNow;
         // EventDate = command.EventDate;
         Level = command.Level;
