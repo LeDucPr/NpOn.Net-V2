@@ -1,5 +1,6 @@
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
@@ -64,7 +65,11 @@ public class RedisDriver : NpOnDbDriver
 
         try
         {
-            IDatabase db = _connection.GetDatabase();
+            IDatabase db; 
+            if (Option.DatabaseIndex == null)
+                db = _connection.GetDatabase();
+            else 
+                db = _connection.GetDatabase(Option.DatabaseIndex.AsDefaultInt());
             return redisCommand.CommandTypeTypeType switch
             {
                 ERedisCommand.Set => new RedisValueWrapper(new RedisValueContainer(
@@ -78,6 +83,12 @@ public class RedisDriver : NpOnDbDriver
                 ERedisCommand.SetMany when redisCommand.KeyValues != null => await HandleSetMany(db, redisCommand),
                 ERedisCommand.DeleteMany when redisCommand.Keys != null => new RedisValueWrapper(
                     new RedisValueContainer(await db.KeyDeleteAsync(redisCommand.Keys))),
+
+                // Pub/Sub
+                ERedisCommand.Publish => await HandlePublish(redisCommand),
+                ERedisCommand.Subscribe => await HandleSubscribe(redisCommand),
+                ERedisCommand.Unsubscribe => await HandleUnsubscribe(redisCommand),
+
                 _ => new RedisValueWrapper(new RedisValueContainer(RedisValue.Null))
                     .SetFail(EDbError.CommandNotSupported)
             };
@@ -104,6 +115,40 @@ public class RedisDriver : NpOnDbDriver
         batch.Execute();
         // Since we're using a batch, the result isn't directly available. We'll return success.
         // The actual set operations are "fire and forget" within the batch.
+        return new RedisValueWrapper(new RedisValueContainer(true));
+    }
+
+    private async Task<INpOnWrapperResult> HandlePublish(RedisDbCommand redisCommand)
+    {
+        if (_connection == null)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+
+        var subscriber = _connection.GetSubscriber();
+        var receiverCount = await subscriber.PublishAsync(redisCommand.Channel, redisCommand.Value);
+        return new RedisValueWrapper(new RedisValueContainer((RedisValue)receiverCount));
+    }
+
+    private async Task<INpOnWrapperResult> HandleSubscribe(RedisDbCommand redisCommand)
+    {
+        if (_connection == null)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+
+        if (redisCommand.SubscribeHandler == null)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null))
+                .SetFail(EDbError.CommandNotSupported);
+
+        var subscriber = _connection.GetSubscriber();
+        await subscriber.SubscribeAsync(redisCommand.Channel, redisCommand.SubscribeHandler);
+        return new RedisValueWrapper(new RedisValueContainer(true));
+    }
+
+    private async Task<INpOnWrapperResult> HandleUnsubscribe(RedisDbCommand redisCommand)
+    {
+        if (_connection == null)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+
+        var subscriber = _connection.GetSubscriber();
+        await subscriber.UnsubscribeAsync(redisCommand.Channel);
         return new RedisValueWrapper(new RedisValueContainer(true));
     }
 }

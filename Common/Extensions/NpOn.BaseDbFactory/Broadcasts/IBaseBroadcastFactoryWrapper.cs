@@ -9,8 +9,6 @@ namespace Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
 public interface IBaseBroadcastFactoryWrapper : IDisposable
 {
     int HandlerCount { get; }
-    IDbDriverFactory? Factory { get; set; }
-    EDb DbType { get; set; }
     // static abstract IBaseBroadcastFactory operator +(IBaseBroadcastFactory? factory, BaseBroadcastHandler? handler);
     bool BuildFactory(out string? errorString);
     void DestroyInternal();

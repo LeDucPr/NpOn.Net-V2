@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonDb.DbCommands;
+using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
 using StackExchange.Redis;
@@ -16,6 +16,10 @@ public class RedisDbCommand : NpOnDbCommand
     public TimeSpan? Expiry { get; }
     public When WhenCondition { get; private set; } = When.Always;
     public CommandFlags[] CommandFlagsUse { get; private set; } = [CommandFlags.None];
+
+    // Pub/Sub properties
+    public RedisChannel Channel { get; }
+    public Action<RedisChannel, RedisValue>? SubscribeHandler { get; }
 
     // to custom 
     public RedisDbCommand(string commandText, TimeSpan? expiry = null)
@@ -48,5 +52,31 @@ public class RedisDbCommand : NpOnDbCommand
         CommandTypeTypeType = ERedisCommand.SetMany;
         Expiry = expiry;
         KeyValues = keyValues;
+    }
+
+    // Constructor for Publish
+    public RedisDbCommand(RedisChannel channel, RedisValue message) : base(EDb.Redis,
+        $"{ERedisCommand.Publish} {channel}")
+    {
+        CommandTypeTypeType = ERedisCommand.Publish;
+        Channel = channel;
+        Value = message;
+    }
+
+    // Constructor for Subscribe
+    public RedisDbCommand(RedisChannel channel, Action<RedisChannel, RedisValue> handler) : base(EDb.Redis,
+        $"{ERedisCommand.Subscribe} {channel}")
+    {
+        CommandTypeTypeType = ERedisCommand.Subscribe;
+        Channel = channel;
+        SubscribeHandler = handler;
+    }
+
+    // Constructor for Unsubscribe
+    public RedisDbCommand(RedisChannel channel) : base(EDb.Redis,
+        $"{ERedisCommand.Unsubscribe} {channel}")
+    {
+        CommandTypeTypeType = ERedisCommand.Unsubscribe;
+        Channel = channel;
     }
 }

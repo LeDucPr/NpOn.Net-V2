@@ -1,13 +1,14 @@
-using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
 using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.FactoryResults;
+using Common.Infrastructures.NpOn.RedisExtCm.Commands;
 using Common.Infrastructures.NpOn.RedisExtCm.Connections;
+using StackExchange.Redis;
 
 namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 
-public class RedisBroadcastFactoryWrapper : IBaseBroadcastFactoryWrapper
+public class RedisBroadcastFactoryWrapper : IRedisBroadcastFactoryWrapper
 {
     public int HandlerCount { get; private set; } /*= 0;*/
     public IDbDriverFactory? Factory { get; set; }
@@ -24,6 +25,7 @@ public class RedisBroadcastFactoryWrapper : IBaseBroadcastFactoryWrapper
     public bool BuildFactory(out string? errorString)
     {
         errorString = null;
+
         // Properly destroy the old Factory before creating a new one
         if (Factory != null)
         {
@@ -32,25 +34,42 @@ public class RedisBroadcastFactoryWrapper : IBaseBroadcastFactoryWrapper
         }
 
         _isDestroyed = false;
-        Factory = new RedisDriverFactory(_connectOption, HandlerCount);
-        var validConnection = Factory.ValidConnections;
+
         if (HandlerCount == 0)
         {
-            errorString =
-                $"Failed to initialize all connections. Expected: {HandlerCount}, Actual: {validConnection?.Count ?? 0}";
-            return true;
-        }
-
-        if (HandlerCount != validConnection?.Count)
-        {
-            errorString =
-                $"HandlerCount and ConnectionNumber does not match. Expected: {HandlerCount}, Actual: {validConnection?.Count ?? 0}";
+            errorString = "No handlers registered. Use operator+ to add handlers before calling BuildFactory.";
             return false;
         }
 
+        // Create Factory
+        Factory = new RedisDriverFactory(_connectOption, HandlerCount);
+        var validConnection = Factory.ValidConnections;
+
+        if (validConnection == null || validConnection.Count == 0)
+        {
+            errorString = "No valid connections created by factory.";
+            return false;
+        }
+
+        // Use the first connection to subscribe all handlers (avoid connection escalation)
+        var connection = validConnection.First();
+
         foreach (var handler in _handlers)
         {
-            
+            var channel = handler.Channel;
+            Action<RedisChannel, RedisValue> callback = (c, v) =>
+            {
+                _ = handler.TriggerAsync(c.ToString(), v.ToString());
+            };
+
+            var command = new RedisDbCommand(RedisChannel.Literal(channel), callback);
+            // BuildFactory is synchronous, so we block on the async task
+            var result = connection.Driver.Execute(command).GetAwaiter().GetResult();
+            if (!result.Status)
+            {
+                errorString = $"Failed to subscribe to channel {channel}.";
+                return false;
+            }
         }
 
         return true;
@@ -59,6 +78,7 @@ public class RedisBroadcastFactoryWrapper : IBaseBroadcastFactoryWrapper
     public RedisBroadcastFactoryWrapper(INpOnConnectOption connectOption)
     {
         DbType = EDb.Redis;
+        connectOption = connectOption.SetSessionTimeout(0);
         if (connectOption is not RedisConnectOption redisConnectOption)
             throw new ArgumentException(
                 $"Expected {nameof(RedisConnectOption)} but received {connectOption.GetType().Name}.",
@@ -93,7 +113,7 @@ public class RedisBroadcastFactoryWrapper : IBaseBroadcastFactoryWrapper
         if (!_cts.IsCancellationRequested)
             _cts.Cancel();
 
-        // close all connections then release
+        // Close all connections then release
         if (Factory != null)
         {
             Factory.Reset().GetAwaiter().GetResult();
