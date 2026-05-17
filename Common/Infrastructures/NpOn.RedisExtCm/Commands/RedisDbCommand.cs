@@ -8,7 +8,7 @@ namespace Common.Infrastructures.NpOn.RedisExtCm.Commands;
 public class RedisDbCommand : NpOnDbCommand
 {
     private readonly EDb _dbType = EDb.Redis;
-    public ERedisCommand CommandType { get; }
+    public ERedisCommand CommandTypeTypeType { get; }
     public string Key { get; }
     public RedisValue Value { get; }
     public RedisKey[]? Keys { get; }
@@ -17,29 +17,35 @@ public class RedisDbCommand : NpOnDbCommand
     public When WhenCondition { get; private set; } = When.Always;
     public CommandFlags[] CommandFlagsUse { get; private set; } = [CommandFlags.None];
 
-    public RedisDbCommand(string key, ERedisCommand command, RedisValue value = default, TimeSpan? expiry = null) :
-        base(EDb.Redis, $"{command} {key}")
+    // to custom 
+    public RedisDbCommand(string commandText, TimeSpan? expiry = null)
+        : base(EDb.Redis, "commandText")
     {
-        CommandType = command;
+        CommandTypeTypeType = ERedisCommand.Customize;
+    }
+
+    public RedisDbCommand(string key, ERedisCommand commandType, RedisValue value = default, TimeSpan? expiry = null) :
+        base(EDb.Redis, $"{commandType} {key}")
+    {
+        CommandTypeTypeType = commandType;
         Key = key;
         Value = value;
         Expiry = expiry;
     }
 
     // get/delete many
-    public RedisDbCommand(ERedisCommand command, RedisKey[] keys) : base(EDb.Redis,
-        $"{command} {keys.Select(x => x.AsDefaultString()).AsArrayJoin()}")
+    public RedisDbCommand(ERedisCommand commandType, RedisKey[] keys) : base(EDb.Redis,
+        $"{commandType} {keys.Select(x => x.AsDefaultString()).AsArrayJoin()}")
     {
-        CommandType = command;
+        CommandTypeTypeType = commandType;
         Keys = keys;
     }
 
     // Constructor for SetMany
     public RedisDbCommand(KeyValuePair<RedisKey, RedisValue>[] keyValues, TimeSpan? expiry = null) : base(EDb.Redis,
         $"{ERedisCommand.SetMany} {keyValues.Select(x => x.Key.AsDefaultString()).AsArrayJoin()}")
-
     {
-        CommandType = ERedisCommand.SetMany;
+        CommandTypeTypeType = ERedisCommand.SetMany;
         Expiry = expiry;
         KeyValues = keyValues;
     }

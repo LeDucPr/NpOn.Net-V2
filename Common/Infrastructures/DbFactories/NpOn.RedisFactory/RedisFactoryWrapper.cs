@@ -1,6 +1,7 @@
 ﻿using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
+using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.FactoryResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Commands;
@@ -41,19 +42,19 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 
     #region Generic Type
 
-    public Task<INpOnWrapperResult?> GetAsync(string key)
+    public Task<INpOnWrapperResult?> GetAsBaseResult(string key)
     {
         var command = new RedisDbCommand(key, ERedisCommand.Get);
         return ExecuteAsync(command);
     }
 
-    public Task<INpOnWrapperResult?> SetAsync(string key, string value, TimeSpan? expiry = null)
+    public Task<INpOnWrapperResult?> SetAsBaseResult(string key, string value, TimeSpan? expiry = null)
     {
         var command = new RedisDbCommand(key, ERedisCommand.Set, value, expiry ?? TimeSpan.FromMinutes(5));
         return ExecuteAsync(command);
     }
 
-    public Task<INpOnWrapperResult?> DeleteAsync(string key)
+    public Task<INpOnWrapperResult?> DeleteAsBaseResult(string key)
     {
         var command = new RedisDbCommand(key, ERedisCommand.Delete);
         return ExecuteAsync(command);
@@ -64,21 +65,21 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 
     #region Redis Wrapper Type
 
-    public async Task<RedisValueWrapper?> GetStringAsync(string key)
+    public async Task<RedisValueWrapper?> Get(string key)
     {
-        var result = await GetAsync(key);
+        var result = await GetAsBaseResult(key);
         return result as RedisValueWrapper;
     }
 
-    public async Task<RedisValueWrapper?> SetStringAsync(string key, string value, TimeSpan? expiry = null)
+    public async Task<RedisValueWrapper?> Set(string key, string value, TimeSpan? expiry = null)
     {
-        var result = await SetAsync(key, value, expiry ?? TimeSpan.FromMinutes(5));
+        var result = await SetAsBaseResult(key, value, expiry ?? TimeSpan.FromMinutes(5));
         return result as RedisValueWrapper;
     }
 
-    public async Task<RedisValueWrapper?> DeleteKeyAsync(string key)
+    public async Task<RedisValueWrapper?> Delete(string key)
     {
-        var result = await DeleteAsync(key);
+        var result = await DeleteAsBaseResult(key);
         return result as RedisValueWrapper;
     }
 
@@ -91,7 +92,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 
     #region Generic Type
 
-    public async Task<INpOnWrapperResult?> GetManyAsync(params string[] keys)
+    public async Task<INpOnWrapperResult?> GetManyAsBaseResult(params string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.GetMany, redisKeys);
@@ -99,7 +100,8 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
         return result;
     }
 
-    public async Task<INpOnWrapperResult?> SetManyAsync(Dictionary<string, string> keyValues, TimeSpan? expiry = null)
+    public async Task<INpOnWrapperResult?> SetManyAsBaseResult(
+        Dictionary<string, string> keyValues, TimeSpan? expiry = null)
     {
         var pairs = keyValues
             .Select(kvp => new KeyValuePair<RedisKey, RedisValue>(kvp.Key, kvp.Value))
@@ -109,7 +111,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
         return result;
     }
 
-    public async Task<INpOnWrapperResult?> DeleteManyAsync(params string[] keys)
+    public async Task<INpOnWrapperResult?> DeleteManyAsBaseResult(params string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.DeleteMany, redisKeys);
@@ -121,7 +123,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 
     #region Redis Wrapper Type
 
-    public async Task<RedisValueWrapper?> GetManyStringAsync(params string[] keys)
+    public async Task<RedisValueWrapper?> GetMany(params string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.GetMany, redisKeys);
@@ -129,7 +131,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
         return result as RedisValueWrapper;
     }
 
-    public async Task<RedisValueWrapper?> SetManyStringAsync(Dictionary<string, string> keyValues,
+    public async Task<RedisValueWrapper?> SetMany(Dictionary<string, string> keyValues,
         TimeSpan? expiry = null)
     {
         var pairs = keyValues
@@ -140,7 +142,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
         return result as RedisValueWrapper;
     }
 
-    public async Task<RedisValueWrapper?> DeleteManyStringAsync(params string[] keys)
+    public async Task<RedisValueWrapper?> DeleteMany(params string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.DeleteMany, redisKeys);
@@ -151,4 +153,35 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
     #endregion Redis Wrapper Type
 
     #endregion Bulk Operations
+
+
+    #region Customize
+
+    public async Task<RedisValueWrapper?> CustomizeString(string commandText)
+    {
+        var result = await ExecuteAsync(new RedisDbCommand(commandText));
+        return result as RedisValueWrapper;
+    }
+
+    public async Task<RedisValueWrapper?> CustomizeCommand(INpOnDbCommand command)
+    {
+        RedisDbCommand redisCommand = command as RedisDbCommand ?? new RedisDbCommand(command.CommandText);
+        var result = await ExecuteAsync(redisCommand);
+        return result as RedisValueWrapper;
+    }
+
+    public async Task<INpOnWrapperResult?> CustomizeStringAsBaseResult(string commandText)
+    {
+        var result = await ExecuteAsync(new RedisDbCommand(commandText));
+        return result;
+    }
+
+    public async Task<INpOnWrapperResult?> CustomizeCommandAsBaseResult(INpOnDbCommand command)
+    {
+        RedisDbCommand redisCommand = command as RedisDbCommand ?? new RedisDbCommand(command.CommandText);
+        var result = await ExecuteAsync(redisCommand);
+        return result;
+    }
+
+    #endregion Customize
 }

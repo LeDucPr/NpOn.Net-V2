@@ -65,7 +65,7 @@ public class RedisDriver : NpOnDbDriver
         try
         {
             IDatabase db = _connection.GetDatabase();
-            return redisCommand.CommandType switch
+            return redisCommand.CommandTypeTypeType switch
             {
                 ERedisCommand.Set => new RedisValueWrapper(new RedisValueContainer(
                     await db.StringSetAsync(redisCommand.Key, redisCommand.Value, redisCommand.Expiry))),

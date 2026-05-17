@@ -29,7 +29,7 @@ public class AccountTokenAndPermissionRedisRepository
 
     public async Task AddCachingToken(string sessionId, AccountLoginRModel accountLogin)
     {
-        await _redisCachingFactoryWrapper.SetAsync($"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}",
+        await _redisCachingFactoryWrapper.SetAsBaseResult($"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}",
             JsonMode.ToJson(accountLogin),
             TimeSpan.FromMinutes(_expireTokenMinutes));
     }
@@ -38,7 +38,7 @@ public class AccountTokenAndPermissionRedisRepository
     {
         sessionId = $"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}";
         var accountLoginInfoCache =
-            await _redisCachingFactoryWrapper.GetStringAsync(sessionId);
+            await _redisCachingFactoryWrapper.Get(sessionId);
         if (accountLoginInfoCache == null)
             return null;
         var cacheValue = accountLoginInfoCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
@@ -53,7 +53,7 @@ public class AccountTokenAndPermissionRedisRepository
     public async Task DeleteCachingToken(string sessionId)
     {
         sessionId = $"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}";
-        await _redisCachingFactoryWrapper.DeleteAsync(sessionId);
+        await _redisCachingFactoryWrapper.DeleteAsBaseResult(sessionId);
     }
 
 
@@ -63,7 +63,7 @@ public class AccountTokenAndPermissionRedisRepository
         string[] existedAccountCachingTokenStorages = [$"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}"];
         existedAccountCachingTokenStorages = existedAccountCachingTokenStorages
             .Concat(await GetCachingTokenStorageByAccountId(accountId) ?? []).ToArray();
-        await _redisCachingFactoryWrapper.SetAsync(accountCachingTokenStorage,
+        await _redisCachingFactoryWrapper.SetAsBaseResult(accountCachingTokenStorage,
             JsonMode.ToJson(existedAccountCachingTokenStorages),
             TimeSpan.FromMinutes(_expireTokenStorageMinutes));
         return true;
@@ -79,15 +79,15 @@ public class AccountTokenAndPermissionRedisRepository
         sessionIds = sessionIds?.Select(x => $"{AccountCachingCode.PrefixCachingAccountToken}{x}").ToArray()
                      ?? existedAccountCachingTokenStorages;
         if (sessionIds.Length == existedAccountCachingTokenStorages.Length)
-            await _redisCachingFactoryWrapper.DeleteManyAsync(
+            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(
                 sessionIds.Concat([accountCachingTokenStorage]).ToArray());
         else
-            await _redisCachingFactoryWrapper.DeleteManyAsync(sessionIds);
+            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(sessionIds);
 
         // Update the storage list by removing the deleted session IDs.
         var remainingSessionIds = existedAccountCachingTokenStorages.Where(x => !sessionIds.Contains(x)).ToArray();
         if (remainingSessionIds is { Length: > 0 })
-            await _redisCachingFactoryWrapper.SetAsync(accountCachingTokenStorage,
+            await _redisCachingFactoryWrapper.SetAsBaseResult(accountCachingTokenStorage,
                 JsonMode.ToJson(remainingSessionIds),
                 TimeSpan.FromMinutes(_expireTokenStorageMinutes));
         return true;
@@ -101,7 +101,7 @@ public class AccountTokenAndPermissionRedisRepository
         if (existedAccountCachingTokenStorages == null)
             return true;
         if (accountCachingTokenStorages.Length > 0)
-            await _redisCachingFactoryWrapper.DeleteManyAsync(
+            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(
                 accountCachingTokenStorages.Concat(existedAccountCachingTokenStorages).ToArray());
         return true;
     }
@@ -110,7 +110,7 @@ public class AccountTokenAndPermissionRedisRepository
     {
         string accountCachingTokenStorage = $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}";
         var accountCachingTokenStorageOld =
-            await _redisCachingFactoryWrapper.GetStringAsync(accountCachingTokenStorage);
+            await _redisCachingFactoryWrapper.Get(accountCachingTokenStorage);
         if (accountCachingTokenStorageOld != null)
         {
             var cacheValue = accountCachingTokenStorageOld.Result.Values.FirstOrDefault()?.ValueAsObject
@@ -127,7 +127,7 @@ public class AccountTokenAndPermissionRedisRepository
         string[] accountCachingTokenStorages = accountIds
             .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}").ToArray();
         var accountCachingTokenStorageOld =
-            await _redisCachingFactoryWrapper.GetManyStringAsync(accountCachingTokenStorages);
+            await _redisCachingFactoryWrapper.GetMany(accountCachingTokenStorages);
         if (accountCachingTokenStorageOld != null)
         {
             var cacheValue = accountCachingTokenStorageOld.Result.Values.FirstOrDefault()?.ValueAsObject
@@ -161,7 +161,7 @@ public class AccountTokenAndPermissionRedisRepository
     private async Task<bool> AddCachingPermissionException(string cachingExceptionPermissionKey,
         string[] permissionExceptionControllerCodes)
     {
-        if (!(await _redisCachingFactoryWrapper.SetAsync(cachingExceptionPermissionKey,
+        if (!(await _redisCachingFactoryWrapper.SetAsBaseResult(cachingExceptionPermissionKey,
                 JsonMode.ToJson(permissionExceptionControllerCodes),
                 TimeSpan.FromMinutes(_expireTokenMinutes)))?.Status ?? false)
             return false;
@@ -172,7 +172,7 @@ public class AccountTokenAndPermissionRedisRepository
     public async Task<string[]?> GetCachingPermissionException(string accountId)
     {
         var permissionExceptionCache =
-            await _redisCachingFactoryWrapper.GetStringAsync(
+            await _redisCachingFactoryWrapper.Get(
                 $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}");
         if (permissionExceptionCache == null) return null;
 
@@ -188,7 +188,7 @@ public class AccountTokenAndPermissionRedisRepository
     public async Task<bool> DeleteCachingPermissionExceptionsByAccountId(string accountId)
     {
         string cacheKey = $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}";
-        await _redisCachingFactoryWrapper.DeleteManyAsync(cacheKey);
+        await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(cacheKey);
         return true;
     }
 
@@ -196,7 +196,7 @@ public class AccountTokenAndPermissionRedisRepository
     {
         string[] cacheKeys = accountIds
             .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}").ToArray();
-        await _redisCachingFactoryWrapper.DeleteManyAsync(cacheKeys);
+        await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(cacheKeys);
         return true;
     }
 
