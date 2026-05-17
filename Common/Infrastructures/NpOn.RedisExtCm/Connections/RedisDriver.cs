@@ -82,7 +82,7 @@ public class RedisDriver : NpOnDbDriver
                     .SetFail(EDbError.CommandNotSupported)
             };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.RedisExecute);
         }

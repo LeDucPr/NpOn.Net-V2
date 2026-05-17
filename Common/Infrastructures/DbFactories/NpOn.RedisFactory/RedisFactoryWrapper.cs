@@ -35,6 +35,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
             this.AddToDbFactoryWrapperCache();
     }
 
+    // public Redis
 
     #region Single Operations
 
@@ -59,6 +60,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
     }
 
     #endregion Generic Type
+
 
     #region Redis Wrapper Type
 

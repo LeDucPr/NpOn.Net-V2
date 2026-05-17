@@ -10,7 +10,7 @@ namespace Common.Extensions.NpOn.CommonDb.Connections;
 public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 {
     // private bool _isUseMultiSessions = false;
-    private bool _isShutdownImmediate = false;
+    private bool _isShutdownImmediate /*= false*/;
     private bool _isWaitNextTransaction = true;
     private long _secondsTimeout = 30; //2592000; // 30 days 
     private DateTime _currentConnectionTime;
@@ -38,7 +38,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
         }
     }
 
-
+    // decoy validate
     public bool IsValidRequireFromBase(string? propertyName)
     {
         var validPropertyNames = new HashSet<string>
@@ -61,7 +61,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
         return this;
     }
 
-    public string? ConnectionString => _connectionString;
+    public string? ConnectionString => _connectionString; // Almost database connection use
 
     #endregion ConnectionString
 
@@ -70,18 +70,17 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     #region Port
 
-    private int? _port;
+    private int? _port; // Almost database connection use
 
-    [Obsolete("Obsolete")]
-    public INpOnConnectOption? SetPort<T1>(int port) where T1 : INpOnDbDriver
+    public INpOnConnectOption SetPort<T1>(int port) where T1 : INpOnDbDriver
     {
         try
         {
             if (!IsValid())
-                throw new ExecutionEngineException($"Port is not valid for {typeof(INpOnDbDriver)}");
+                throw new InvalidOperationException($"Port is not valid for {typeof(INpOnDbDriver)}");
             _port = port;
         }
-        catch (ExecutionEngineException)
+        catch (InvalidOperationException)
         {
             _port = null;
         }
@@ -98,16 +97,15 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     private string? _keyspace = string.Empty; // cassandra, scyllaDb
 
-    [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption SetKeyspace/*<T>*/(string keyspace) /* where T : INpOnDbDriver*/
+    public virtual INpOnConnectOption SetKeyspace /*<T>*/(string keyspace) /* where T : INpOnDbDriver*/
     {
         try
         {
             if (!IsValid())
-                throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+                throw new InvalidOperationException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
             _keyspace = keyspace;
         }
-        catch (ExecutionEngineException)
+        catch (InvalidOperationException)
         {
             _keyspace = null;
         }
@@ -124,16 +122,15 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     private string? _collection = string.Empty; // mongoDb
 
-    [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption SetCollectionName/*<T>*/(string collection)/* where T : INpOnDbDriver*/
+    public virtual INpOnConnectOption SetCollectionName /*<T>*/(string collection) /* where T : INpOnDbDriver*/
     {
         try
         {
             if (!IsValid())
-                throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+                throw new InvalidOperationException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
             _collection = collection;
         }
-        catch (ExecutionEngineException)
+        catch (InvalidOperationException)
         {
             _collection = null;
         }
@@ -150,13 +147,13 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     private string[]? _contactAddresses;
 
-    [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption SetContactAddresses/*<T>*/(string[]? contactAddresses)/* where T : INpOnDbDriver*/
+    public virtual INpOnConnectOption
+        SetContactAddresses /*<T>*/(string[]? contactAddresses) /* where T : INpOnDbDriver*/
     {
         try
         {
             if (!IsValid())
-                throw new ExecutionEngineException($"Keyspace is not valid for {typeof(INpOnDbDriver)}");
+                throw new InvalidOperationException($"Keyspace is not valid for {typeof(INpOnDbDriver)}");
             if (contactAddresses is not { Length: > 0 })
             {
                 _contactAddresses = contactAddresses;
@@ -168,7 +165,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
                 contactAddressesHashSet.Add(contactAddress);
             _contactAddresses = contactAddressesHashSet.ToArray();
         }
-        catch (ExecutionEngineException)
+        catch (InvalidOperationException)
         {
             _contactAddresses = null;
         }
@@ -185,16 +182,15 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     private string? _databaseName = string.Empty; // postgres
 
-    [Obsolete("Obsolete")]
-    public virtual INpOnConnectOption? SetDatabaseName(string databaseName)
+    public virtual INpOnConnectOption SetDatabaseName(string databaseName)
     {
         try
         {
             if (!IsValid())
-                throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+                throw new InvalidOperationException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
             _databaseName = databaseName;
         }
-        catch (ExecutionEngineException)
+        catch (InvalidOperationException)
         {
             _databaseName = null;
         }
@@ -205,6 +201,31 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     public string? DatabaseName => _databaseName;
 
     #endregion Database name
+
+
+    #region SetShutdownImmediate
+
+    private int? _databaseIndex;
+
+    public INpOnConnectOption SetDatabaseIndex(int databaseIndex)
+    {
+        try
+        {
+            if (!IsValid())
+                throw new InvalidOperationException($"DatabaseIndex is not valid for {typeof(INpOnDbDriver)}");
+            _databaseIndex = databaseIndex;
+        }
+        catch (InvalidOperationException)
+        {
+            _databaseIndex = null;
+        }
+
+        return this;
+    }
+
+    public int? DatabaseIndex => _databaseIndex;
+
+    #endregion SetShutdownImmediate
 
 
     // generic 

@@ -31,7 +31,8 @@ public class RedisValueContainer
 /// <summary>
 /// A generic wrapper for Redis value results. Can act as a single row or a table depending on the content.
 /// </summary>
-public class RedisValueWrapper : NpOnWrapperResult<RedisValueContainer, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper, INpOnTableWrapper
+public class RedisValueWrapper : NpOnWrapperResult<RedisValueContainer, IReadOnlyDictionary<string, INpOnCell>>,
+    INpOnRowWrapper, INpOnTableWrapper
 {
     public RedisValueWrapper(RedisValueContainer parent) : base(parent)
     {
@@ -99,21 +100,24 @@ public class RedisValueWrapper : NpOnWrapperResult<RedisValueContainer, IReadOnl
                 item => (INpOnRowWrapper?)new RedisValueWrapper(new RedisValueContainer(item.value))
             ) ?? new Dictionary<int, INpOnRowWrapper?>();
 
-    public INpOnCollectionWrapper CollectionWrappers => throw new NotImplementedException("Collection wrapper is not supported for a simple list of Redis values.");
+    public INpOnCollectionWrapper CollectionWrappers =>
+        throw new NotImplementedException("Collection wrapper is not supported for a simple list of Redis values.");
 }
 
 /// <summary>
 /// Wraps the result of a Redis HGETALL command (a collection of hash entries).
 /// </summary>
-public class RedisHashWrapper : NpOnWrapperResult<HashEntry[], IReadOnlyDictionary<string, INpOnCell>>, INpOnTableWrapper, INpOnRowWrapper
+public class RedisHashWrapper : NpOnWrapperResult<HashEntry[], IReadOnlyDictionary<string, INpOnCell>>,
+    INpOnTableWrapper, INpOnRowWrapper
 {
-    public RedisHashWrapper(HashEntry[]? parent) : base(parent)
+    public RedisHashWrapper(HashEntry[]? parent) : base(parent ?? Array.Empty<HashEntry>())
     {
-        if (parent == null)
+        if (parent is not { Length: > 0 })
         {
             SetFail(EDbError.RedisValueIsNull);
             return;
         }
+
         SetSuccess();
     }
 
@@ -125,7 +129,8 @@ public class RedisHashWrapper : NpOnWrapperResult<HashEntry[], IReadOnlyDictiona
         );
     }
 
-    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers => new Dictionary<int, INpOnRowWrapper?> { { 0, this } };
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers =>
+        new Dictionary<int, INpOnRowWrapper?> { { 0, this } };
 
     public INpOnCollectionWrapper CollectionWrappers => new RedisHashFieldCollection(Parent);
 
