@@ -1,3 +1,4 @@
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Newtonsoft.Json;
 
 namespace Common.Extensions.NpOn.CommonMode;
@@ -5,11 +6,12 @@ namespace Common.Extensions.NpOn.CommonMode;
 public static class JsonMode
 {
     public static string ToJson(object? obj) => JsonConvert.SerializeObject(obj);
+    public static string? ToJsonAsNull(object? obj) => obj == null ? null : JsonConvert.SerializeObject(obj);
     public static T? FromJson<T>(string? json) => JsonConvert.DeserializeObject<T>(json ?? string.Empty);
 
     public static object? FromJson(string? json, Type type) =>
         JsonConvert.DeserializeObject(json ?? string.Empty, type);
-    
+
     public static bool TryFromJson<T>(string? json, out T? result)
     {
         result = default;
