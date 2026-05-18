@@ -7,7 +7,8 @@ public abstract class BaseRedisBroadcastHandler : BaseBroadcastHandler
     public abstract string Channel { get; }
     public abstract Task TriggerAsync(string channel, string message);
 
-    protected BaseRedisBroadcastHandler(BaseBroadcastTrigger trigger, Func<BaseBroadcastMessage, Task<bool>> logicFunc) : base(trigger, logicFunc)
+    protected BaseRedisBroadcastHandler(BaseBroadcastTrigger trigger, Func<BaseBroadcastMessage, Task<bool>> logicFunc)
+        : base(trigger, logicFunc)
     {
     }
 }
@@ -15,7 +16,7 @@ public abstract class BaseRedisBroadcastHandler : BaseBroadcastHandler
 public abstract class BaseRedisBroadcastHandler<T> : BaseRedisBroadcastHandler
 {
     public BaseRedisBaseBroadcastTrigger<T> Trigger { get; }
-    
+
     public override string Channel => Trigger.Channel;
 
     protected BaseRedisBroadcastHandler(BaseRedisBaseBroadcastTrigger<T> trigger,
