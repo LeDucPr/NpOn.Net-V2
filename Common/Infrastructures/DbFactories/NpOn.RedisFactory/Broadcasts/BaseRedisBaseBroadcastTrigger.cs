@@ -11,4 +11,4 @@ public abstract class BaseRedisBaseBroadcastTrigger<T> : BaseBroadcastTrigger
         var msg = new RedisBroadcastMessage<T> { Channel = channel, Message = message };
         return IncomingOnMessageReceived(msg);
     }
-}
+} 

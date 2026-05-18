@@ -52,11 +52,12 @@ public sealed class Program : HttpCommonProgram
             () => new NpOnWrapperResult(),
             100
         );
-        services.AddSingleton<IObjectPoolStore>(sp => store);
+        services.AddSingleton<IObjectPoolStore>(_ => store);
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)
-            .AddRedis();
+            .AddRedis()
+            .AddRedisBroadcast();
 
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
