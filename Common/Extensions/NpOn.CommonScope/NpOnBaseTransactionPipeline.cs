@@ -36,7 +36,7 @@ public abstract class NpOnBaseTransactionPipeline : INpOnBaseTransactionPipeline
     public bool IsCompleted => _isCompleted | !_invoked; // Tránh khi chưa invoke gọi gây lỗi 
     public string? ErrorMessage => _errorMessage;
 
-    protected async Task TransactionPipelineWrapper(IDbFactoryWrapper? dbFactoryWrapper,
+    protected async Task TransactionPipelineWrapper(IDbFactoryWrapper? dbFactoryWrapper,    
         IEnumerable<IBaseNpOnDbCommand>? commands,
         Func<IDbFactoryWrapper?, IEnumerable<IBaseNpOnDbCommand>?, Task> transactionProcess
     )

@@ -25,7 +25,7 @@ IsUseClickhouse: true
 ClickHouseConnectionString: "Host=192.168.1.11;Port=8123;User=default;Password=password;Database=np_on_db;"
 ClickhouseConnectionNumber: 100 #00
 
-IsUseRedisCache: false
+IsUseRedisCache: true
 RedisConnectString: "192.168.1.11:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 200 #00
 

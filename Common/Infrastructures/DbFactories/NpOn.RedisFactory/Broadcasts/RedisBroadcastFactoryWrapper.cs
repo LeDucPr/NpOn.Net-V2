@@ -54,7 +54,7 @@ public class RedisBroadcastFactoryWrapper : IRedisBroadcastFactoryWrapper
         // Use the first connection to subscribe all handlers (avoid connection escalation)
         var connection = validConnection.First();
 
-        foreach (var handler in _handlers)
+        foreach (BaseRedisBroadcastHandler handler in _handlers)
         {
             var channel = handler.Channel;
             Action<RedisChannel, RedisValue> callback = (c, v) =>

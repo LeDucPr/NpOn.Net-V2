@@ -11,6 +11,7 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 using MicroServices.Tracker.StorageAdapter.NpOn.ITrackerStorageAdapter;
@@ -49,18 +50,23 @@ public sealed class Program : HttpCommonProgram
         );
         services.AddSingleton<IObjectPoolStore>(_ => store);
         services.AddSingleton(store);
-        
+
         if (EApplicationConfiguration.IsUseClickhouse.GetAppSettingConfig().AsDefaultBool())
             services.AddClickHouse(poolStore: store);
-        
+
+        if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
+            services
+                // .AddRedis()
+                .AddRedisBroadcast();
+
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
             services.AddHostedService<HostingApp>();
         }
-        
+
         // Add Service
         services.AddTransient<ITrackerLogService, TrackerLogService>();
-        
+
         // Add StorageAdapter
         services.AddTransient<ISystemLogStorageAdapter, SystemLogStorageAdapter>();
 
@@ -71,7 +77,7 @@ public sealed class Program : HttpCommonProgram
     {
         // Add Map Grpc Service
         app.MapGrpcService<TrackerLogService>();
-        
+
         // // Initialize ClickHouse Schema (static func)
         // Task.Run(async () => {
         //     using var scope = app.Services.CreateScope();

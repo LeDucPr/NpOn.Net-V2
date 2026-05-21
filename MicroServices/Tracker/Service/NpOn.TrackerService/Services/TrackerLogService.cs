@@ -1,6 +1,7 @@
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain.Domains;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
@@ -8,6 +9,7 @@ using MicroServices.Tracker.Service.NpOn.ITrackerService;
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
 public class TrackerLogService(
+    IRedisBroadcastFactoryWrapper redisBroadcastFactoryWrapper,
     IClickHouseFactoryWrapper clickHouseFactoryWrapper,
     ILogger<CommonService> logger
 ) : CommonService(logger), ITrackerLogService

@@ -18,7 +18,7 @@ public class RedisDbCommand : NpOnDbCommand
     public CommandFlags[] CommandFlagsUse { get; private set; } = [CommandFlags.None];
 
     // Pub/Sub properties
-    public RedisChannel Channel { get; }
+    public RedisChannel Channel { get; } // struct RedisChannelOption = 0 default 
     public Action<RedisChannel, RedisValue>? SubscribeHandler { get; }
 
     // to custom 
