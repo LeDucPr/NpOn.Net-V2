@@ -1,4 +1,5 @@
-﻿using Common.Extensions.NpOn.BaseDbFactory.Generics;
+﻿using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
+using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
@@ -179,6 +180,20 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
     public async Task<INpOnWrapperResult?> CustomizeCommandAsBaseResult(INpOnDbCommand command)
     {
         RedisDbCommand redisCommand = command as RedisDbCommand ?? new RedisDbCommand(command.CommandText);
+        var result = await ExecuteAsync(redisCommand);
+        return result;
+    }
+
+    public async Task<INpOnWrapperResult?> Publish(string channel)
+    {
+        RedisDbCommand redisCommand = new RedisDbCommand(channel, message: null);
+        var result = await ExecuteAsync(redisCommand);
+        return result;
+    }
+
+    public async Task<INpOnWrapperResult?> Subscribe(BaseBroadcastMessage message)
+    {
+        RedisDbCommand redisCommand = new RedisDbCommand(message);
         var result = await ExecuteAsync(redisCommand);
         return result;
     }

@@ -1,13 +1,16 @@
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
-using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
+using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.Messages;
+using NpOn.TrackerConstant.Broadcasts;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
 public class HostingApp(
+    IRedisBroadcastFactoryWrapper redisBroadcastFactoryWrapper,
     ITrackerLogService trackerLogService,
     IClickHouseFactoryWrapper clickHouseFactoryWrapper,
     ILogger<HostingApp> logger
@@ -25,15 +28,34 @@ public class HostingApp(
             throw new Exception("Critical initialization failure.");
         }
 
-        await trackerLogService.PushLogs([new TrackerLogAddCommand
+        ////// Test Clickhouse
+        // await trackerLogService.PushLogs([new TrackerLogAddCommand
+        //     {
+        //         EventDate = DateTime.UtcNow,
+        //         Level = ETrackerLogLevel.Debug,
+        //         Source = "NpOn.TrackerService",
+        //         Message = "NpOn.TrackerService is starting",
+        //         TrackerLogTypes = [ETrackerLogType.TraceLog]
+        //     }
+        // ]);
+
+        var redisMsg = new RedisBroadcastMessage<WarningRedisBroadCastMessage>
+        {
+            Value = new WarningRedisBroadCastMessage
             {
-                EventDate = DateTime.UtcNow,
-                Level = ETrackerLogLevel.Debug,
-                Source = "NpOn.TrackerService",
-                Message = "NpOn.TrackerService is starting",
-                TrackerLogTypes = [ETrackerLogType.TraceLog]
-            }
-        ]);
+                MessageLog = "NpOn.TrackerService is starting",
+                ServiceName = "NpOn.TrackerService",
+                TrackerLogLevel = ETrackerLogLevel.Debug,
+                WarningDateUtc = DateTime.UtcNow,
+            },
+            Channel = WarningRedisBroadcastConstant.WarningRedisBroadcastChannel,
+        };
+
+        var publishActRs = await redisBroadcastFactoryWrapper.PublishAsync(redisMsg);
+        if (publishActRs?.Status ?? false)
+            logger.LogInformation("Successfully broadcasted start message via Redis Pub/Sub.");
+        else 
+            logger.LogWarning("Failed to broadcast start message via Redis Pub/Sub.");
     }
 
     private async Task<bool> InitializeDatabaseTablesAsync(string sqlFilePath)

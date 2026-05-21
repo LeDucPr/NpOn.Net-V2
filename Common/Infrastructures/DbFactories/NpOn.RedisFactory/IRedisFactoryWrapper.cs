@@ -1,4 +1,5 @@
-﻿using Common.Extensions.NpOn.BaseDbFactory.Generics;
+﻿using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
+using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Results;
@@ -37,6 +38,8 @@ public interface IRedisFactoryWrapper : IDbFactoryWrapper
     Task<RedisValueWrapper?> CustomizeCommand(INpOnDbCommand command);
     Task<INpOnWrapperResult?> CustomizeStringAsBaseResult(string commandText);
     Task<INpOnWrapperResult?> CustomizeCommandAsBaseResult(INpOnDbCommand command);
+    Task<INpOnWrapperResult?> Publish(string channel);
+    Task<INpOnWrapperResult?> Subscribe(BaseBroadcastMessage message);
 
     #endregion Customize
 }

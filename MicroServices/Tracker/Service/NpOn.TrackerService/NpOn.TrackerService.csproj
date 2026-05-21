@@ -24,6 +24,7 @@
       <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.ClickHouseAppExtUse\NpOn.ClickHouseAppExtUse.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.TrackerServiceCommand\NpOn.TrackerServiceCommand.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.TrackerServiceDomain\NpOn.TrackerServiceDomain.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.TrackerConstant\NpOn.TrackerConstant.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.ITrackerStorageAdapter\NpOn.ITrackerStorageAdapter.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.TrackerStorageAdapter\NpOn.TrackerStorageAdapter.csproj" />
       <ProjectReference Include="..\NpOn.ITrackerService\NpOn.ITrackerService.csproj" />
@@ -36,10 +37,6 @@
       <Content Include="SqlScripts\**\*.sql">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="RedisBroadcast\" />
     </ItemGroup>
 
 </Project>

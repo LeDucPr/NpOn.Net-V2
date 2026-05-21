@@ -18,6 +18,11 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     private Timer? _idleTimer;
     private readonly object _timerLock = new object();
 
+    public virtual object? GetConnection()
+    {
+        throw new NotImplementedException("Need to override this method");
+    }
+
     protected void StartSelfDestructTimer()
     {
         var timeoutSeconds = Option.ConnectionTimeoutSessions;

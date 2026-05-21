@@ -1,3 +1,4 @@
+using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.CommonMode;
@@ -54,13 +55,13 @@ public class RedisDbCommand : NpOnDbCommand
         KeyValues = keyValues;
     }
 
+
     // Constructor for Publish
-    public RedisDbCommand(RedisChannel channel, RedisValue message) : base(EDb.Redis,
+    public RedisDbCommand(RedisChannel channel, string? message = null) : base(EDb.Redis,
         $"{ERedisCommand.Publish} {channel}")
     {
         CommandTypeTypeType = ERedisCommand.Publish;
         Channel = channel;
-        Value = message;
     }
 
     // Constructor for Subscribe
@@ -70,6 +71,14 @@ public class RedisDbCommand : NpOnDbCommand
         CommandTypeTypeType = ERedisCommand.Subscribe;
         Channel = channel;
         SubscribeHandler = handler;
+    }
+
+    public RedisDbCommand(BaseBroadcastMessage message) : base(EDb.Redis,
+        $"{ERedisCommand.Subscribe} {message.Channel}")
+    {
+        CommandTypeTypeType = ERedisCommand.Subscribe;
+        Channel = RedisChannel.Literal(message.Channel);
+        Value = message.Message;
     }
 
     // Constructor for Unsubscribe

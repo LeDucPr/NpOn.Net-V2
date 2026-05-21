@@ -18,7 +18,7 @@ public static class RedisServiceCollectionExtensions
                 EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
             connectionNumber ??= EApplicationConfiguration.RedisConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IRedisFactoryWrapper factoryWrapper =
-                new RedisFactoryWrapper(connectionString, (int)connectionNumber, true);
+                new RedisFactoryWrapper(connectionString, (int)connectionNumber /*, true*/);
             return (RedisFactoryWrapper)factoryWrapper;
         });
         return services;
@@ -26,25 +26,36 @@ public static class RedisServiceCollectionExtensions
 
     public static IServiceCollection AddRedisBroadcast(this IServiceCollection services,
         string? connectionString = null,
-        params BaseRedisBroadcastHandler[]? handlers)
+        params Type[]? handlerTypes) // Thêm tham số nhận danh sách Type ở đây
     {
-        services.AddSingleton<IRedisBroadcastFactoryWrapper, RedisBroadcastFactoryWrapper>(_ =>
+        if (handlerTypes != null)
         {
-            connectionString ??=
-                EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
-            INpOnConnectOption connectOption = new RedisConnectOption()
-                .SetConnectionString(connectionString);
-            RedisBroadcastFactoryWrapper? factoryWrapper =
-                new RedisBroadcastFactoryWrapper(connectOption);
-            if (handlers is { Length: > 0 })
+            foreach (var type in handlerTypes)
             {
-                foreach (var handler in handlers)
-                    factoryWrapper += handler;
-                if (!factoryWrapper!.BuildFactory(out string? errorString))
-                    Console.WriteLine(errorString);
+                services.AddSingleton(type);
+                services.AddSingleton(typeof(BaseRedisBroadcastHandler), provider => provider.GetRequiredService(type));
             }
+        }
+
+        services.AddSingleton<IRedisBroadcastFactoryWrapper, RedisBroadcastFactoryWrapper>(provider =>
+        {
+            connectionString ??= EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
+            INpOnConnectOption connectOption = new RedisConnectOption().SetConnectionString(connectionString);
+            RedisBroadcastFactoryWrapper? factoryWrapper = new RedisBroadcastFactoryWrapper(connectOption);
+
+            var handlers = provider.GetServices<BaseRedisBroadcastHandler>().ToArray();
+            if (!handlers.Any())
+                return factoryWrapper;
+
+            foreach (var handler in handlers)
+                factoryWrapper += handler;
+
+            if (!factoryWrapper!.BuildFactory(out string? errorString))
+                Console.WriteLine(errorString);
+
             return factoryWrapper;
         });
+
         return services;
     }
 }

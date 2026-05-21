@@ -1,17 +1,28 @@
 using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
+using StackExchange.Redis;
 
 namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 
 public abstract class BaseRedisBroadcastHandler : BaseBroadcastHandler
 {
     public abstract string Channel { get; }
-    public abstract Task TriggerAsync(string channel, string message);
-    
-    public abstract Task TriggerAsync(RedisBroadcastMessage redisBroadcastMessage);
+    public abstract Type MessageType { get; }
+    public abstract Task ParseAndTriggerAsync(string channel, RedisValue value);
 
     protected BaseRedisBroadcastHandler(BaseBroadcastTrigger trigger, Func<BaseBroadcastMessage, Task<bool>> logicFunc)
         : base(trigger, logicFunc)
     {
+    }
+
+    protected override Task<bool> Validator(BaseBroadcastMessage? message) // Pattern Matching
+    {
+        if (message == null)
+            return Task.FromResult(false);
+        var messageType = message.GetType();
+        bool isBroadcast = messageType.IsGenericType &&
+                           messageType.GetGenericTypeDefinition() == typeof(RedisBroadcastMessage<>);
+
+        return Task.FromResult(isBroadcast);
     }
 }
 
@@ -20,6 +31,7 @@ public abstract class BaseRedisBroadcastHandler<T> : BaseRedisBroadcastHandler
     public BaseRedisBaseBroadcastTrigger<T> Trigger { get; }
 
     public override string Channel => Trigger.Channel;
+    public override Type MessageType => typeof(T);
 
     protected BaseRedisBroadcastHandler(BaseRedisBaseBroadcastTrigger<T> trigger,
         Func<BaseBroadcastMessage, Task<bool>> logicFunc) : base(trigger, logicFunc)
@@ -27,20 +39,9 @@ public abstract class BaseRedisBroadcastHandler<T> : BaseRedisBroadcastHandler
         Trigger = trigger;
     }
 
-    public override Task TriggerAsync(string channel, string message)
+    public override Task ParseAndTriggerAsync(string channel, RedisValue value)
     {
-        return Trigger.TriggerAsync(message);
-    }
-
-    public override Task TriggerAsync(RedisBroadcastMessage redisBroadcastMessage)
-    {
-        return Trigger.TriggerAsync(redisBroadcastMessage);
-    }
-
-
-    protected override Task<bool> Validator(BaseBroadcastMessage message) // Pattern Matching
-    {
-        // Only handle messages that match the expected type
-        return Task.FromResult(message is RedisBroadcastMessage<T>);
+        var msg = value.ToRedisBroadcastMessage<T>(channel);
+        return Trigger.TriggerAsync(msg);
     }
 }

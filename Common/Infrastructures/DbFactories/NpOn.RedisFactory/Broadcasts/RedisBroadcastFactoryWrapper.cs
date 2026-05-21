@@ -1,9 +1,14 @@
+using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
 using Common.Extensions.NpOn.BaseDbFactory.FactoryResults;
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
+using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.FactoryResults;
 using Common.Infrastructures.NpOn.RedisExtCm.Commands;
 using Common.Infrastructures.NpOn.RedisExtCm.Connections;
+using Common.Infrastructures.NpOn.RedisExtCm.Results;
 using StackExchange.Redis;
 
 namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
@@ -43,29 +48,20 @@ public class RedisBroadcastFactoryWrapper : IRedisBroadcastFactoryWrapper
 
         // Create Factory
         Factory = new RedisDriverFactory(_connectOption, HandlerCount);
-        var validConnection = Factory.ValidConnections;
-
-        if (validConnection == null || validConnection.Count == 0)
-        {
-            errorString = "No valid connections created by factory.";
-            return false;
-        }
-
-        // Use the first connection to subscribe all handlers (avoid connection escalation)
-        var connection = validConnection.First();
-
+        
         foreach (BaseRedisBroadcastHandler handler in _handlers)
         {
             var channel = handler.Channel;
             Action<RedisChannel, RedisValue> callback = (c, v) =>
             {
-                _ = handler.TriggerAsync(c.ToString(), v.ToString());
+                _ = handler.ParseAndTriggerAsync(c.ToString(), v);
             };
 
             var command = new RedisDbCommand(RedisChannel.Literal(channel), callback);
+            var connection = Factory.GetConnectionAsync().GetAwaiter().GetResult();
             // BuildFactory is synchronous, so we block on the async task
-            var result = connection.Driver.Execute(command).GetAwaiter().GetResult();
-            if (!result.Status)
+            var result = connection?.Driver.Execute(command).GetAwaiter().GetResult();
+            if (!result?.Status ?? false)
             {
                 errorString = $"Failed to subscribe to channel {channel}.";
                 return false;
@@ -132,6 +128,50 @@ public class RedisBroadcastFactoryWrapper : IRedisBroadcastFactoryWrapper
 
         _cts.Dispose(); // dispose the old CTS and prepare a fresh one for potential reuse
         _cts = new CancellationTokenSource();
+    }
+
+    public async Task<INpOnWrapperResult?> PublishAsync(BaseBroadcastMessage message)
+    {
+        var messageType = message.GetType();
+        Type? underlyingType = null;
+        if (messageType.IsGenericType && messageType.GetGenericTypeDefinition() == typeof(RedisBroadcastMessage<>))
+        {
+            underlyingType = messageType.GetGenericArguments().FirstOrDefault();
+        }
+
+        var handler = _handlers.FirstOrDefault(h => h.MessageType == messageType || (underlyingType != null && h.MessageType == underlyingType));
+        if (handler == null)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null))
+                .SetFail(EDbError.CommandNotSupported);
+
+        var channel = handler.Channel;
+        if (string.IsNullOrWhiteSpace(message.Channel))
+        {
+            message.Channel = channel;
+        }
+
+        string? json;
+        if (messageType.IsGenericType && messageType.GetGenericTypeDefinition() == typeof(RedisBroadcastMessage<>))
+            json = message.Message;
+        else
+            json = JsonModeWithCache.ToJson(message);
+
+        var redisValue = (RedisValue)json;
+
+        var connection = Factory?.ValidConnections?.FirstOrDefault();
+        if (connection == null)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null))
+                .SetFail(EDbError.Connection);
+
+        if (connection is not NpOnDbConnection npOnDbConnection
+            || npOnDbConnection.Driver is not RedisDriver redisDriver
+            || redisDriver.GetConnection() is not ConnectionMultiplexer multiplexer)
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null))
+                .SetFail(EDbError.Connection);
+
+        var subscriber = multiplexer.GetSubscriber();
+        var receiverCount = await subscriber.PublishAsync(RedisChannel.Literal(channel), redisValue);
+        return new RedisValueWrapper(new RedisValueContainer(receiverCount));
     }
 
     public void Dispose()

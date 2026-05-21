@@ -6,6 +6,7 @@ namespace Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
 public abstract class BaseBroadcastTrigger
 {
     public event BroadcastEvent? OnMessageReceived;
+    public abstract string Channel { get; }
 
     protected virtual async Task IncomingOnMessageReceived(BaseBroadcastMessage message)
     {

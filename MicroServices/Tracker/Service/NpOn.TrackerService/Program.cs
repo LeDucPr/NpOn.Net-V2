@@ -13,9 +13,12 @@ using NpOn.CommonGrpcCall;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
+using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.BroadcastHandlers;
+using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.Triggers;
 using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 using MicroServices.Tracker.StorageAdapter.NpOn.ITrackerStorageAdapter;
 using MicroServices.Tracker.StorageAdapter.NpOn.TrackerStorageAdapter;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
 
@@ -55,9 +58,14 @@ public sealed class Program : HttpCommonProgram
             services.AddClickHouse(poolStore: store);
 
         if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
+        {
             services
-                // .AddRedis()
-                .AddRedisBroadcast();
+                .AddRedis()
+                .AddSingleton<WarningBroadcastTrigger>()
+                .AddRedisBroadcast(connectionString: null,
+                    typeof(WarningBroadcastHandler)
+                );
+        }
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

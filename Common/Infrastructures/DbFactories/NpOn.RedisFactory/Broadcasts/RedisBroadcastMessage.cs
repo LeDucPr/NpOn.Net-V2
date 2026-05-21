@@ -3,14 +3,8 @@ using Common.Extensions.NpOn.CommonMode;
 
 namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 
-public abstract class RedisBroadcastMessage : BaseBroadcastMessage
-{
-    // Sửa chính tả Chanel -> Channel
-    public string? Channel { get; set; } 
-    public virtual string? Message { get; set; }
-}
 
-public class RedisBroadcastMessage<T> : RedisBroadcastMessage
+public class RedisBroadcastMessage<T> : BaseBroadcastMessage
 {
     private T? _value;
     private bool _isParsed;
@@ -34,6 +28,8 @@ public class RedisBroadcastMessage<T> : RedisBroadcastMessage
         }
     }
 
+    public override required string Channel { get; set; }
+
     public override string? Message
     {
         get => base.Message;
@@ -48,5 +44,17 @@ public class RedisBroadcastMessage<T> : RedisBroadcastMessage
     {
         _value = default;
         _isParsed = false;
+    }
+}
+
+public static class RedisBroadcastMessageExtensions
+{
+    public static RedisBroadcastMessage<T> ToRedisBroadcastMessage<T>(this StackExchange.Redis.RedisValue value, string channel)
+    {
+        return new RedisBroadcastMessage<T>
+        {
+            Channel = channel,
+            Message = value.HasValue ? value.ToString() : null
+        };
     }
 }

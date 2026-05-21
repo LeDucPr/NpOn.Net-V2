@@ -18,6 +18,8 @@ public class RedisDriver : NpOnDbDriver
 
     public override bool IsValidSession => _connection is { IsConnected: true };
 
+    public override object? GetConnection() => _connection;
+
     public RedisDriver(INpOnConnectOption option) : base(option)
     {
     }
@@ -65,10 +67,10 @@ public class RedisDriver : NpOnDbDriver
 
         try
         {
-            IDatabase db; 
+            IDatabase db;
             if (Option.DatabaseIndex == null)
                 db = _connection.GetDatabase();
-            else 
+            else
                 db = _connection.GetDatabase(Option.DatabaseIndex.AsDefaultInt());
             return redisCommand.CommandTypeTypeType switch
             {
@@ -125,9 +127,10 @@ public class RedisDriver : NpOnDbDriver
 
         var subscriber = _connection.GetSubscriber();
         var receiverCount = await subscriber.PublishAsync(redisCommand.Channel, redisCommand.Value);
-        return new RedisValueWrapper(new RedisValueContainer((RedisValue)receiverCount));
+        return new RedisValueWrapper(new RedisValueContainer( /*(RedisValue)*/receiverCount));
     }
 
+    // for subscribe (always open connection)
     private async Task<INpOnWrapperResult> HandleSubscribe(RedisDbCommand redisCommand)
     {
         if (_connection == null)

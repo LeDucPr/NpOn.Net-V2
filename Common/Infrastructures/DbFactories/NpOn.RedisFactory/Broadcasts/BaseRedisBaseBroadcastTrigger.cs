@@ -4,15 +4,7 @@ namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 
 public abstract class BaseRedisBaseBroadcastTrigger<T> : BaseBroadcastTrigger
 {
-    public abstract string Channel { get; }
-
-    public Task TriggerAsync(string message)
-    {
-        var msg = new RedisBroadcastMessage<T> { Channel = Channel, Message = message };
-        return IncomingOnMessageReceived(msg);
-    }
-
-    public Task TriggerAsync(RedisBroadcastMessage msg)
+    public Task TriggerAsync(RedisBroadcastMessage<T> msg)
     {
         if (string.IsNullOrWhiteSpace(msg.Channel))
             msg.Channel = Channel;
