@@ -13,7 +13,7 @@ public class WarningBroadcastHandler(
     async (msg) =>
     {
         var warningMsg = msg as RedisBroadcastMessage<WarningRedisBroadCastMessage>;
-        if (warningMsg?.Value == null) 
+        if (warningMsg?.Value == null)
             return false;
 
         using var scope = serviceProvider.CreateScope();
@@ -25,7 +25,7 @@ public class WarningBroadcastHandler(
             Source = warningMsg.Value.ServiceName ?? "Unknown",
             Level = warningMsg.Value.TrackerLogLevel,
             EventDate = warningMsg.Value.WarningDateUtc ?? DateTime.UtcNow,
-            TrackerLogTypes = Array.Empty<ETrackerLogType>()
+            TrackerLogTypes = [ETrackerLogType.EventLog]
         };
 
         var response = await trackerLogService.PushLogs([command]);
