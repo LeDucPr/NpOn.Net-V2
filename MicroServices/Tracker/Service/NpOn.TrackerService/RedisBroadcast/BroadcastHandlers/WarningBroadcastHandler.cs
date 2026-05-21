@@ -1,9 +1,8 @@
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
-using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.Messages;
-using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.Triggers;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
 using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
+using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.BroadcastHandlers;
 
@@ -14,7 +13,8 @@ public class WarningBroadcastHandler(
     async (msg) =>
     {
         var warningMsg = msg as RedisBroadcastMessage<WarningRedisBroadCastMessage>;
-        if (warningMsg?.Value == null) return false;
+        if (warningMsg?.Value == null) 
+            return false;
 
         using var scope = serviceProvider.CreateScope();
         var trackerLogService = scope.ServiceProvider.GetRequiredService<ITrackerLogService>();

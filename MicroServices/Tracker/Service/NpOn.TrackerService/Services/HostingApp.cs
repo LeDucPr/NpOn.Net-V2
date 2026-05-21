@@ -4,7 +4,7 @@ using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
-using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.Messages;
+using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 using NpOn.TrackerConstant.Broadcasts;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
@@ -54,7 +54,7 @@ public class HostingApp(
         var publishActRs = await redisBroadcastFactoryWrapper.PublishAsync(redisMsg);
         if (publishActRs?.Status ?? false)
             logger.LogInformation("Successfully broadcasted start message via Redis Pub/Sub.");
-        else 
+        else
             logger.LogWarning("Failed to broadcast start message via Redis Pub/Sub.");
     }
 

@@ -14,11 +14,11 @@ using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.BroadcastHandlers;
-using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.Triggers;
 using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 using MicroServices.Tracker.StorageAdapter.NpOn.ITrackerStorageAdapter;
 using MicroServices.Tracker.StorageAdapter.NpOn.TrackerStorageAdapter;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
+using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
 
