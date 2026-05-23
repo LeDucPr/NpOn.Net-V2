@@ -16,6 +16,8 @@ public class TrackerLogService(
 {
     public async Task<CommonResponse> PushLogs(TrackerLogAddCommand[]? commands)
     {
+        TrackerLogMetrics.TrackPushLogsRequest(commands?.Length ?? 0);
+
         return await CommonProcess(async (response) =>
         {
             if (commands is not { Length : > 0 })
@@ -27,10 +29,12 @@ public class TrackerLogService(
             IEnumerable<SystemLog> systemLogs = commands.Select(x => new SystemLog(x));
             if (!(await clickHouseFactoryWrapper.Add(systemLogs))?.Status ?? false)
             {
+                TrackerLogMetrics.TrackPushLogsFailed(commands.Length);
                 response.SetFail("Push logs to ClickHouse failed");
                 return;
             }
 
+            TrackerLogMetrics.TrackPushLogsSuccess(commands.Length);
             response.SetSuccess();
         });
     }

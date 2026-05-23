@@ -86,6 +86,8 @@ public sealed class Program : HttpCommonProgram
         // Add Map Grpc Service
         app.MapGrpcService<TrackerLogService>();
 
+        app.MapGet("/metrics", () => Results.Text(TrackerLogMetrics.Collect(), "text/plain; version=0.0.4"));
+
         // // Initialize ClickHouse Schema (static func)
         // Task.Run(async () => {
         //     using var scope = app.Services.CreateScope();
