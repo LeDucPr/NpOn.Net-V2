@@ -4,7 +4,7 @@ using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
 
 namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory;
 
-public static class TableNeo4jExtensions
+public static class TableNeo4JExtensions
 {
     private static List<string> GetPrimaryKeyColumnNames(IReadOnlyDictionary<string, INpOnCell> row)
     {
@@ -17,7 +17,7 @@ public static class TableNeo4jExtensions
         return pkCols;
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsCreate(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsCreate(
         this INpOnTableWrapper table, string tableName)
     {
         if (table.RowWrappers is not { Count: > 0 } rowWrappers)
@@ -35,7 +35,7 @@ public static class TableNeo4jExtensions
             var props = new Dictionary<string, object?>();
             foreach (var kvp in row)
             {
-                props[kvp.Key] = Neo4jUtils.NormalizeToCypherValue(kvp.Value?.ValueAsObject);
+                props[kvp.Key] = Neo4JUtils.NormalizeToCypherValue(kvp.Value.ValueAsObject);
             }
             propsList.Add(props);
         }
@@ -46,7 +46,7 @@ public static class TableNeo4jExtensions
         return (cypher.ToString(), parameters);
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsUpdate(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsUpdate(
         this INpOnTableWrapper table, string tableName)
     {
         if (table.RowWrappers is not { Count: > 0 } rowWrappers)
@@ -73,11 +73,11 @@ public static class TableNeo4jExtensions
             {
                 if (pkColumnNames.Contains(kvp.Key))
                 {
-                    pks[kvp.Key] = Neo4jUtils.NormalizeToCypherValue(kvp.Value?.ValueAsObject);
+                    pks[kvp.Key] = Neo4JUtils.NormalizeToCypherValue(kvp.Value.ValueAsObject);
                 }
                 else
                 {
-                    props[kvp.Key] = Neo4jUtils.NormalizeToCypherValue(kvp.Value?.ValueAsObject);
+                    props[kvp.Key] = Neo4JUtils.NormalizeToCypherValue(kvp.Value.ValueAsObject);
                 }
             }
 
@@ -93,7 +93,7 @@ public static class TableNeo4jExtensions
         return (cypher.ToString(), parameters);
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsMerge(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsMerge(
         this INpOnTableWrapper table, string tableName)
     {
         if (table.RowWrappers is not { Count: > 0 } rowWrappers)
@@ -118,9 +118,9 @@ public static class TableNeo4jExtensions
             foreach (var kvp in row)
             {
                 if (pkColumnNames.Contains(kvp.Key))
-                    pks[kvp.Key] = Neo4jUtils.NormalizeToCypherValue(kvp.Value?.ValueAsObject);
+                    pks[kvp.Key] = Neo4JUtils.NormalizeToCypherValue(kvp.Value.ValueAsObject);
                 else
-                    props[kvp.Key] = Neo4jUtils.NormalizeToCypherValue(kvp.Value?.ValueAsObject);
+                    props[kvp.Key] = Neo4JUtils.NormalizeToCypherValue(kvp.Value.ValueAsObject);
             }
             mergesList.Add(new Dictionary<string, object?> { ["pks"] = pks, ["props"] = props });
         }
@@ -132,7 +132,7 @@ public static class TableNeo4jExtensions
         return (cypher.ToString(), parameters);
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsDelete(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsDelete(
         this INpOnTableWrapper table, string tableName)
     {
         if (table.RowWrappers is not { Count: > 0 } rowWrappers)
@@ -154,7 +154,7 @@ public static class TableNeo4jExtensions
             var pks = new Dictionary<string, object?>();
             foreach (var pk in pkColumnNames)
             {
-                pks[pk] = Neo4jUtils.NormalizeToCypherValue(row[pk]?.ValueAsObject);
+                pks[pk] = Neo4JUtils.NormalizeToCypherValue(row[pk].ValueAsObject);
             }
             deletesList.Add(pks);
         }

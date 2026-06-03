@@ -7,9 +7,9 @@ using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
 
 namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory;
 
-public static class BaseDomainNeo4jExtensions
+public static class BaseDomainNeo4JExtensions
 {
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsCreate
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsCreate
         (this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
     {
         if (domains == null || domains.Count == 0)
@@ -37,7 +37,7 @@ public static class BaseDomainNeo4jExtensions
                 if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, memberType)))
                     continue;
 
-                props[columnName] = Neo4jUtils.NormalizeToCypherValue(raw);
+                props[columnName] = Neo4JUtils.NormalizeToCypherValue(raw);
             }
             if (props.Count > 0)
             {
@@ -56,7 +56,7 @@ public static class BaseDomainNeo4jExtensions
         return (cypher.ToString(), parameters);
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsUpdate(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsUpdate(
         this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
     {
         if (domains == null || domains.Count == 0)
@@ -89,13 +89,13 @@ public static class BaseDomainNeo4jExtensions
                 if (pkMembers.Any(pk => pk.ColumnName == colName))
                 {
                     if (raw == null) throw new Exception("Primary key value cannot be null.");
-                    pks[colName] = Neo4jUtils.NormalizeToCypherValue(raw);
+                    pks[colName] = Neo4JUtils.NormalizeToCypherValue(raw);
                 }
                 else
                 {
                     if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, memberType)))
                         continue;
-                    props[colName] = Neo4jUtils.NormalizeToCypherValue(raw);
+                    props[colName] = Neo4JUtils.NormalizeToCypherValue(raw);
                 }
             }
 
@@ -117,7 +117,7 @@ public static class BaseDomainNeo4jExtensions
         return (cypher.ToString(), parameters);
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsMerge(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsMerge(
         this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
     {
         if (domains == null || domains.Count == 0)
@@ -147,11 +147,11 @@ public static class BaseDomainNeo4jExtensions
                 var raw = GetMemberValue(member, domains[i]);
                 if (pkMembers.Any(pk => pk.ColumnName == colName))
                 {
-                    pks[colName] = Neo4jUtils.NormalizeToCypherValue(raw);
+                    pks[colName] = Neo4JUtils.NormalizeToCypherValue(raw);
                 }
                 else if (isUseDefaultWhenNull || (raw != null && !IsDefaultValue(raw, memberType)))
                 {
-                    allProps[colName] = Neo4jUtils.NormalizeToCypherValue(raw);
+                    allProps[colName] = Neo4JUtils.NormalizeToCypherValue(raw);
                 }
             }
 
@@ -168,7 +168,7 @@ public static class BaseDomainNeo4jExtensions
         return (cypher.ToString(), parameters);
     }
 
-    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4jParamsDelete(
+    public static (string CommandText, Dictionary<string, object?> Parameters) ToNeo4JParamsDelete(
         this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
     {
         if (domains == null || domains.Count == 0)
@@ -196,7 +196,7 @@ public static class BaseDomainNeo4jExtensions
                 var raw = GetMemberValue(pk.Member, domain);
                 if (raw != null)
                 {
-                    pks[pk.ColumnName] = Neo4jUtils.NormalizeToCypherValue(raw);
+                    pks[pk.ColumnName] = Neo4JUtils.NormalizeToCypherValue(raw);
                 }
             }
             if (pks.Count == pkMembers.Count)

@@ -3,15 +3,15 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
 namespace Common.Infrastructures.NpOn.Neo4jExtCm.Cypher;
 
-public class Neo4jCommand : NpOnDbCommand
+public class Neo4JCommand : NpOnDbCommand
 {
-    private Neo4jCommand(string? commandText)
+    private Neo4JCommand(string? commandText)
         : base(EDb.Neo4j, commandText)
     {
     }
 
-    public static Neo4jCommand Create(string? commandText)
+    public static Neo4JCommand Create(string? commandText)
     {
-        return new Neo4jCommand(commandText);
+        return new Neo4JCommand(commandText);
     }
 }

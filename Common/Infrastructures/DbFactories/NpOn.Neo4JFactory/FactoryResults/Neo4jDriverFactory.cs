@@ -22,12 +22,12 @@ public class Neo4jDriverFactory : BaseDbDriverFactory
             throw new InvalidOperationException("Connection options have not been set or are invalid.");
         }
 
-        if (option is not Neo4jConnectOption neo4jOptions)
+        if (option is not Neo4JConnectOption neo4jOptions)
         {
             throw new ArgumentException("Invalid options for Neo4j.", nameof(option));
         }
 
-        INpOnDbDriver driver = new Neo4jDriver(neo4jOptions);
-        return new NpOnDbConnection<Neo4jDriver>(driver);
+        INpOnDbDriver driver = new Neo4JDriver(neo4jOptions);
+        return new NpOnDbConnection<Neo4JDriver>(driver);
     }
 }

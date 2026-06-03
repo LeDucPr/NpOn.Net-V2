@@ -4,11 +4,11 @@ using Neo4j.Driver;
 
 namespace Common.Infrastructures.NpOn.Neo4jExtCm.Results;
 
-public class Neo4jRowWrapper : NpOnWrapperResult<IRecord, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
+public class Neo4JRowWrapper : NpOnWrapperResult<IRecord, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
     private readonly IReadOnlyList<string> _keys;
 
-    public Neo4jRowWrapper(IRecord parent, IReadOnlyList<string> keys) : base(parent)
+    public Neo4JRowWrapper(IRecord parent, IReadOnlyList<string> keys) : base(parent)
     {
         _keys = keys;
     }
@@ -25,8 +25,8 @@ public class Neo4jRowWrapper : NpOnWrapperResult<IRecord, IReadOnlyDictionary<st
             
             if (hasValue && rawObject != null)
             {
-                normalizedValue = Neo4jUtils.NormalizeNeo4jValue(rawObject);
-                dotNetType = Neo4jUtils.InferDotNetType(rawObject);
+                normalizedValue = Neo4JUtils.NormalizeNeo4JValue(rawObject);
+                dotNetType = Neo4JUtils.InferDotNetType(rawObject);
             }
 
             var genericCellType = typeof(NpOnCell<>).MakeGenericType(dotNetType);
@@ -43,13 +43,13 @@ public class Neo4jRowWrapper : NpOnWrapperResult<IRecord, IReadOnlyDictionary<st
     public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
 }
 
-public class Neo4jColumnWrapper : NpOnWrapperResult<IReadOnlyList<IRecord>, IReadOnlyDictionary<int, INpOnCell>>,
+public class Neo4JColumnWrapper : NpOnWrapperResult<IReadOnlyList<IRecord>, IReadOnlyDictionary<int, INpOnCell>>,
     INpOnColumnWrapper
 {
     private readonly string _columnName;
     private readonly IReadOnlyList<string> _allKeys;
 
-    public Neo4jColumnWrapper(IReadOnlyList<IRecord> parent, string columnName, IReadOnlyList<string> allKeys) : base(parent)
+    public Neo4JColumnWrapper(IReadOnlyList<IRecord> parent, string columnName, IReadOnlyList<string> allKeys) : base(parent)
     {
         _columnName = columnName;
         _allKeys = allKeys;
@@ -62,7 +62,7 @@ public class Neo4jColumnWrapper : NpOnWrapperResult<IReadOnlyList<IRecord>, IRea
         for (int i = 0; i < Parent.Count; i++)
         {
             var rowRecord = Parent[i];
-            var rowWrapper = new Neo4jRowWrapper(rowRecord, _allKeys);
+            var rowWrapper = new Neo4JRowWrapper(rowRecord, _allKeys);
             var cell = rowWrapper.Result[_columnName];
             dictionary.Add(i, cell);
         }
@@ -73,36 +73,36 @@ public class Neo4jColumnWrapper : NpOnWrapperResult<IReadOnlyList<IRecord>, IRea
     public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
 }
 
-public class Neo4jColumnCollection : IReadOnlyDictionary<string, Neo4jColumnWrapper>,
-    IReadOnlyDictionary<int, Neo4jColumnWrapper>, INpOnCollectionWrapper
+public class Neo4JColumnCollection : IReadOnlyDictionary<string, Neo4JColumnWrapper>,
+    IReadOnlyDictionary<int, Neo4JColumnWrapper>, INpOnCollectionWrapper
 {
-    private readonly List<Neo4jColumnWrapper> _columnWrappers;
+    private readonly List<Neo4JColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public Neo4jColumnCollection(IReadOnlyList<IRecord> allRows, IReadOnlyList<string> allKeys)
+    public Neo4JColumnCollection(IReadOnlyList<IRecord> allRows, IReadOnlyList<string> allKeys)
     {
         var nameToIndexMap = new Dictionary<string, int>();
-        _columnWrappers = new List<Neo4jColumnWrapper>(allKeys.Count);
+        _columnWrappers = new List<Neo4JColumnWrapper>(allKeys.Count);
 
         for (int i = 0; i < allKeys.Count; i++)
         {
             var key = allKeys[i];
             nameToIndexMap.Add(key, i);
-            _columnWrappers.Add(new Neo4jColumnWrapper(allRows, key, allKeys));
+            _columnWrappers.Add(new Neo4JColumnWrapper(allRows, key, allKeys));
         }
 
         _nameToIndexMap = nameToIndexMap;
     }
 
-    public Neo4jColumnWrapper this[string columnName] => _columnWrappers[_nameToIndexMap[columnName]];
-    public Neo4jColumnWrapper this[int columnIndex] => _columnWrappers[columnIndex];
+    public Neo4JColumnWrapper this[string columnName] => _columnWrappers[_nameToIndexMap[columnName]];
+    public Neo4JColumnWrapper this[int columnIndex] => _columnWrappers[columnIndex];
 
     public IEnumerable<string> Keys => _nameToIndexMap.Keys;
-    public IEnumerable<Neo4jColumnWrapper> Values => _columnWrappers;
+    public IEnumerable<Neo4JColumnWrapper> Values => _columnWrappers;
     public int Count => _columnWrappers.Count;
     public bool ContainsKey(string key) => _nameToIndexMap.ContainsKey(key);
 
-    public bool TryGetValue(string key, out Neo4jColumnWrapper value)
+    public bool TryGetValue(string key, out Neo4JColumnWrapper value)
     {
         if (_nameToIndexMap.TryGetValue(key, out int index))
         {
@@ -114,19 +114,19 @@ public class Neo4jColumnCollection : IReadOnlyDictionary<string, Neo4jColumnWrap
         return false;
     }
 
-    public IEnumerator<KeyValuePair<string, Neo4jColumnWrapper>> GetEnumerator()
+    public IEnumerator<KeyValuePair<string, Neo4JColumnWrapper>> GetEnumerator()
     {
         foreach (var pair in _nameToIndexMap)
         {
-            yield return new KeyValuePair<string, Neo4jColumnWrapper>(pair.Key, _columnWrappers[pair.Value]);
+            yield return new KeyValuePair<string, Neo4JColumnWrapper>(pair.Key, _columnWrappers[pair.Value]);
         }
     }
 
-    IEnumerable<int> IReadOnlyDictionary<int, Neo4jColumnWrapper>.Keys => Enumerable.Range(0, Count);
+    IEnumerable<int> IReadOnlyDictionary<int, Neo4JColumnWrapper>.Keys => Enumerable.Range(0, Count);
 
-    bool IReadOnlyDictionary<int, Neo4jColumnWrapper>.ContainsKey(int key) => key >= 0 && key < Count;
+    bool IReadOnlyDictionary<int, Neo4JColumnWrapper>.ContainsKey(int key) => key >= 0 && key < Count;
 
-    bool IReadOnlyDictionary<int, Neo4jColumnWrapper>.TryGetValue(int key, out Neo4jColumnWrapper value)
+    bool IReadOnlyDictionary<int, Neo4JColumnWrapper>.TryGetValue(int key, out Neo4JColumnWrapper value)
     {
         if (key >= 0 && key < Count)
         {
@@ -138,12 +138,12 @@ public class Neo4jColumnCollection : IReadOnlyDictionary<string, Neo4jColumnWrap
         return false;
     }
 
-    IEnumerator<KeyValuePair<int, Neo4jColumnWrapper>> IEnumerable<KeyValuePair<int, Neo4jColumnWrapper>>.
+    IEnumerator<KeyValuePair<int, Neo4JColumnWrapper>> IEnumerable<KeyValuePair<int, Neo4JColumnWrapper>>.
         GetEnumerator()
     {
         for (int i = 0; i < Count; i++)
         {
-            yield return new KeyValuePair<int, Neo4jColumnWrapper>(i, _columnWrappers[i]);
+            yield return new KeyValuePair<int, Neo4JColumnWrapper>(i, _columnWrappers[i]);
         }
     }
 
@@ -169,31 +169,31 @@ public class Neo4jColumnCollection : IReadOnlyDictionary<string, Neo4jColumnWrap
     }
 }
 
-public class Neo4jResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
+public class Neo4JResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     private readonly IReadOnlyList<IRecord> _allRecords;
     private readonly IReadOnlyList<string> _keys;
 
-    public IReadOnlyDictionary<int, Neo4jRowWrapper> Rows { get; }
-    public Neo4jColumnCollection Columns { get; }
+    public IReadOnlyDictionary<int, Neo4JRowWrapper> Rows { get; }
+    public Neo4JColumnCollection Columns { get; }
 
-    public Neo4jResultSetWrapper() 
+    public Neo4JResultSetWrapper() 
     {
         _allRecords = new List<IRecord>();
         _keys = new List<string>();
-        Rows = new Dictionary<int, Neo4jRowWrapper>();
-        Columns = new Neo4jColumnCollection(new List<IRecord>(), new List<string>());
+        Rows = new Dictionary<int, Neo4JRowWrapper>();
+        Columns = new Neo4JColumnCollection(new List<IRecord>(), new List<string>());
     }
 
-    public Neo4jResultSetWrapper(List<IRecord>? records)
+    public Neo4JResultSetWrapper(List<IRecord>? records)
     {
         if (records == null)
         {
             SetFail(EDbError.Neo4jRecordNull);
             _allRecords = new List<IRecord>();
             _keys = new List<string>();
-            Rows = new Dictionary<int, Neo4jRowWrapper>();
-            Columns = new Neo4jColumnCollection(new List<IRecord>(), new List<string>());
+            Rows = new Dictionary<int, Neo4JRowWrapper>();
+            Columns = new Neo4JColumnCollection(new List<IRecord>(), new List<string>());
             return;
         }
 
@@ -204,10 +204,10 @@ public class Neo4jResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
             .Select((doc, index) => new { doc, index })
             .ToDictionary(
                 item => item.index,
-                item => new Neo4jRowWrapper(item.doc, _keys)
+                item => new Neo4JRowWrapper(item.doc, _keys)
             );
 
-        Columns = new Neo4jColumnCollection(_allRecords, _keys);
+        Columns = new Neo4JColumnCollection(_allRecords, _keys);
         SetSuccess();
     }
 

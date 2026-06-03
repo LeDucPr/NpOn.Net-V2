@@ -3,16 +3,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.Neo4jExtCm.Connections;
 
-public class Neo4jConnectOption : DbNpOnConnectOption<Neo4jDriver>
+public class Neo4JConnectOption : DbNpOnConnectOption<Neo4JDriver>
 {
-    public string DatabaseName { get; private set; } = "neo4j";
-
-    public Neo4jConnectOption SetNeo4jDatabase(string databaseName)
-    {
-        DatabaseName = databaseName;
-        return this;
-    }
-
     public override bool IsConnectValid()
     {
         try
@@ -40,8 +32,8 @@ public class Neo4jConnectOption : DbNpOnConnectOption<Neo4jDriver>
         return propertyName switch
         {
             nameof(SetConnectionString) => !string.IsNullOrWhiteSpace(ConnectionString),
-            nameof(SetNeo4jDatabase)    => !string.IsNullOrWhiteSpace(DatabaseName),
-            _                           => false
+            nameof(SetDatabaseName) => !string.IsNullOrWhiteSpace(DatabaseName),
+            _ => false
         };
     }
 }

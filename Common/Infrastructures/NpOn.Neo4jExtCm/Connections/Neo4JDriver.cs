@@ -1,30 +1,28 @@
 using Common.Extensions.NpOn.CommonDb.Connections;
-using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Common.Extensions.NpOn.ICommonDb.Transactions;
 using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
 using Neo4j.Driver;
 
 namespace Common.Infrastructures.NpOn.Neo4jExtCm.Connections;
 
-public class Neo4jDriver : NpOnDbDriver
+public class Neo4JDriver : NpOnDbDriver
 {
     private IDriver? _driver;
-    private string _databaseName = "neo4j";
+    private readonly string _databaseName = "neo4j";
 
     public sealed override string Name { get; set; } = "Neo4j";
     public sealed override string Version { get; set; } = "Unknown";
 
     public override bool IsValidSession => _driver != null;
 
-    public Neo4jDriver(INpOnConnectOption option) : base(option)
+    public Neo4JDriver(INpOnConnectOption option) : base(option)
     {
-        if (option is Neo4jConnectOption neo4jOption)
+        if (option is Neo4JConnectOption neo4JOption)
         {
-            _databaseName = neo4jOption.DatabaseName;
+            _databaseName = neo4JOption.DatabaseName;
         }
     }
 
@@ -79,22 +77,22 @@ public class Neo4jDriver : NpOnDbDriver
     public override async Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         if (!IsValidSession || _driver == null)
-            return new Neo4jResultSetWrapper().SetFail(EDbError.Session);
+            return new Neo4JResultSetWrapper().SetFail(EDbError.Session);
 
         if (command is not INpOnDbCommand execCommand || string.IsNullOrWhiteSpace(execCommand.CommandText))
-            return new Neo4jResultSetWrapper().SetFail(EDbError.Command);
+            return new Neo4JResultSetWrapper().SetFail(EDbError.Command);
 
         var session = _driver.AsyncSession(o => o.WithDatabase(_databaseName));
         try
         {
-            var parameters = BuildNeo4jParameters(execCommand.Parameters);
+            var parameters = BuildNeo4JParameters(execCommand.Parameters);
             var result = await session.RunAsync(execCommand.CommandText, parameters);
             var records = await result.ToListAsync();
-            return new Neo4jResultSetWrapper(records);
+            return new Neo4JResultSetWrapper(records);
         }
         catch (Exception ex)
         {
-            return new Neo4jResultSetWrapper().SetFail(ex);
+            return new Neo4JResultSetWrapper().SetFail(ex);
         }
         finally
         {
@@ -113,24 +111,25 @@ public class Neo4jDriver : NpOnDbDriver
         var session = _driver.AsyncSession(o => o.WithDatabase(_databaseName));
         var results = new Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>();
 
+        IBaseNpOnDbCommand[] baseNpOnDbCommands = commands as IBaseNpOnDbCommand[] ?? commands.ToArray();
         try
         {
             var tx = await session.BeginTransactionAsync();
             try
             {
-                foreach (var command in commands)
+                foreach (var command in baseNpOnDbCommands)
                 {
                     if (command is not INpOnDbCommand execCommand || string.IsNullOrWhiteSpace(execCommand.CommandText))
                     {
-                        var failResult = new Neo4jResultSetWrapper().SetFail(EDbError.Command);
+                        var failResult = new Neo4JResultSetWrapper().SetFail(EDbError.Command);
                         results.Add(command, failResult);
                         break;
                     }
 
-                    var parameters = BuildNeo4jParameters(execCommand.Parameters);
+                    var parameters = BuildNeo4JParameters(execCommand.Parameters);
                     var cursor = await tx.RunAsync(execCommand.CommandText, parameters);
                     var records = await cursor.ToListAsync();
-                    var wrapperResult = new Neo4jResultSetWrapper(records);
+                    var wrapperResult = new Neo4JResultSetWrapper(records);
                     results.Add(command, wrapperResult);
 
                     if (!wrapperResult.Status) break;
@@ -151,8 +150,8 @@ public class Neo4jDriver : NpOnDbDriver
         {
             if (results.Count == 0)
             {
-                var failResult = new Neo4jResultSetWrapper().SetFail(ex);
-                foreach (var cmd in commands)
+                var failResult = new Neo4JResultSetWrapper().SetFail(ex);
+                foreach (var cmd in baseNpOnDbCommands)
                 {
                     results.TryAdd(cmd, failResult);
                 }
@@ -167,15 +166,15 @@ public class Neo4jDriver : NpOnDbDriver
         return results;
     }
 
-    private static Dictionary<string, object?> BuildNeo4jParameters(List<INpOnDbCommandParam>? parameters)
+    private static Dictionary<string, object?> BuildNeo4JParameters(List<INpOnDbCommandParam>? parameters)
     {
         var dict = new Dictionary<string, object?>();
         if (parameters == null) return dict;
 
         foreach (var param in parameters)
         {
-            var name = param.ParamName?.TrimStart('@', '$') ?? string.Empty;
-            dict[name] = Neo4jUtils.NormalizeToCypherValue(param.ParamValue);
+            var name = param.ParamName.TrimStart('@', '$');
+            dict[name] = Neo4JUtils.NormalizeToCypherValue(param.ParamValue);
         }
 
         return dict;

@@ -6,7 +6,7 @@ using Common.Extensions.NpOn.ICommonDb.DbResults;
 
 namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory;
 
-public interface INeo4jFactoryWrapper : IDbFactoryWrapper, IBaseDbCommandBuilder
+public interface INeo4JFactoryWrapper : IDbFactoryWrapper, IBaseDbCommandBuilder
 {
     Task<INpOnWrapperResult?> Add<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false) where T : BaseDomain;
     Task<INpOnWrapperResult?> Update<T>(IEnumerable<T> domains, bool isUseDefaultWhenNull = false) where T : BaseDomain;

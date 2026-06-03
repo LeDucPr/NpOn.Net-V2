@@ -3,9 +3,9 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
 namespace Common.Infrastructures.NpOn.Neo4jExtCm.Results;
 
-public static class Neo4jUtils
+public static class Neo4JUtils
 {
-    public static object? NormalizeNeo4jValue(object? value)
+    public static object? NormalizeNeo4JValue(object? value)
     {
         if (value == null) return null;
 
@@ -30,8 +30,8 @@ public static class Neo4jUtils
             Neo4j.Driver.Duration dur => TimeSpan.FromSeconds(
                 dur.Seconds + dur.Months * 30.436875 * 86400 + dur.Days * 86400)
                 + TimeSpan.FromTicks(dur.Nanos / 100),
-            IList<object> list => list.Select(NormalizeNeo4jValue).ToList(),
-            IDictionary<string, object> map => map.ToDictionary(kv => kv.Key, kv => NormalizeNeo4jValue(kv.Value)),
+            IList<object> list => list.Select(NormalizeNeo4JValue).ToList(),
+            IDictionary<string, object> map => map.ToDictionary(kv => kv.Key, kv => NormalizeNeo4JValue(kv.Value)),
             _ => value
         };
     }
@@ -43,7 +43,7 @@ public static class Neo4jUtils
         dict["_neo4j_labels"] = node.Labels.ToList();
         foreach (var prop in node.Properties)
         {
-            dict[prop.Key] = NormalizeNeo4jValue(prop.Value);
+            dict[prop.Key] = NormalizeNeo4JValue(prop.Value);
         }
         return dict;
     }
@@ -59,7 +59,7 @@ public static class Neo4jUtils
         };
         foreach (var prop in rel.Properties)
         {
-            dict[prop.Key] = NormalizeNeo4jValue(prop.Value);
+            dict[prop.Key] = NormalizeNeo4JValue(prop.Value);
         }
         return dict;
     }
@@ -92,7 +92,7 @@ public static class Neo4jUtils
         return raw;
     }
 
-    public static ENeo4jDbType GetENeo4jDbType(Type type)
+    public static ENeo4jDbType GetENeo4JDbType(Type type)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
         if (underlyingType.IsEnum)
