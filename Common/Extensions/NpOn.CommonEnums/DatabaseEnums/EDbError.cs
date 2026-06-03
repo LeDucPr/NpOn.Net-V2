@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
@@ -94,6 +94,12 @@ public enum EDbError
     
     [Display(Name = "MySql DataTable (Result is null)")]
     MySqlDataTableNull,
+
+    [Display(Name = "Neo4j Record (Result is null)")]
+    Neo4jRecordNull,
+
+    [Display(Name = "Neo4j Cypher Execute Error")]
+    Neo4jCypherExecute,
 
     #endregion Result
 }

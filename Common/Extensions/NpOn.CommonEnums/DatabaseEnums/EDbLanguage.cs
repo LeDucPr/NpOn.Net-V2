@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
@@ -9,4 +9,5 @@ public enum EDbLanguage //: Int32
     [Display(Name = "Cql")] Cql = 1 << 2,
     [Display(Name = "Bson")] Bson = 1 << 3,
     [Display(Name = "Json")] Json = 1 << 4,
+    [Display(Name = "Cypher")] Cypher = 1 << 5, // Neo4j / Memgraph / openCypher compatible
 }
