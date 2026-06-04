@@ -1,6 +1,6 @@
 using System.Text;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
+using Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 
 namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory;
 

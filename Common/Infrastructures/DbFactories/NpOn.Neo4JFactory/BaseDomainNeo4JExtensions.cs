@@ -3,7 +3,7 @@ using System.Text;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
 using Common.Extensions.NpOn.HandleFlow.Attributes;
-using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
+using Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 
 namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory;
 

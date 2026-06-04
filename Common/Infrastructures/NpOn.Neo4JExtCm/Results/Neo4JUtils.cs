@@ -1,7 +1,7 @@
 using System.Data;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
-namespace Common.Infrastructures.NpOn.Neo4jExtCm.Results;
+namespace Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 
 public static class Neo4JUtils
 {

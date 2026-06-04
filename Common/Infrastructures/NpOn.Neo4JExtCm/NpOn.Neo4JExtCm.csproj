@@ -4,16 +4,17 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Common.Infrastructures.NpOn.Neo4jExtCm</RootNamespace>
+        <RootNamespace>Common.Infrastructures.NpOn.Neo4JExtCm</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-        <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
-        <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj"/>
-        <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
         <!-- Neo4j .NET Driver — openCypher compatible, also works with Memgraph -->
         <PackageReference Include="Neo4j.Driver" Version="5.28.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
     </ItemGroup>
 
 </Project>

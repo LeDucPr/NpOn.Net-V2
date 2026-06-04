@@ -3,10 +3,10 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
+using Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 using Neo4j.Driver;
 
-namespace Common.Infrastructures.NpOn.Neo4jExtCm.Connections;
+namespace Common.Infrastructures.NpOn.Neo4JExtCm.Connections;
 
 public class Neo4JDriver : NpOnDbDriver
 {

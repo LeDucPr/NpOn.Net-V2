@@ -4,7 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.Neo4jAppExtUse</RootNamespace>
+        <RootNamespace>Common.Applications.ApplicationsExtensions.NpOn.Neo4JAppExtUse</RootNamespace>
         <OutputType>Library</OutputType>
     </PropertyGroup>
 

@@ -2,7 +2,7 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Neo4j.Driver;
 
-namespace Common.Infrastructures.NpOn.Neo4jExtCm.Results;
+namespace Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 
 public class Neo4JRowWrapper : NpOnWrapperResult<IRecord, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {

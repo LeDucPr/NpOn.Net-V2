@@ -7,8 +7,8 @@ using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory.FactoryResults;
-using Common.Infrastructures.NpOn.Neo4jExtCm.Connections;
-using Common.Infrastructures.NpOn.Neo4jExtCm.Results;
+using Common.Infrastructures.NpOn.Neo4JExtCm.Connections;
+using Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 
 namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory;
 
@@ -24,7 +24,7 @@ public class Neo4JFactoryWrapper : BaseDbFactoryWrapper, INeo4JFactoryWrapper, I
         if (option == null)
             throw new ArgumentNullException(nameof(option));
 
-        Factory = new Neo4jDriverFactory(option, connectionNumber);
+        Factory = new Neo4JDriverFactory(option, connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }
@@ -35,7 +35,7 @@ public class Neo4JFactoryWrapper : BaseDbFactoryWrapper, INeo4JFactoryWrapper, I
         DbType = EDb.Neo4j;
         if (connectOption is not Neo4JConnectOption)
             throw new ArgumentException("connectOption must be a Neo4jConnectOption");
-        Factory = new Neo4jDriverFactory(option: connectOption, connectionNumber: connectionNumber);
+        Factory = new Neo4JDriverFactory(option: connectOption, connectionNumber: connectionNumber);
         if (isUseCaching)
             this.AddToDbFactoryWrapperCache();
     }

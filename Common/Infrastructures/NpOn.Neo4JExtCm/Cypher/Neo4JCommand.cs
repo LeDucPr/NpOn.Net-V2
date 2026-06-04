@@ -1,7 +1,7 @@
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 
-namespace Common.Infrastructures.NpOn.Neo4jExtCm.Cypher;
+namespace Common.Infrastructures.NpOn.Neo4JExtCm.Cypher;
 
 public class Neo4JCommand : NpOnDbCommand
 {

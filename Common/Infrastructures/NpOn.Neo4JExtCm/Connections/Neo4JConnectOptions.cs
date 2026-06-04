@@ -1,7 +1,7 @@
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Microsoft.Extensions.Logging;
 
-namespace Common.Infrastructures.NpOn.Neo4jExtCm.Connections;
+namespace Common.Infrastructures.NpOn.Neo4JExtCm.Connections;
 
 public class Neo4JConnectOption : DbNpOnConnectOption<Neo4JDriver>
 {
