@@ -38,6 +38,10 @@ public enum EApplicationConfiguration
     [Display(Name = "MySqlConnectionString")] MySqlConnectionString, // - string
     [Display(Name = "MySqlConnectionNumber")] MySqlConnectionNumber, // - int
     [Display(Name = "IsUseMySql")] IsUseMySql, // - bool
+    [Display(Name = "Neo4jConnectionString")] Neo4jConnectionString, // - string (bolt://host:7687)
+    [Display(Name = "Neo4jConnectionNumber")] Neo4jConnectionNumber, // - int
+    [Display(Name = "Neo4jDatabaseName")] Neo4jDatabaseName, // - string (default: "neo4j")
+    [Display(Name = "IsUseNeo4j")] IsUseNeo4j, // - bool
 
     
     // Connection Settings

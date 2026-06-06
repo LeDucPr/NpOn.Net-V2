@@ -15,6 +15,7 @@ public enum EDb : byte
     [Display(Name = "YugaBytePg")] YugaBytePg = 8,
     [Display(Name = "ClickHouse")] ClickHouse = 9,
     [Display(Name = "MySql")] MySql = 10,
+    [Display(Name = "Neo4j")] Neo4J = 11,
 }
 
 public static class EDbExtension
@@ -33,6 +34,7 @@ public static class EDbExtension
             EDb.ElasticSearch => EDbLanguage.Json,
             EDb.YugaBytePg => EDbLanguage.Sql,
             EDb.ClickHouse => EDbLanguage.Sql,
+            EDb.Neo4J => EDbLanguage.Cypher,
             _ => throw new NotSupportedException($"The database language for '{db}' is not supported."),
         };
     }
@@ -50,6 +52,7 @@ public static class EDbExtension
             EDb.ElasticSearch,
             EDb.YugaBytePg,
             EDb.ClickHouse,
+            EDb.Neo4J,
         ];
         if (validTypes.Contains(dbType)) return true;
         return false;
