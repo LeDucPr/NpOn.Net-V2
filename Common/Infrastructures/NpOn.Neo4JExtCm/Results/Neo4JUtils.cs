@@ -1,5 +1,6 @@
 using System.Data;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonMode;
 
 namespace Common.Infrastructures.NpOn.Neo4JExtCm.Results;
 
@@ -81,7 +82,7 @@ public static class Neo4JUtils
             return Convert.ChangeType(raw, Enum.GetUnderlyingType(raw.GetType()));
 
         if (raw is Guid g)
-            return g.ToString();
+            return g.AsDefaultString();
 
         if (raw is DateTime dt)
             return dt.ToUniversalTime().ToString("O");

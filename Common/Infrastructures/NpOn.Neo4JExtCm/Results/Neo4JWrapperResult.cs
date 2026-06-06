@@ -189,7 +189,7 @@ public class Neo4JResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
     {
         if (records == null)
         {
-            SetFail(EDbError.Neo4jRecordNull);
+            SetFail(EDbError.Neo4JRecordNull);
             _allRecords = new List<IRecord>();
             _keys = new List<string>();
             Rows = new Dictionary<int, Neo4JRowWrapper>();

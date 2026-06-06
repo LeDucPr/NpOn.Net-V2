@@ -17,7 +17,7 @@ public class Neo4JFactoryWrapper : BaseDbFactoryWrapper, INeo4JFactoryWrapper, I
     public Neo4JFactoryWrapper(
         string openConnectString, string databaseName, int connectionNumber = 1, bool isUseCaching = true)
     {
-        DbType = EDb.Neo4j;
+        DbType = EDb.Neo4J;
         INpOnConnectOption? option = new Neo4JConnectOption()
             .SetConnectionString(openConnectString)
             .SetDatabaseName(databaseName);
@@ -32,7 +32,7 @@ public class Neo4JFactoryWrapper : BaseDbFactoryWrapper, INeo4JFactoryWrapper, I
     public Neo4JFactoryWrapper(
         INpOnConnectOption connectOption, int connectionNumber = 1, bool isUseCaching = true)
     {
-        DbType = EDb.Neo4j;
+        DbType = EDb.Neo4J;
         if (connectOption is not Neo4JConnectOption)
             throw new ArgumentException("connectOption must be a Neo4jConnectOption");
         Factory = new Neo4JDriverFactory(option: connectOption, connectionNumber: connectionNumber);

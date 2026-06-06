@@ -9,7 +9,7 @@ namespace Common.Infrastructures.DbFactories.NpOn.Neo4jDbFactory.FactoryResults;
 public class Neo4JDriverFactory : BaseDbDriverFactory
 {
     public Neo4JDriverFactory(INpOnConnectOption option, int connectionNumber = 1) 
-        : base(EDb.Neo4j, option, connectionNumber)
+        : base(EDb.Neo4J, option, connectionNumber)
     {
     }
 

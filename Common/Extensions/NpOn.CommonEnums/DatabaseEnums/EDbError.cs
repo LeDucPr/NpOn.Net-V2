@@ -95,11 +95,11 @@ public enum EDbError
     [Display(Name = "MySql DataTable (Result is null)")]
     MySqlDataTableNull,
 
-    [Display(Name = "Neo4j Record (Result is null)")]
-    Neo4jRecordNull,
+    [Display(Name = "Neo4J Record (Result is null)")]
+    Neo4JRecordNull,
 
-    [Display(Name = "Neo4j Cypher Execute Error")]
-    Neo4jCypherExecute,
+    [Display(Name = "Neo4J Cypher Execute Error")]
+    Neo4JCypherExecute,
 
     #endregion Result
 }

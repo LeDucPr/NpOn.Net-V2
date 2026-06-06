@@ -6,7 +6,7 @@ namespace Common.Infrastructures.NpOn.Neo4JExtCm.Cypher;
 public class Neo4JCommand : NpOnDbCommand
 {
     private Neo4JCommand(string? commandText)
-        : base(EDb.Neo4j, commandText)
+        : base(EDb.Neo4J, commandText)
     {
     }
 
