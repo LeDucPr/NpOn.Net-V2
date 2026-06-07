@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>MicroServices.Tracker.Service.NpOn.Tracker2WayService</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.ZeroMqExtCm\NpOn.ZeroMqExtCm.csproj" />
+      <ProjectReference Include="..\..\Definitions\NpOn.TrackerConstant\NpOn.TrackerConstant.csproj" />
+    </ItemGroup>
+
+</Project>

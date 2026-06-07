@@ -57,10 +57,8 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)
-            .AddRedis();
-            // .AddRedisBroadcast();
-            // .AddSingleton<TrackerServiceTestTrigger>()
-            // .AddZeroMqTwoWay(null, typeof(TrackerServiceTwoWayHandler));
+            .AddRedis()
+            .AddRedisBroadcast();
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
@@ -86,6 +84,9 @@ public sealed class Program : HttpCommonProgram
             services.AddTransient<AccountSaveLoginKafkaConsumer>()
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
         }
+        
+        // zeromq 
+        services.AddZeroMqTwoWay(connectionString: null);
 
         // Add Service
         services.AddTransient<IAccountInfoService, AccountInfoService>();

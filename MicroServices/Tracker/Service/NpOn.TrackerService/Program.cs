@@ -12,12 +12,14 @@ using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.BroadcastHandlers;
 using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 using MicroServices.Tracker.StorageAdapter.NpOn.ITrackerStorageAdapter;
 using MicroServices.Tracker.StorageAdapter.NpOn.TrackerStorageAdapter;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
+using MicroServices.Tracker.Service.NpOn.Tracker2WayService.Zero2Way.Handlers;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService;
@@ -66,6 +68,11 @@ public sealed class Program : HttpCommonProgram
                     typeof(WarningBroadcastHandler)
                 );
         }
+        
+        // zeroMq
+        services
+            .AddSingleton<TrackerLog2WayTrigger>()
+            .AddZeroMqTwoWay(null, typeof(TrackerLog2WayHandler));
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

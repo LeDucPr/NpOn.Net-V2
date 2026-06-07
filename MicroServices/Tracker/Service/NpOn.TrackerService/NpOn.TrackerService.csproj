@@ -14,6 +14,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RedisAppExtUse\NpOn.RedisAppExtUse.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.ZeroMqAppExtUse\NpOn.ZeroMqAppExtUse.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
       <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
@@ -28,6 +29,7 @@
       <ProjectReference Include="..\..\StorageAdapter\NpOn.ITrackerStorageAdapter\NpOn.ITrackerStorageAdapter.csproj" />
       <ProjectReference Include="..\..\StorageAdapter\NpOn.TrackerStorageAdapter\NpOn.TrackerStorageAdapter.csproj" />
       <ProjectReference Include="..\NpOn.ITrackerService\NpOn.ITrackerService.csproj" />
+      <ProjectReference Include="..\NpOn.Tracker2WayService\NpOn.Tracker2WayService.csproj" />
     </ItemGroup>
 
     <ItemGroup>

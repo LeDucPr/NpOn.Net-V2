@@ -1,17 +1,16 @@
-using System;
-using System.Linq;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Infrastructures.NpOn.ZeroMqExtCm.Connections;
 using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.IO;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 
 public static class ZeroMqServiceCollectionExtensions
 {
-    private static bool CombineConnectionStringInProc(out string? connectionString)
+    private static bool CombineConnectionStringIpc(out string? connectionString)
     {
         connectionString = null;
         int hostPort = EApplicationConfiguration.HostPort.GetAppSettingConfig().AsDefaultInt();
@@ -20,21 +19,46 @@ public static class ZeroMqServiceCollectionExtensions
 #if DEBUG
             return false;
 #endif
-            throw new ArgumentException("HostPort is required to configuration InProc identifier");
+            throw new ArgumentException("HostPort is required to configuration IPC identifier");
         }
 
-        string hostDomain = EApplicationConfiguration.HostDomain.GetAppSettingConfig().AsEmptyString();
-        int index = hostDomain.IndexOf("://", StringComparison.Ordinal);
-        if (index == -1)
+        string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
+
+        // Cấu hình đường dẫn file IPC tùy theo Hệ điều hành
+        if (OperatingSystem.IsWindows())
         {
-#if DEBUG
-            return false;
-#endif
-            throw new ArgumentException("HostDomain is invalid format. Missing '://' protocol separator.");
+            // Trên Windows, IPC của ZeroMQ sử dụng cơ chế Named Pipes
+            // Định dạng bắt buộc: ipc:///chuo_ten_pipe
+            connectionString = $"ipc://{appName}-zmq-pipe-{hostPort}";
+        }
+        else
+        {
+            // Trên Linux / WSL2 / Docker, IPC sử dụng Unix Domain Socket (là một file vật lý)
+            // Thường lưu trong thư mục tạm /tmp hoặc /home/app để đảm bảo quyền ghi
+            string baseDir = "/tmp";
+            if (!Directory.Exists(baseDir))
+            {
+                baseDir = Path.GetTempPath();
+            }
+
+            string ipcFolder = Path.Combine(baseDir, appName);
+            
+            try
+            {
+                if (!Directory.Exists(ipcFolder))
+                    Directory.CreateDirectory(ipcFolder);
+            }
+            catch
+            {
+                // Nếu lỗi quyền ghi, fallback về thẳng thư mục temp cơ bản
+                ipcFolder = Path.GetTempPath();
+            }
+
+            // Đường dẫn file kết quả dạng: ipc:///tmp/YourAppName/zmq-40004.ipc
+            string fullPath = Path.Combine(ipcFolder, $"zmq-{hostPort}.ipc");
+            connectionString = $"ipc://{fullPath.Replace("\\", "/")}";
         }
 
-        string domainPart = hostDomain.Substring(index); // lấy từ "://" 
-        connectionString = $"inproc{domainPart}-{hostPort}";
         return true;
     }
 
@@ -42,8 +66,10 @@ public static class ZeroMqServiceCollectionExtensions
         string? connectionString = null,
         params Type[]? handlerTypes)
     {
-        if (!CombineConnectionStringInProc(out connectionString))
+        // Gọi hàm sinh chuỗi kết nối IPC thay vì InProc
+        if (!CombineConnectionStringIpc(out connectionString))
             return services;
+
         if (handlerTypes != null)
         {
             foreach (var type in handlerTypes)

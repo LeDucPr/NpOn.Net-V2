@@ -213,6 +213,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ZeroMqExtCm", "Common\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.ZeroMqAppExtUse", "Common\Applications\ApplicationExtensions\NpOn.ZeroMqAppExtUse\NpOn.ZeroMqAppExtUse.csproj", "{4402BCB9-ADB3-4145-8014-66A8E6331EAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpOn.Tracker2WayService", "MicroServices\Tracker\Service\NpOn.Tracker2WayService\NpOn.Tracker2WayService.csproj", "{0372744A-22E0-4BF0-BCB1-3CC2E3C8825C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -539,6 +541,10 @@ Global
 		{4402BCB9-ADB3-4145-8014-66A8E6331EAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4402BCB9-ADB3-4145-8014-66A8E6331EAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4402BCB9-ADB3-4145-8014-66A8E6331EAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0372744A-22E0-4BF0-BCB1-3CC2E3C8825C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0372744A-22E0-4BF0-BCB1-3CC2E3C8825C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0372744A-22E0-4BF0-BCB1-3CC2E3C8825C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0372744A-22E0-4BF0-BCB1-3CC2E3C8825C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -645,5 +651,6 @@ Global
 		{5E8262E6-8CAC-4D07-A9BB-F799D20C764D} = {AD0F80D5-9866-4BE6-990B-9324F07B7DB3}
 		{3483D3E6-2DCE-404A-BA3B-C1534C64F584} = {F18CA1AA-1C81-4D36-9AFE-463039E910C5}
 		{4402BCB9-ADB3-4145-8014-66A8E6331EAA} = {D9A3C4E6-CD1A-4C6E-AF3E-D5EE9E971B99}
+		{0372744A-22E0-4BF0-BCB1-3CC2E3C8825C} = {1EA82BEB-5544-4557-9D60-41EEA413077D}
 	EndGlobalSection
 EndGlobal

@@ -1,5 +1,4 @@
-using System;
-using System.Threading.Tasks;
+using Common.Extensions.NpOn.CommonMode;
 
 namespace Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 
@@ -24,6 +23,6 @@ public abstract class BaseZeroMqTwoWayHandler<TRequest, TResponse> : BaseZeroMqT
     {
         var msg = new ZeroMqMessage { Channel = Channel, Payload = payload };
         var response = await Trigger.TriggerAsync(msg);
-        return Common.Extensions.NpOn.CommonMode.JsonModeWithCache.ToJson(response) ?? string.Empty;
+        return JsonModeWithCache.ToJson(response) ?? string.Empty;
     }
 }
