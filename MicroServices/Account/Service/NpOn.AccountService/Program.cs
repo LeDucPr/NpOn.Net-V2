@@ -84,9 +84,13 @@ public sealed class Program : HttpCommonProgram
             services.AddTransient<AccountSaveLoginKafkaConsumer>()
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
         }
-        
+
         // zeromq 
         services.AddZeroMqTwoWay(connectionString: null);
+        services.AddZeroMqMultiTwoWay([
+                EUrlConfiguration.TrackerServiceUrl
+            ]
+            /*, handler*/);
 
         // Add Service
         services.AddTransient<IAccountInfoService, AccountInfoService>();

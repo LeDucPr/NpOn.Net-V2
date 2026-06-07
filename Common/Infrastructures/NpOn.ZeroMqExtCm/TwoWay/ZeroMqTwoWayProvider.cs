@@ -10,7 +10,7 @@ using Common.Infrastructures.NpOn.ZeroMqExtCm.Results;
 
 namespace Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 
-public class ZeroMqTwoWayFactoryWrapper : IZeroMqTwoWayFactoryWrapper
+public class ZeroMqTwoWayProvider : IZeroMqTwoWayProvider
 {
     public int HandlerCount { get; private set; }
     public IDbDriverFactory? Factory { get; set; }
@@ -58,7 +58,7 @@ public class ZeroMqTwoWayFactoryWrapper : IZeroMqTwoWayFactoryWrapper
         return true;
     }
 
-    public ZeroMqTwoWayFactoryWrapper(INpOnConnectOption connectOption)
+    public ZeroMqTwoWayProvider(INpOnConnectOption connectOption)
     {
         DbType = EDb.ZeroMqRunAsDbFlow;
         connectOption = connectOption.SetSessionTimeout(0);
@@ -69,14 +69,14 @@ public class ZeroMqTwoWayFactoryWrapper : IZeroMqTwoWayFactoryWrapper
         _connectOption = zmqConnectOption;
     }
 
-    public static ZeroMqTwoWayFactoryWrapper? operator +(ZeroMqTwoWayFactoryWrapper? factory,
+    public static ZeroMqTwoWayProvider? operator +(ZeroMqTwoWayProvider? factory,
         BaseZeroMqTwoWayHandler? handler)
     {
         if (factory == null || handler == null)
             return factory;
 
         if (factory._isDestroyed)
-            throw new ObjectDisposedException(nameof(ZeroMqTwoWayFactoryWrapper),
+            throw new ObjectDisposedException(nameof(ZeroMqTwoWayProvider),
                 "Cannot add handlers after DestroyInternal has been called.");
 
         factory._handlers.Add(handler);
@@ -111,6 +111,7 @@ public class ZeroMqTwoWayFactoryWrapper : IZeroMqTwoWayFactoryWrapper
         if (connection is not NpOnDbConnection npOnDbConnection // parse type from connection
             || npOnDbConnection.Driver is not ZeroMqDriver zmqDriver)
             return new ZeroMqResultSetWrapper().SetFail(EDbError.Connection);
+        // chuyển sang dùng tín hiệu phân vùng cho đa kết nối trục tiếp thong qua ipc, cái này cần cấu hình lại đẻ có thể chuyển tiếp qua các địa chỉ kết nối khác
 
         return await zmqDriver.Execute(command);
     }
