@@ -8,6 +8,8 @@ Kestrel:
     Protocols: Http2
 
 AppName: AccountService
+IsUseDataProtectionAutomaticKeyGeneration: true
+
 
 CookieDomain: ".npon_v2"
 CookieAuthenName: NpOn
@@ -20,7 +22,7 @@ IsUseEnableUnencryptedMode: true
 HostPort: 40004
 HostDomain: "http://0.0.0.0"
 WorkerThreadMin: 2500
-  
+
 IsUsePostgres: true
 PostgresConnectionString: "Host=192.168.1.11;Port=5432;Username=postgres;Password=password;Database=account;"
 PostgresConnectionNumber: 100 #00
@@ -28,6 +30,7 @@ PostgresConnectionNumber: 100 #00
 IsUseRedisCache: true
 RedisConnectString: "192.168.1.11:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 200 #00
+
 
 #CORS: "*"
 #CorsPolicy: NpOnCorsPolicy

@@ -8,6 +8,8 @@ Kestrel:
     Protocols: Http2
 
 AppName: SSO
+IsUseDataProtectionAutomaticKeyGeneration: true
+
 
 CookieDomain: ".npon_v2"
 CookieAuthenName: NpOn
