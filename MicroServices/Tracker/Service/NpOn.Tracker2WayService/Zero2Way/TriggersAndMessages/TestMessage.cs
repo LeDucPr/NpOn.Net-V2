@@ -1,8 +1,10 @@
+using Common.Extensions.NpOn.CommonMode;
+
 namespace MicroServices.Tracker.Service.NpOn.Tracker2WayService.Zero2Way.TriggersAndMessages;
 
 public class TrackerTest2WayRequestCommand
 {
-    public string MessageId { get; set; } = Guid.NewGuid().ToString();
+    public string MessageId { get; set; } = IndexerMode.CreateGuidAsString();
     public string Action { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }

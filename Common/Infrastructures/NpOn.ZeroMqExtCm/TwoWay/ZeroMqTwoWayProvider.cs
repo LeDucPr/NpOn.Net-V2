@@ -99,10 +99,10 @@ public class ZeroMqTwoWayProvider : IZeroMqTwoWayProvider
         HandlerCount = 0;
     }
 
-    public async Task<INpOnWrapperResult?> SendAsync<TRequest>(string channel, TRequest request)
+    public async Task<INpOnWrapperResult?> SendAsync<TRequest>(TRequest request)
     {
         var json = JsonModeWithCache.ToJson(request);
-        var command = new ZeroMqCommand(channel, json);
+        var command = new ZeroMqCommand(/*channel*/string.Empty, json);
         
         var connection = Factory?.ValidConnections?.FirstOrDefault();
         if (connection == null)

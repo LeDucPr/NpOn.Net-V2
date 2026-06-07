@@ -18,6 +18,28 @@ public class ZeroMqTwoWayFactory : IZeroMqTwoWayFactory
         _serviceProvider = serviceProvider;
     }
 
+    public IZeroMqTwoWayProvider? TryGet(EUrlConfiguration urlConfiguration)
+    {
+        return CacheStore.TryGetValue(urlConfiguration, out var value) ? value : null;
+    }
+
+    public async Task<bool> TrySendTo<TRequest>(IEnumerable<EUrlConfiguration>? configurations, TRequest request)
+    {
+        var configurationList = configurations?.ToList();
+        if (configurationList is not { Count: > 0 })
+            return true;
+        var sendTasks = configurationList.Select(async configuration =>
+        {
+            IZeroMqTwoWayProvider? provider = TryGet(configuration);
+            if (provider == null)
+                return false; 
+            var result = await provider.SendAsync(request);
+            return result?.Status ?? false;
+        });
+        bool[] results = await Task.WhenAll(sendTasks);
+        return results.All(status => status); // true when all same 
+    }
+
     public async Task<IZeroMqTwoWayProvider> CreateClientAsync(EUrlConfiguration urlConfig)
     {
         // Sử dụng GetOrAddAsync chống Cache Stampede khi đăng ký URL liên tục

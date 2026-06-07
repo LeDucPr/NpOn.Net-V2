@@ -58,3 +58,4 @@ RefreshTokenExpiredTime: 16
 IsUseMiddlewareLogger: true
 GeneralServiceUrl: "http://localhost:40000"
 AccountServiceUrl: "http://localhost:40004"
+TrackerServiceUrl: "http://localhost:40003"

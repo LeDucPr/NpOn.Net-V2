@@ -9,30 +9,37 @@ public static class ZeroMqServiceMultiCollectionExtensions
     /// <summary>
     /// Multi ZeroMQ IPC
     /// </summary>
-    public static IServiceCollection AddZeroMqMultiTwoWay(
-        this IServiceCollection services,
-        EUrlConfiguration[] urlConfigs,
-        params Type[]? handlerTypes)
+    public static IServiceCollection AddZeroMqMultiClients(
+        this IServiceCollection services, 
+        EUrlConfiguration[] targetUrls)
     {
-        // Handler DI 
-        if (handlerTypes != null)
-        {
-            foreach (var type in handlerTypes)
-            {
-                services.AddSingleton(type);
-                services.AddSingleton(typeof(BaseZeroMqTwoWayHandler), provider => provider.GetRequiredService(type));
-            }
-        }
-
+        // Đăng ký con Factory quản lý Cache gửi tin làm Singleton
         services.AddSingleton<IZeroMqTwoWayFactory, ZeroMqTwoWayFactory>();
 
-        // 3. Ép hệ thống khởi tạo sẵn các kết nối ngay khi App Start (Né việc Lazy Loading)
-        // Dùng IHostedService để chạy ngầm lúc app vừa lên
-        services.AddHostedService(provider =>
+        // Ép khởi tạo sớm (Warmup) các kết nối Client (Connect) tới các URL mục tiêu ngay khi App lên
+        services.AddHostedService(provider => 
         {
             var factory = provider.GetRequiredService<IZeroMqTwoWayFactory>();
-            return new ZeroMqWarmupHostedService(factory, urlConfigs);
+            return new ZeroMqWarmupHostedService(factory, targetUrls);
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Nhận tin xử lý thì đăng ký thêm (Server/Bind) Handler
+    /// </summary>
+    public static IServiceCollection AddZeroMqReceiverHandlers(
+        this IServiceCollection services, 
+        params Type[]? handlerTypes)
+    {
+        if (handlerTypes == null) return services;
+
+        foreach (var type in handlerTypes)
+        {
+            services.AddSingleton(type);
+            services.AddSingleton(typeof(BaseZeroMqTwoWayHandler), provider => provider.GetRequiredService(type));
+        }
 
         return services;
     }

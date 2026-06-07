@@ -87,7 +87,7 @@ public sealed class Program : HttpCommonProgram
 
         // zeromq 
         services.AddZeroMqTwoWay(connectionString: null);
-        services.AddZeroMqMultiTwoWay([
+        services.AddZeroMqMultiClients([
                 EUrlConfiguration.TrackerServiceUrl
             ]
             /*, handler*/);
