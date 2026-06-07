@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NetMQ" Version="4.0.1.13" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+      <PackageReference Include="NetMQ.Reactive" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Common.Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+      <ProjectReference Include="..\..\..\Common.Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\..\Common.Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
+      <ProjectReference Include="..\..\..\Common.Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
+    </ItemGroup>
+
+</Project>
