@@ -3,6 +3,7 @@ using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonHttpApplication;
@@ -56,9 +57,10 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton(store);
         services
             .AddPostgres(poolStore: store)
-            .AddRedis()
-            .AddRedisBroadcast();
-
+            .AddRedis();
+            // .AddRedisBroadcast();
+            // .AddSingleton<TrackerServiceTestTrigger>()
+            // .AddZeroMqTwoWay(null, typeof(TrackerServiceTwoWayHandler));
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

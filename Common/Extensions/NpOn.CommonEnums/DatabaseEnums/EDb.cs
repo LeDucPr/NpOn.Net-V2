@@ -16,6 +16,7 @@ public enum EDb : byte
     [Display(Name = "ClickHouse")] ClickHouse = 9,
     [Display(Name = "MySql")] MySql = 10,
     [Display(Name = "Neo4j")] Neo4J = 11,
+    [Display(Name = "ZeroMqRunAsDbFlow")] ZeroMqRunAsDbFlow = 12,
 }
 
 public static class EDbExtension

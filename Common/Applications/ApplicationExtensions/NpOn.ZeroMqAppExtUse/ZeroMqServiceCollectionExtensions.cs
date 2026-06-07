@@ -1,41 +1,76 @@
-using Microsoft.Extensions.DependencyInjection;
-using Common.Extensions.NpOn.CommonDb.Connections;
-using Common.Infrastructures.NpOn.ZeroMqExtCm.Connections;
+using System;
+using System.Linq;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
+using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
-using Common.Infrastructures.NpOn.ZeroMqExtCm.Broadcast;
-using Microsoft.Extensions.Logging;
+using Common.Infrastructures.NpOn.ZeroMqExtCm.Connections;
+using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 
 public static class ZeroMqServiceCollectionExtensions
 {
-    public static IServiceCollection AddNpOnZeroMqService(
-        this IServiceCollection services,
-        string connectionString,
-        Action<DbNpOnConnectOption<ZeroMqDriver>>? configureOptions = null)
+    private static bool CombineConnectionStringInProc(out string? connectionString)
     {
-        var connectOption = new ZeroMqConnectOption { ConnectionString = connectionString };
-        configureOptions?.Invoke(connectOption);
-
-        services.AddSingleton<INpOnDbDriver>(provider =>
+        connectionString = null;
+        int hostPort = EApplicationConfiguration.HostPort.GetAppSettingConfig().AsDefaultInt();
+        if (hostPort == 0)
         {
-            var loggerFactory = provider.GetService<ILoggerFactory>();
-            if (loggerFactory != null)
+#if DEBUG
+            return false;
+#endif
+            throw new ArgumentException("HostPort is required to configuration InProc identifier");
+        }
+
+        string hostDomain = EApplicationConfiguration.HostDomain.GetAppSettingConfig().AsEmptyString();
+        int index = hostDomain.IndexOf("://", StringComparison.Ordinal);
+        if (index == -1)
+        {
+#if DEBUG
+            return false;
+#endif
+            throw new ArgumentException("HostDomain is invalid format. Missing '://' protocol separator.");
+        }
+
+        string domainPart = hostDomain.Substring(index); // lấy từ "://" 
+        connectionString = $"inproc{domainPart}-{hostPort}";
+        return true;
+    }
+
+    public static IServiceCollection AddZeroMqTwoWay(this IServiceCollection services,
+        string? connectionString = null,
+        params Type[]? handlerTypes)
+    {
+        if (!CombineConnectionStringInProc(out connectionString))
+            return services;
+        if (handlerTypes != null)
+        {
+            foreach (var type in handlerTypes)
             {
-                connectOption.Logger = loggerFactory.CreateLogger<ZeroMqDriver>();
+                services.AddSingleton(type);
+                services.AddSingleton(typeof(BaseZeroMqTwoWayHandler), provider => provider.GetRequiredService(type));
             }
-            return new ZeroMqDriver(connectOption);
-        });
+        }
 
-        services.AddSingleton<IZeroMqBroadcastService, ZeroMqBroadcastService>();
-        services.AddSingleton(provider =>
+        services.AddSingleton<IZeroMqTwoWayFactoryWrapper, ZeroMqTwoWayFactoryWrapper>(provider =>
         {
-            var broadcastService = provider.GetRequiredService<IZeroMqBroadcastService>();
-            var logger = provider.GetRequiredService<ILogger<ZeroMqBroadcastService>>();
-            // Assuming a default address or getting it from configuration
-            // For now, hardcoding for demonstration. This should be configurable.
-            broadcastService.Start("tcp://*:5556");
-            return broadcastService;
+            var connectOption = new ZeroMqConnectOption();
+            connectOption.SetConnectionString(connectionString!);
+
+            ZeroMqTwoWayFactoryWrapper? factoryWrapper = new ZeroMqTwoWayFactoryWrapper(connectOption);
+
+            var handlers = provider.GetServices<BaseZeroMqTwoWayHandler>().ToArray();
+            if (!handlers.Any())
+                return factoryWrapper;
+
+            foreach (var handler in handlers)
+                factoryWrapper += handler;
+
+            if (!factoryWrapper!.BuildFactory(out string? errorString))
+                Console.WriteLine(errorString);
+
+            return factoryWrapper;
         });
 
         return services;

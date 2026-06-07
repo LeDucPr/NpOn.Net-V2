@@ -1,77 +1,61 @@
+using System;
+using System.Collections.Generic;
 using Common.Extensions.NpOn.CommonDb.Results;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using NetMQ;
 
 namespace Common.Infrastructures.NpOn.ZeroMqExtCm.Results;
 
-public class ZeroMqResultSetWrapper : NpOnWrapperResult
+public class ZeroMqResultSetWrapper : NpOnWrapperResult, INpOnRowWrapper, INpOnTableWrapper
 {
-    private NetMQMessage? _message;
-    private int _frameIndex;
+    private string? _payload;
+
+    public string? Payload => _payload;
+    public string? ErrorMessage { get; set; }
+
+    // Delegate to return this object to the pool
+    public Action<ZeroMqResultSetWrapper>? ReturnToPool { get; set; }
 
     public ZeroMqResultSetWrapper()
     {
-        // Default constructor for pooling
+        // Default constructor for object pooling
     }
 
-    public ZeroMqResultSetWrapper Init(NetMQMessage message)
+    public ZeroMqResultSetWrapper(string payload)
     {
-        _message = message;
-        _frameIndex = 0;
-        Status = true;
+        Init(payload);
+    }
+
+    public ZeroMqResultSetWrapper Init(string payload)
+    {
+        _payload = payload;
+        SetSuccess();
         return this;
     }
 
-    public ZeroMqResultSetWrapper Init(string messageString)
+    public void Reset()
     {
-        _message = new NetMQMessage();
-        _message.Append(messageString);
-        _frameIndex = 0;
-        Status = true;
-        return this;
+        _payload = null;
+        ErrorMessage = null;
+        // Base class NpOnWrapperResult doesn't expose a direct Reset(), but calling Init() or SetFail() resets its state.
     }
 
-    public override bool Read()
+    // INpOnRowWrapper
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper()
     {
-        if (_message == null || _frameIndex >= _message.FrameCount)
-        {
-            return false;
-        }
-        // For ZeroMQ, each frame could be considered a "row" or part of a message.
-        // This implementation assumes a simple message where each frame is a distinct piece of data.
-        // More complex scenarios would require a defined message structure.
-        return true;
+        var cell = new NpOnCell<string?>(_payload, System.Data.DbType.String, "zeromq:string");
+        return new Dictionary<string, INpOnCell> { { "value", cell } };
     }
 
-    public override INpOnCell GetCell(string name)
-    {
-        // This method needs to be adapted based on how ZeroMQ messages are structured.
-        // For now, it's a placeholder.
-        return new ZeroMqCell { Value = "N/A" };
-    }
+    // INpOnTableWrapper
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers =>
+        new Dictionary<int, INpOnRowWrapper?> { { 0, this } };
 
-    public override INpOnCell GetCell(int ordinal)
-    {
-        if (_message == null || ordinal >= _message.FrameCount)
-        {
-            return new ZeroMqCell { Value = null };
-        }
-        return new ZeroMqCell { Value = _message[_frameIndex].ConvertToString() };
-    }
-
-    public override void Reset()
-    {
-        base.Reset();
-        _message = null;
-        _frameIndex = 0;
-    }
+    public INpOnCollectionWrapper CollectionWrappers =>
+        throw new NotImplementedException("Collection wrapper is not supported for ZeroMQ.");
 
     public override void Dispose()
     {
-        _message?.Dispose();
-        _message = null;
-        base.Dispose();
+        ReturnToPool?.Invoke(this);
     }
-
-    public override int FieldCount => _message?.FrameCount ?? 0;
 }
