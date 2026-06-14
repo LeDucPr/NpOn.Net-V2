@@ -103,17 +103,33 @@ public class ZeroMqTwoWayProvider : IZeroMqTwoWayProvider
     {
         var json = JsonModeWithCache.ToJson(request);
         var command = new ZeroMqCommand(/*channel*/string.Empty, json);
-        
-        var connection = Factory?.ValidConnections?.FirstOrDefault();
-        if (connection == null)
+        if (Factory == null)
             return new ZeroMqResultSetWrapper().SetFail(EDbError.Connection);
 
-        if (connection is not NpOnDbConnection npOnDbConnection // parse type from connection
-            || npOnDbConnection.Driver is not ZeroMqDriver zmqDriver)
-            return new ZeroMqResultSetWrapper().SetFail(EDbError.Connection);
-        // chuyển sang dùng tín hiệu phân vùng cho đa kết nối trục tiếp thong qua ipc, cái này cần cấu hình lại đẻ có thể chuyển tiếp qua các địa chỉ kết nối khác
+        NpOnDbConnection? connection = null;
+        try
+        {
+            connection = await Factory.GetConnectionAsync();
+            if (connection == null)
+                return new ZeroMqResultSetWrapper().SetFail(EDbError.Connection);
 
-        return await zmqDriver.Execute(command);
+            if (connection.Driver is not ZeroMqDriver zmqDriver)
+                return new ZeroMqResultSetWrapper().SetFail(EDbError.Connection);
+
+            // chuyển sang dùng tín hiệu phân vùng cho đa kết nối trục tiếp thong qua ipc, cái này cần cấu hình lại đẻ có thể chuyển tiếp qua các địa chỉ kết nối khác
+            return await zmqDriver.Execute(command);
+        }
+        catch (Exception)
+        {
+            return new ZeroMqResultSetWrapper().SetFail(EDbError.Connection);
+        }
+        finally
+        {
+            if (connection != null)
+            {
+                Factory.ReleaseConnection(connection);
+            }
+        }
     }
 
     public void Dispose()

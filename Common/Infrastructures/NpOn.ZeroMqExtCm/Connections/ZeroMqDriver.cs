@@ -275,7 +275,7 @@ public class ZeroMqDriver : NpOnDbDriver
 
                 _sendQueue!.Enqueue(netMsg);
 
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5));
                 var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
                 if (completedTask == timeoutTask)

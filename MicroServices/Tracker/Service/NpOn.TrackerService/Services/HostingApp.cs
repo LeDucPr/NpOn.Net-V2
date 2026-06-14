@@ -3,16 +3,19 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
-using MicroServices.Tracker.Service.NpOn.ITrackerService;
+// using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 using NpOn.TrackerConstant.Broadcasts;
+
+using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
 public class HostingApp(
     IRedisBroadcastFactoryWrapper redisBroadcastFactoryWrapper,
-    ITrackerLogService trackerLogService,
+    // ITrackerLogService trackerLogService,
     IClickHouseFactoryWrapper clickHouseFactoryWrapper,
+    IZeroMqTwoWayProvider zeroMqTwoWayProvider,
     ILogger<HostingApp> logger
 ) : IHostedService
 {

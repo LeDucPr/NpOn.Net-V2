@@ -30,15 +30,22 @@ public class ZeroMqTwoWayFactory : IZeroMqTwoWayFactory
             return true;
         var sendTasks = configurationList.Select(async configuration =>
         {
-            IZeroMqTwoWayProvider? provider = TryGet(configuration);
-            if (provider == null)
+            try
+            {
+                // Thay vì TryGet (trả về null nếu background warmup task chưa hoàn thành),
+                // CreateClientAsync sẽ await task đang chạy trong cache hoặc tạo mới nếu chưa có.
+                IZeroMqTwoWayProvider provider = await CreateClientAsync(configuration);
+                var result = await provider.SendAsync(request);
+                return result?.Status ?? false;
+            }
+            catch (Exception)
+            {
                 return false; 
-            var result = await provider.SendAsync(request);
-            return result?.Status ?? false;
+            }
         });
         bool[] results = await Task.WhenAll(sendTasks);
         return results.All(status => status); // true when all same 
-    }
+    } 
 
     public async Task<IZeroMqTwoWayProvider> CreateClientAsync(EUrlConfiguration urlConfig)
     {
@@ -49,8 +56,7 @@ public class ZeroMqTwoWayFactory : IZeroMqTwoWayFactory
             if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out Uri? uri))
                 throw new ArgumentException($"URL cấu hình {config} sai định dạng.");
 
-            // IPC use with default port
-            string ipcConnectionString = $"ipc://npon-zmq-pipe-{uri.Port}";
+            string ipcConnectionString = ZeroMqIpcHelper.CombineConnectionStringIpc(uri.Port);
 
             var connectOption = new ZeroMqConnectOption();
             connectOption.SetConnectionString(ipcConnectionString);

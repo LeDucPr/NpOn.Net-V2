@@ -8,9 +8,6 @@ namespace Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 
 public static class ZeroMqServiceCollectionExtensions
 {
-    private static readonly string IpcCommonConnectionString = "ipc://npon-zmq-pipe-";
-
-
     private static bool CombineConnectionStringIpc(out string? connectionString)
     {
         connectionString = null;
@@ -23,43 +20,7 @@ public static class ZeroMqServiceCollectionExtensions
             throw new ArgumentException("HostPort is required to configuration IPC identifier");
         }
 
-        string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
-
-        // Cấu hình đường dẫn file IPC tùy theo Hệ điều hành
-        if (OperatingSystem.IsWindows())
-        {
-            // Trên Windows, IPC của ZeroMQ sử dụng cơ chế Named Pipes
-            // Định dạng bắt buộc: ipc:///chuo_ten_pipe
-            connectionString = $"{IpcCommonConnectionString}{hostPort}";
-        }
-        else
-        {
-            // Trên Linux / WSL2 / Docker, IPC sử dụng Unix Domain Socket (là một file vật lý)
-            // Thường lưu trong thư mục tạm /tmp hoặc /home/app để đảm bảo quyền ghi
-            string baseDir = "/tmp";
-            if (!Directory.Exists(baseDir))
-            {
-                baseDir = Path.GetTempPath();
-            }
-
-            string ipcFolder = Path.Combine(baseDir, appName);
-
-            try
-            {
-                if (!Directory.Exists(ipcFolder))
-                    Directory.CreateDirectory(ipcFolder);
-            }
-            catch
-            {
-                // Nếu lỗi quyền ghi, fallback về thẳng thư mục temp cơ bản
-                ipcFolder = Path.GetTempPath();
-            }
-
-            // Đường dẫn file kết quả dạng: ipc:///tmp/YourAppName/zmq-40004.ipc
-            string fullPath = Path.Combine(ipcFolder, $"zmq-{hostPort}.ipc");
-            connectionString = $"ipc://{fullPath.Replace("\\", "/")}";
-        }
-
+        connectionString = ZeroMqIpcHelper.CombineConnectionStringIpc(hostPort);
         return true;
     }
 
