@@ -3,7 +3,7 @@ using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
-// using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonHttpApplication;
@@ -87,12 +87,12 @@ public sealed class Program : HttpCommonProgram
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
         }
 
-        // // zeromq 
-        // services.AddZeroMqTwoWay(connectionString: null);
-        // services.AddZeroMqMultiClients([
-        //         EUrlConfiguration.TrackerServiceUrl
-        //     ]
-        //     /*, handler*/);
+        // zeromq 
+        services.AddZeroMqTwoWay(connectionString: null);
+        services.AddZeroMqMultiClients([
+                EUrlConfiguration.TrackerServiceUrl
+            ]
+            /*, handler*/);
 
         // Add Service
         services.AddTransient<IAccountInfoService, AccountInfoService>();
