@@ -31,6 +31,7 @@
         <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
         <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj" />
         <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj"/>
+        <ProjectReference Include="..\..\..\Tracker\Service\NpOn.ITrackerService\NpOn.ITrackerService.csproj" />
         <ProjectReference Include="..\..\..\Tracker\Service\NpOn.Tracker2WayService\NpOn.Tracker2WayService.csproj" />
         <ProjectReference Include="..\..\Contract\NpOn.AccountServiceDomain\NpOn.AccountServiceDomain.csproj" />
         <ProjectReference Include="..\..\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj"/>

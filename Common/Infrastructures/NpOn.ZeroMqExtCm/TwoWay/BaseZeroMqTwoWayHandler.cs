@@ -21,7 +21,11 @@ public abstract class BaseZeroMqTwoWayHandler<TRequest, TResponse> : BaseZeroMqT
 
     public override async Task<string> ParseAndTriggerAsync(string payload)
     {
-        var msg = new ZeroMqMessage { Channel = Channel, Payload = payload };
+        var msg = new ZeroMqMessage
+        {
+            Channel = Channel,
+            Payload = payload
+        };
         var response = await Trigger.TriggerAsync(msg);
         return JsonModeWithCache.ToJson(response) ?? string.Empty;
     }

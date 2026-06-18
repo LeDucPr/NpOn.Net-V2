@@ -4,8 +4,11 @@ namespace Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 
 public abstract class BaseZeroMqTwoWayTrigger<TRequest, TResponse>
 {
+    // [System.Text.Json.Serialization.JsonIgnore]
+    // [Newtonsoft.Json.JsonIgnore]
     public string Channel { get; }
 
+    
     protected BaseZeroMqTwoWayTrigger(string channel)
     {
         Channel = channel;

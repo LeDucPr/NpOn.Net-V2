@@ -10,7 +10,7 @@ using Common.Extensions.NpOn.CommonScope;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Events;
 using Common.Infrastructures.NpOn.RabbitMqExtMs.Senders;
-using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
+// using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Events;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
@@ -20,7 +20,7 @@ using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
-using MicroServices.Tracker.Service.NpOn.Tracker2WayService.Zero2Way.TriggersAndMessages;
+using MicroServices.Tracker.Service.NpOn.Tracker2WayService.Zero2Way.TriggersAndMessages.Messages;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
@@ -29,7 +29,7 @@ public class AuthenticationService(
     IPostgresFactoryWrapper baseRepository,
     IAuthenticationStorageAdapter authenticationStorageAdapter,
     // IAccountInfoStorageAdapter accountInfoStorageAdapter,
-    IZeroMqTwoWayFactory zeroMqTwoWayFactory,
+    // IZeroMqTwoWayFactory zeroMqTwoWayFactory,
     IAccountPermissionService accountPermissionService,
     IAccountTokenAndPermissionRedisRepository redisRepository,
     IRabbitMqProducer rabbitMqProducer,
@@ -239,10 +239,10 @@ public class AuthenticationService(
                 accountRModel, query.AuthType /*, ELoginType.Default*/);
 
             // Gọi hàm và vứt đuôi .FireAndForget() vào là xong, gọn gàng, tự khởi động ngầm
-            zeroMqTwoWayFactory.TrySendTo(
-                new[] { EUrlConfiguration.TrackerServiceUrl }, 
-                new TrackerTest2WayRequestCommand { Action = "CC" }
-            ).FireAndForget();
+            // zeroMqTwoWayFactory.TrySendTo(
+            //     new[] { EUrlConfiguration.TrackerServiceUrl }, 
+            //     new TrackerTest2WayRequestCommand { Action = "CC" }
+            // ).FireAndForget();
             
             
             if (query.IsEnableMultiDevice)

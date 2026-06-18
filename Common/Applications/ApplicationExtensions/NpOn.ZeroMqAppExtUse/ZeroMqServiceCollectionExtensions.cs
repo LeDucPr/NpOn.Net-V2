@@ -3,6 +3,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Infrastructures.NpOn.ZeroMqExtCm.Connections;
 using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 
@@ -61,6 +62,22 @@ public static class ZeroMqServiceCollectionExtensions
             return factoryWrapper;
         });
 
+        services.AddHostedService<ZeroMqTwoWayWakeupService>();
+
         return services;
     }
+}
+
+public class ZeroMqTwoWayWakeupService : IHostedService
+{
+    private readonly IZeroMqTwoWayProvider _provider;
+
+    public ZeroMqTwoWayWakeupService(IZeroMqTwoWayProvider provider)
+    {
+        _provider = provider;
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

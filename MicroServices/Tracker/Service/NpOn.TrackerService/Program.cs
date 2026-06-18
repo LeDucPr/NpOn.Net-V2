@@ -18,6 +18,7 @@ using MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 using MicroServices.Tracker.StorageAdapter.NpOn.ITrackerStorageAdapter;
 using MicroServices.Tracker.StorageAdapter.NpOn.TrackerStorageAdapter;
 using MicroServices.Tracker.Service.NpOn.Tracker2WayService.Zero2Way.Handlers;
+using MicroServices.Tracker.Service.NpOn.Tracker2WayService.Zero2Way.TriggersAndMessages.Triggers;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.BroadcastHandlers;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 

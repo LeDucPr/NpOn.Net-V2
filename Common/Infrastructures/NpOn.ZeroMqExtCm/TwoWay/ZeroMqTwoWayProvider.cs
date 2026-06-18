@@ -34,15 +34,16 @@ public class ZeroMqTwoWayProvider : IZeroMqTwoWayProvider
 
         // Nếu không có handler nào, ta vẫn có thể dùng Factory để send
         int connCount = HandlerCount == 0 ? 1 : HandlerCount;
+        if (HandlerCount > 0)
+        {
+            _connectOption.IsServerMode = true;
+        }
         Factory = new ZeroMqDriverFactory(_connectOption, connCount);
 
         foreach (var handler in _handlers)
         {
             var channel = handler.Channel;
-            Func<string, Task<string>> callback = async (payload) =>
-            {
-                return await handler.ParseAndTriggerAsync(payload);
-            };
+            Func<string, Task<string>> callback = async (payload) => await handler.ParseAndTriggerAsync(payload);
 
             var command = new ZeroMqCommand(channel, callback);
             

@@ -15,7 +15,7 @@ public static class JsonModeWithCache
 
     public static string ToJson(object? obj)
     {
-        if (obj == null) 
+        if (obj == null)
             return string.Empty;
         var type = obj.GetType();
 
@@ -30,7 +30,7 @@ public static class JsonModeWithCache
 
     public static string? ToJsonAsNull(object? obj)
     {
-        if (obj == null) 
+        if (obj == null)
             return null;
         var type = obj.GetType();
 
@@ -102,7 +102,11 @@ public static class JsonModeWithCache
             [typeof(object)], typeof(JsonModeWithCache).Module, true);
         var il = method.GetILGenerator();
 
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(p => p.CanRead)
+            .Where(p => !p.CustomAttributes.Any(attr =>
+                attr.AttributeType.Name == nameof( /*Newtonsoft.Json.*/JsonIgnoreAttribute) ||
+                attr.AttributeType.Name == nameof(System.Text.Json.Serialization.JsonIgnoreAttribute)))
             .ToArray();
         var sbConstructor = typeof(StringBuilder).GetConstructor(Type.EmptyTypes);
         var sbAppendString = typeof(StringBuilder).GetMethod(nameof(StringBuilder.Append), [typeof(string)]);
@@ -208,7 +212,11 @@ public static class JsonModeWithCache
             typeof(JsonModeWithCache).Module, true);
         var il = method.GetILGenerator();
 
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite)
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(p => p.CanWrite)
+            .Where(p => !p.CustomAttributes.Any(attr =>
+                attr.AttributeType.Name == nameof( /*Newtonsoft.Json.*/JsonIgnoreAttribute) ||
+                attr.AttributeType.Name == nameof(System.Text.Json.Serialization.JsonIgnoreAttribute)))
             .ToArray();
 
         var jObjectParse = typeof(JObject).GetMethod(nameof(JObject.Parse), [typeof(string)]);

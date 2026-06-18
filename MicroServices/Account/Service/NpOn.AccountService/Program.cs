@@ -3,7 +3,7 @@ using Common.Applications.ApplicationsExtensions.NpOn.KafkaAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RabbitMqAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
-using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
+// using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Applications.NpOn.CommonHttpApplication;
@@ -20,6 +20,7 @@ using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
 using MicroServices.General.Service.NpOn.IGeneralService;
+using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
@@ -46,6 +47,7 @@ public sealed class Program : HttpCommonProgram
                 .AddGrpcDefaultMode()
                 .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
+                .AddConnectService(new TrackerServiceClientResolver(), null, EUrlConfiguration.TrackerServiceUrl)
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
@@ -85,12 +87,12 @@ public sealed class Program : HttpCommonProgram
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginKafkaConsumer>>();
         }
 
-        // zeromq 
-        services.AddZeroMqTwoWay(connectionString: null);
-        services.AddZeroMqMultiClients([
-                EUrlConfiguration.TrackerServiceUrl
-            ]
-            /*, handler*/);
+        // // zeromq 
+        // services.AddZeroMqTwoWay(connectionString: null);
+        // services.AddZeroMqMultiClients([
+        //         EUrlConfiguration.TrackerServiceUrl
+        //     ]
+        //     /*, handler*/);
 
         // Add Service
         services.AddTransient<IAccountInfoService, AccountInfoService>();

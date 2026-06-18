@@ -3,11 +3,8 @@ using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
 using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
-// using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersAndMessages;
 using NpOn.TrackerConstant.Broadcasts;
-
-using Common.Infrastructures.NpOn.ZeroMqExtCm.TwoWay;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
@@ -15,7 +12,6 @@ public class HostingApp(
     IRedisBroadcastFactoryWrapper redisBroadcastFactoryWrapper,
     // ITrackerLogService trackerLogService,
     IClickHouseFactoryWrapper clickHouseFactoryWrapper,
-    IZeroMqTwoWayProvider zeroMqTwoWayProvider,
     ILogger<HostingApp> logger
 ) : IHostedService
 {
@@ -30,18 +26,10 @@ public class HostingApp(
             logger.LogCritical("NpOn.TrackerService App HostedService failed to initialize. Shutting down.");
             throw new Exception("Critical initialization failure.");
         }
+    }
 
-        ////// Test Clickhouse
-        // await trackerLogService.PushLogs([new TrackerLogAddCommand
-        //     {
-        //         EventDate = DateTime.UtcNow,
-        //         Level = ETrackerLogLevel.Debug,
-        //         Source = "NpOn.TrackerService",
-        //         Message = "NpOn.TrackerService is starting",
-        //         TrackerLogTypes = [ETrackerLogType.TraceLog]
-        //     }
-        // ]);
-
+    private async Task<bool> RedisBroadcastMessageTrial()
+    {
         var redisMsg = new RedisBroadcastMessage<WarningRedisBroadCastMessage>
         {
             Value = new WarningRedisBroadCastMessage
@@ -55,10 +43,12 @@ public class HostingApp(
         };
 
         var publishActRs = await redisBroadcastFactoryWrapper.PublishAsync(redisMsg);
-        if (publishActRs?.Status ?? false)
+        bool isSuccess = publishActRs?.Status ?? false;
+        if (isSuccess)
             logger.LogInformation("Successfully broadcasted start message via Redis Pub/Sub.");
         else
             logger.LogWarning("Failed to broadcast start message via Redis Pub/Sub.");
+        return isSuccess;
     }
 
     private async Task<bool> InitializeDatabaseTablesAsync(string sqlFilePath)

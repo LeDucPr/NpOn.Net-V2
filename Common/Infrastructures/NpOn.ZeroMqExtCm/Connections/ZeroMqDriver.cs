@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
@@ -27,8 +28,8 @@ public class ZeroMqDriver : NpOnDbDriver
 
     public override bool IsValidSession => _dealerSocket != null && _dealerSocket.Options.Linger.TotalMilliseconds >= 0;
 
-    private readonly ConcurrentDictionary<string, Func<string, Task<string>>> _callbacks = new();
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<INpOnWrapperResult>> _pendingRequests = new();
+    private readonly WrapperCacheStore<string, Func<string, Task<string>>> _callbacks = new();
+    private readonly WrapperCacheStore<string, TaskCompletionSource<INpOnWrapperResult>> _pendingRequests = new();
 
     public ZeroMqDriver(INpOnConnectOption option, IObjectPoolStore? objectPoolStore = null) : base(option)
     {
@@ -61,7 +62,13 @@ public class ZeroMqDriver : NpOnDbDriver
             try
             {
                 if (Option.ConnectionString != null)
-                    _dealerSocket.Connect(Option.ConnectionString);
+                {
+                    if (Option is ZeroMqConnectOption zOpt && zOpt.IsServerMode)
+                        _dealerSocket.Bind(Option.ConnectionString);
+                    else
+                        _dealerSocket.Connect(Option.ConnectionString);
+                }
+
                 lastException = null;
                 break;
             }
@@ -224,7 +231,7 @@ public class ZeroMqDriver : NpOnDbDriver
             return CreateSuccessResult();
         }
 
-        int retryCount = 3;
+        int retryCount = 1;
         Exception? lastException = null;
 
         for (int i = 0; i < retryCount; i++)
@@ -326,10 +333,12 @@ public class ZeroMqDriver : NpOnDbDriver
     protected INpOnWrapperResult CreateSuccessResult()
     {
         var wrapper = ResultSetPool?.Get() ?? new ZeroMqResultSetWrapper();
-        if (ResultSetPool != null) wrapper.Reset();
+        if (ResultSetPool != null)
+            wrapper.Reset();
         wrapper.Init("OK");
         wrapper.SetSuccess();
-        if (ResultSetPool != null) wrapper.ReturnToPool = w => ResultSetPool.Return(w);
+        if (ResultSetPool != null)
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
         return wrapper;
     }
 

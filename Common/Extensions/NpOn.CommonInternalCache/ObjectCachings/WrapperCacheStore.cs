@@ -17,13 +17,14 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
         foreach (var pair in _dict)
         {
             // Only include completed and not-expired tasks
-            if (pair.Value.IsValueCreated && 
-                pair.Value.Value.IsCompletedSuccessfully && 
+            if (pair.Value.IsValueCreated &&
+                pair.Value.Value.IsCompletedSuccessfully &&
                 !pair.Value.Value.Result.IsExpired)
             {
                 result[pair.Key] = pair.Value.Value.Result.Value;
             }
         }
+
         return result;
     }
 
@@ -52,13 +53,13 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
                 {
                     return wrapper.Value;
                 }
-                
+
                 // The entry has expired. We try to remove it.
                 // If we succeed, the loop will continue and we'll create a new factory.
                 // If we fail, it means another thread just removed it, so the loop will continue
                 // and we'll likely get the new value in the next TryGetValue.
                 var pair = new KeyValuePair<TKey, Lazy<Task<WrapperCache<TValue>>>>(key, lazyWrapperTask);
-                _dict.TryRemove(pair); 
+                _dict.TryRemove(pair);
                 continue; // Retry the loop
             }
 
@@ -72,7 +73,7 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
             // Try to add the new lazy factory.
             // If another thread added it in the meantime, GetOrAdd returns the existing one.
             var existingOrNewLazy = _dict.GetOrAdd(key, newLazyWrapperTask);
-            
+
             // Whether we added a new one or got an existing one, we await its value.
             // The Lazy<> ensures the factory is only ever executed once.
             var finalWrapper = await existingOrNewLazy.Value;
@@ -100,7 +101,7 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
         Func<TKey, TValue, TValue> updateFactory,
         TimeSpan? expiresIn = null)
     {
-        var newLazy = new Lazy<Task<WrapperCache<TValue>>>(() => 
+        var newLazy = new Lazy<Task<WrapperCache<TValue>>>(() =>
             Task.FromResult(new WrapperCache<TValue>(addFactory(key), expiresIn)));
 
         var resultLazy = _dict.AddOrUpdate(key, newLazy, (k, existingLazy) =>
@@ -109,7 +110,7 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
             // For simplicity, we'll just replace the old task with a new one.
             // A more robust implementation might await the old task first.
             var updatedValue = updateFactory(k, existingLazy.Value.GetAwaiter().GetResult().Value);
-            return new Lazy<Task<WrapperCache<TValue>>>(() => 
+            return new Lazy<Task<WrapperCache<TValue>>>(() =>
                 Task.FromResult(new WrapperCache<TValue>(updatedValue, expiresIn)));
         });
 
@@ -122,16 +123,81 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
         if (_dict.TryGetValue(key, out var lazyWrapperTask))
         {
             // Check if the task has completed successfully and the result is not expired.
-            if (lazyWrapperTask.IsValueCreated && 
-                lazyWrapperTask.Value.IsCompletedSuccessfully && 
+            if (lazyWrapperTask.IsValueCreated &&
+                lazyWrapperTask.Value.IsCompletedSuccessfully &&
                 !lazyWrapperTask.Value.Result.IsExpired)
             {
                 value = lazyWrapperTask.Value.Result.Value;
                 return true;
             }
         }
+
         return false;
     }
 
     public bool Remove(TKey key) => _dict.TryRemove(key, out _);
+
+    public bool TryRemove(TKey key, out TValue? value)
+    {
+        value = default;
+
+        if (_dict.TryRemove(key, out var lazyWrapperTask))
+        {
+            if (lazyWrapperTask.IsValueCreated &&
+                lazyWrapperTask.Value.IsCompletedSuccessfully &&
+                !lazyWrapperTask.Value.Result.IsExpired)
+            {
+                value = lazyWrapperTask.Value.Result.Value;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public void Clear() => _dict.Clear();
+
+    public IEnumerable<TValue> Values
+    {
+        get
+        {
+            var validValues = new List<TValue>();
+            foreach (var lazyWrapperTask in _dict.Values)
+            {
+                if (lazyWrapperTask.IsValueCreated &&
+                    lazyWrapperTask.Value.IsCompletedSuccessfully &&
+                    !lazyWrapperTask.Value.Result.IsExpired)
+                {
+                    validValues.Add(lazyWrapperTask.Value.Result.Value);
+                }
+            }
+
+            return validValues;
+        }
+    }
+    
+    public TValue? this[TKey key]
+    {
+        get
+        {
+            if (TryGetValue(key, out var value))
+            {
+                return value;
+            }
+            
+            // Exception ??
+            return default; 
+        }
+        set
+        {
+            if (value != null)
+            {
+                AddOrUpdate(key, value);
+            }
+            // else
+            // {
+            // }
+        }
+    }
 }

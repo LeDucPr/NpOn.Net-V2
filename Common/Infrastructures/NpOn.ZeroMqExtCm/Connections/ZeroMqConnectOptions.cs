@@ -7,6 +7,7 @@ namespace Common.Infrastructures.NpOn.ZeroMqExtCm.Connections;
 public class ZeroMqConnectOption : DbNpOnConnectOption<ZeroMqDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
+    public bool IsServerMode { get; set; } = false;
 
     public override bool IsConnectValid()
     {
