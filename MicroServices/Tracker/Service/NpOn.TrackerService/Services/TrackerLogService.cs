@@ -1,7 +1,7 @@
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Infrastructures.DbFactories.NpOn.ClickHouseFactory;
-using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
+// using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain.Domains;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
@@ -9,17 +9,16 @@ using MicroServices.Tracker.Service.NpOn.ITrackerService;
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
 public class TrackerLogService(
-    IRedisBroadcastFactoryWrapper redisBroadcastFactoryWrapper,
+    // IRedisBroadcastFactoryWrapper redisBroadcastFactoryWrapper,
     IClickHouseFactoryWrapper clickHouseFactoryWrapper,
     ILogger<CommonService> logger
 ) : CommonService(logger), ITrackerLogService
 {
     public async Task<CommonResponse> PushLogs(TrackerLogAddCommand[]? commands)
     {
-        TrackerLogMetrics.TrackPushLogsRequest(commands?.Length ?? 0);
-
         return await CommonProcess(async (response) =>
         {
+            TrackerLogMetrics.TrackPushLogsRequest(commands?.Length ?? 0);
             if (commands is not { Length : > 0 })
             {
                 response.SetSuccess();

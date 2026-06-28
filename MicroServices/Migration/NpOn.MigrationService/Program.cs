@@ -13,6 +13,7 @@ using Common.Extensions.NpOn.ICommonDb.DbResults;
 using MicroServices.Migration.Service.NpOn.IMigrationService;
 using MicroServices.Migration.Service.NpOn.MigrationService.Services;
 using Microsoft.AspNetCore.Builder;
+using NpOn.CommonGrpcCall;
 
 namespace MicroServices.Migration.Service.NpOn.MigrationService;
 
@@ -36,8 +37,8 @@ public sealed class Program : HttpCommonProgram
             services
                 .AddDefaultKestrelListenConfig(out _)
                 .AddGrpcDefaultMode()
-                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer));
-        // .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
+                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
+                .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
         // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
         // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
 
@@ -55,8 +56,10 @@ public sealed class Program : HttpCommonProgram
 
 
         // Add Service
-        services.AddTransient<CassandraMigration>();
-        services.AddTransient<ICassandraMigration>(sp => sp.GetRequiredService<CassandraMigration>());
+        // services.AddTransient<CassandraMigration>();
+        // services.AddTransient<ICassandraMigration>(sp => sp.GetRequiredService<CassandraMigration>());
+        services.AddTransient<CassandraMigration, CassandraMigration>();
+
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

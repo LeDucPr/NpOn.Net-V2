@@ -64,7 +64,7 @@ public class NpOnWrapperResultQueryBuilder
                     {
                         var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
                         columns.Add(targetCol);
-                        values.Add(FormatDbValue(kvp.Value?.ValueAsObject));
+                        values.Add(FormatDbValue(kvp.Value.ValueAsObject));
                     }
                     sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)});\n");
                 }
@@ -83,7 +83,7 @@ public class NpOnWrapperResultQueryBuilder
                     {
                         var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
                         columns.Add(targetCol);
-                        values.Add(FormatDbValue(kvp.Value?.ValueAsObject));
+                        values.Add(FormatDbValue(kvp.Value.ValueAsObject));
                     }
                     sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)});\n");
                 }
@@ -162,7 +162,7 @@ public class NpOnWrapperResultQueryBuilder
                         var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
                         var formattedValue = FormatDbValue(kvp.Value.ValueAsObject);
 
-                        if (kvp.Value?.IsPrimaryKey == true)
+                        if (kvp.Value.IsPrimaryKey)
                             whereClauses.Add($"{targetCol} = {formattedValue}");
                         else
                             setClauses.Add($"{targetCol} = {formattedValue}");
@@ -206,7 +206,7 @@ public class NpOnWrapperResultQueryBuilder
                     {
                         var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
                         columns.Add(targetCol);
-                        values.Add(FormatDbValue(kvp.Value?.ValueAsObject));
+                        values.Add(FormatDbValue(kvp.Value.ValueAsObject));
                     }
                     sb.Append($"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)});\n");
                 }
@@ -226,11 +226,11 @@ public class NpOnWrapperResultQueryBuilder
                     foreach (var kvp in cells)
                     {
                         var targetCol = _columnMappings.GetValueOrDefault(kvp.Key, kvp.Key);
-                        var formattedValue = FormatDbValue(kvp.Value?.ValueAsObject);
+                        var formattedValue = FormatDbValue(kvp.Value.ValueAsObject);
                         columns.Add(targetCol);
                         values.Add(formattedValue);
 
-                        if (kvp.Value?.IsPrimaryKey == true)
+                        if (kvp.Value.IsPrimaryKey)
                             primaryKeys.Add(targetCol);
                         else
                             updateClauses.Add($"{targetCol} = EXCLUDED.{targetCol}");
