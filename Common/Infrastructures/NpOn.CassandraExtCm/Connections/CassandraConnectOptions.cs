@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.CassandraExtCm.Connections;
 
-public class CassandraConnectOption : DbNpOnConnectOption<CassandraDriver>
+public class CassandraConnectOption : NpOnDbConnectOption<CassandraDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
 

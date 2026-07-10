@@ -101,7 +101,7 @@ public class GenericDbDriverFactory : BaseDbDriverFactory
 
     private NpOnDbConnection CreateMongoDbConnection(INpOnConnectOption option)
     {
-        if (option is not MongoDbConnectOption mongoOptions)
+        if (option is not MongoNpOnDbConnectOption mongoOptions)
         {
             throw new ArgumentException("Invalid options for MongoDB. Expected MongoDbConnectOptions.",
                 nameof(option));
@@ -113,7 +113,7 @@ public class GenericDbDriverFactory : BaseDbDriverFactory
 
     private INpOnDbDriver CreateMongoDbDriver(INpOnConnectOption option)
     {
-        if (option is not MongoDbConnectOption mongoOptions)
+        if (option is not MongoNpOnDbConnectOption mongoOptions)
         {
             throw new ArgumentException("Invalid options provided for MongoDB. Expected MongoDbConnectOptions.",
                 nameof(option));

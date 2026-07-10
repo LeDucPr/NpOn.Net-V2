@@ -6,7 +6,7 @@ namespace Common.Infrastructures.NpOn.ElasticSearchExtCm.Connections;
 /// <summary>
 /// Defines connection options for ElasticSearch, inheriting from the common DbNpOnConnectOption.
 /// </summary>
-public class ElasticSearchConnectOption : DbNpOnConnectOption<ElasticSearchDriver>
+public class ElasticSearchConnectOption : NpOnDbConnectOption<ElasticSearchDriver>
 {
     public override bool IsConnectValid()
     {

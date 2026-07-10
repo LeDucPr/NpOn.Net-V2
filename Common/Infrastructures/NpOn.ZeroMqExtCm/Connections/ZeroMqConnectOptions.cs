@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.ZeroMqExtCm.Connections;
 
-public class ZeroMqConnectOption : DbNpOnConnectOption<ZeroMqDriver>
+public class ZeroMqConnectOption : NpOnDbConnectOption<ZeroMqDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
     public bool IsServerMode { get; set; } = false;

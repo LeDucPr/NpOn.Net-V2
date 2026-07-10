@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.MssqlExtCm.Connections;
 
-public class MssqlConnectOption : DbNpOnConnectOption<MssqlDriver>
+public class MssqlConnectOption : NpOnDbConnectOption<MssqlDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
 

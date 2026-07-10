@@ -21,7 +21,7 @@ public class MongoDbDriver : NpOnDbDriver
 
     public override bool IsValidSession => _client != null; //&& _collection != null;
 
-    public MongoDbDriver(MongoDbConnectOption option) : base(option)
+    public MongoDbDriver(MongoNpOnDbConnectOption option) : base(option)
     {
     }
 

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.ClickHouseExtCm.Connections;
 
-public class ClickHouseConnectOption : DbNpOnConnectOption<ClickHouseDriver>
+public class ClickHouseConnectOption : NpOnDbConnectOption<ClickHouseDriver>
 {
     public override bool IsConnectValid()
     {

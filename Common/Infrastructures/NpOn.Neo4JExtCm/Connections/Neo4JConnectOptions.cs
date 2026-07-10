@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.Neo4JExtCm.Connections;
 
-public class Neo4JConnectOption : DbNpOnConnectOption<Neo4JDriver>
+public class Neo4JConnectOption : NpOnDbConnectOption<Neo4JDriver>
 {
     public override bool IsConnectValid()
     {

@@ -6,7 +6,7 @@ namespace Common.Infrastructures.NpOn.RedisExtCm.Connections;
 /// <summary>
 /// Defines connection options for Redis, inheriting from the common DbNpOnConnectOption.
 /// </summary>
-public class RedisConnectOption : DbNpOnConnectOption<RedisDriver>
+public class RedisConnectOption : NpOnDbConnectOption<RedisDriver>
 {
     public override bool IsConnectValid()
     {

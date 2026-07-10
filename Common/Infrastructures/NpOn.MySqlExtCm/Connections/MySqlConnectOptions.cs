@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.MySqlExtCm.Connections;
 
-public class MySqlConnectOption : DbNpOnConnectOption<MySqlDriver>
+public class MySqlConnectOption : NpOnDbConnectOption<MySqlDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
 

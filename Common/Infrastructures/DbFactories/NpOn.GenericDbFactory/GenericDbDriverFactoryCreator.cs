@@ -56,7 +56,7 @@ public class GenericDbDriverFactoryCreator
                 _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
             case EDb.MongoDb:
-                _connectOptions = new MongoDbConnectOption().SetConnectionString(connectString);
+                _connectOptions = new MongoNpOnDbConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
             case EDb.Cassandra:

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Common.Extensions.NpOn.CommonDb.Connections;
 
-public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
+public abstract class NpOnDbConnectOption<T> : INpOnConnectOption
 {
     // private bool _isUseMultiSessions = false;
     private bool _isShutdownImmediate /*= false*/;
@@ -17,8 +17,8 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     private DateTime _expiredConnectionTime;
     private string? _connectionString;
 
-    protected readonly ILogger<DbNpOnConnectOption<T>> Logger =
-        new Logger<DbNpOnConnectOption<T>>(new NullLoggerFactory());
+    protected readonly ILogger<NpOnDbConnectOption<T>> Logger =
+        new Logger<NpOnDbConnectOption<T>>(new NullLoggerFactory());
 
     #region Validate
 

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.YugaByteExtCm.Connections;
 
-public class YugaByteConnectOption : DbNpOnConnectOption<YugaByteDriver>
+public class YugaByteConnectOption : NpOnDbConnectOption<YugaByteDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
 

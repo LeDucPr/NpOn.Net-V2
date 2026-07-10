@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Common.Infrastructures.NpOn.PostgresExtCm.Connections;
 
-public class PostgresConnectOption : DbNpOnConnectOption<PostgresDriver>
+public class PostgresConnectOption : NpOnDbConnectOption<PostgresDriver>
 {
     public IObjectPoolStore? PoolStore { get; set; }
 

@@ -7,7 +7,8 @@ using MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.TriggersA
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.RedisBroadcast.BroadcastHandlers;
 
 public class WarningBroadcastHandler(
-    IServiceProvider serviceProvider,
+    // IServiceProvider serviceProvider,
+    ITrackerLogService trackerLogService,
     WarningBroadcastTrigger trigger
 ) : BaseRedisBroadcastHandler<WarningRedisBroadCastMessage>(trigger,
     async (msg) =>
@@ -16,8 +17,8 @@ public class WarningBroadcastHandler(
         if (warningMsg?.Value == null)
             return false;
 
-        using var scope = serviceProvider.CreateScope();
-        var trackerLogService = scope.ServiceProvider.GetRequiredService<ITrackerLogService>();
+        // using var scope = serviceProvider.CreateScope();
+        // var trackerLogService = scope.ServiceProvider.GetRequiredService<ITrackerLogService>();
 
         var command = new TrackerLogAddCommand
         {
