@@ -13,5 +13,5 @@ public enum ERedisCommand
     [Display(Name = "Publish")] Publish,
     [Display(Name = "Subscribe")] Subscribe,
     [Display(Name = "Unsubscribe")] Unsubscribe,
-    [Display(Name = "")] Customize,
+    [Display(Name = "Customize")] Customize,
 }
