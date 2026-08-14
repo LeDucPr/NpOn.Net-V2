@@ -76,15 +76,15 @@ public class ZeroMqDriver : NpOnDbDriver
             {
                 lastException = ex;
                 var delay = TimeSpan.FromSeconds(Math.Pow(2, i + 1));
-                Console.WriteLine(
-                    $"[ZeroMqDriver] Connection attempt {i + 1} failed. Retrying in {delay}. Error: {ex.Message}");
+                // Console.WriteLine(
+                //     $"[ZeroMqDriver] Connection attempt {i + 1} failed. Retrying in {delay}. Error: {ex.Message}");
                 await Task.Delay(delay, cancellationToken);
             }
         }
 
         if (lastException != null)
         {
-            Console.WriteLine($"[ZeroMqDriver] Failed to connect to ZeroMQ after {retryCount} attempts.");
+            // Console.WriteLine($"[ZeroMqDriver] Failed to connect to ZeroMQ after {retryCount} attempts.");
             await DisconnectAsync();
             throw lastException;
         }
@@ -164,7 +164,7 @@ public class ZeroMqDriver : NpOnDbDriver
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ZeroMqDriver] Error handling incoming ZeroMQ message: {ex.Message}");
+            // Console.WriteLine($"[ZeroMqDriver] Error handling incoming ZeroMQ message: {ex.Message}");
         }
     }
 
@@ -179,7 +179,7 @@ public class ZeroMqDriver : NpOnDbDriver
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ZeroMqDriver] Error sending ZeroMQ message: {ex.Message}");
+            // Console.WriteLine($"[ZeroMqDriver] Error sending ZeroMQ message: {ex.Message}");
         }
     }
 
@@ -244,8 +244,8 @@ public class ZeroMqDriver : NpOnDbDriver
             {
                 lastException = ex;
                 var delay = TimeSpan.FromSeconds(Math.Pow(2, i + 1));
-                Console.WriteLine(
-                    $"[ZeroMqDriver] Execute attempt {i + 1} failed. Retrying in {delay}. Error: {ex.Message}");
+                // Console.WriteLine(
+                //     $"[ZeroMqDriver] Execute attempt {i + 1} failed. Retrying in {delay}. Error: {ex.Message}");
                 await Task.Delay(delay);
             }
         }

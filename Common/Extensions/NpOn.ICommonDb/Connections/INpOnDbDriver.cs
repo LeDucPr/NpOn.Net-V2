@@ -9,6 +9,8 @@ public interface INpOnDbDriver
     string Version { get; }
     public bool IsValidSession { get; }
     public INpOnConnectOption Option { get; }
+    bool IsBusy { get; set; }
+    void ResetSessionTimeout();
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command);

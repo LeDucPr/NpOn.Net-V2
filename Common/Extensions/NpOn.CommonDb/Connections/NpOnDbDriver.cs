@@ -18,6 +18,8 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     private Timer? _idleTimer;
     private readonly object _timerLock = new object();
 
+    public bool IsBusy { get; set; } = false;
+
     public virtual object? GetConnection()
     {
         throw new NotImplementedException("Need to override this method");
@@ -36,7 +38,7 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
 
     private void CheckIdleTimeout(object? state)
     {
-        if (Option.IsExpired && IsValidSession)
+        if (Option.IsExpired && IsValidSession && !IsBusy)
         {
             _ = DisconnectAsync();
         }

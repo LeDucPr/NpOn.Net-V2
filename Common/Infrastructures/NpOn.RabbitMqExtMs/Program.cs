@@ -109,7 +109,7 @@ internal static class Test
                     basicProperties: props,
                     body: body);
 
-                Console.WriteLine($"[Producer] Sent: Message {counter}");
+                // Console.WriteLine($"[Producer] Sent: Message {counter}");
                 counter++;
                 await Task.Delay(1000); // gửi mỗi giây
             }
@@ -121,8 +121,8 @@ internal static class Test
             await SetupConsumer(channel, "testQueue", "Consumer 1");
         });
 
-        Console.WriteLine("Consumers are running. Press [Enter] to exit.");
-        Console.ReadLine(); // Keep the application running to listen for messages
+        // Console.WriteLine("Consumers are running. Press [Enter] to exit.");
+        // Console.ReadLine(); // Keep the application running to listen for messages
     }
 
     private static async Task SetupConsumer(IChannel channel, string queueName, string consumerName)
@@ -131,7 +131,7 @@ internal static class Test
         consumer.ReceivedAsync += async (sender, ea) =>
         {
             var message = Encoding.UTF8.GetString(ea.Body.ToArray());
-            Console.WriteLine($"[{consumerName}] Received from {queueName}: {message}");
+            // Console.WriteLine($"[{consumerName}] Received from {queueName}: {message}");
             await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
         };
 

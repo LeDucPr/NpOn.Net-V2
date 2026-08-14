@@ -17,6 +17,8 @@ public interface IDbDriverFactory
     /// </summary>
     public int GetAliveConnectionNumbers { get; }
 
+    public long ConnectionTimeoutSessions();
+
     public int GetConnectionNumbers { get; }
 
     public EDb GetDbType();
@@ -83,6 +85,8 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
 
 
     #region Create Connections
+
+    public long ConnectionTimeoutSessions() => Option?.ConnectionTimeoutSessions ?? 30;
 
     public BaseDbDriverFactory(EDb dbType, INpOnConnectOption option, int connectionNumber = 1)
     {
@@ -185,12 +189,16 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
             // 2. Pop an available connection from the ConcurrentStack (Lock-free O(1))
             if (_idleConnections.TryPop(out var connection))
             {
+                connection.Driver.IsBusy = true;
+                connection.Driver.ResetSessionTimeout();
+
                 // Verify and open if the session is no longer valid
                 if (!connection.Driver.IsValidSession)
                 {
                     // OpenAsync is handled asynchronously outside of any global lock
                     await connection.OpenAsync();
                 }
+
                 return connection;
             }
 
@@ -211,9 +219,12 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
     {
         if (connection == null) return;
 
+        connection.Driver.ResetSessionTimeout();
+        connection.Driver.IsBusy = false;
+
         // Return connection to the idle stack and release the semaphore slot
         _idleConnections.Push(connection);
-        
+
         if (_poolSemaphore != null)
         {
             try
@@ -221,7 +232,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
                 _poolSemaphore.Release();
                 // Logging high-frequency events should be avoided in performance critical paths
                 // _logger.LogInformation($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
-                Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
+                // Console.WriteLine($"({DbType}) Remaining available connections: {_poolSemaphore.CurrentCount}");
             }
             catch (SemaphoreFullException)
             {
@@ -280,7 +291,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
                 NpOnDbConnection? connection = InitConnection();
                 if (connection == null)
                     throw new NotSupportedException($"The database type '{DbType}' is not supported.");
-                
+
                 _connections.Add(connection);
                 _idleConnections.Push(connection);
             }

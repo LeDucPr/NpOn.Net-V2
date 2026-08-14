@@ -31,15 +31,30 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
 
     public string? FactoryOptionCode => Factory?.DriverOptionKey;
 
-    protected async Task<INpOnWrapperResult?> ExecuteWithConnectionAsync(
+    private async Task<INpOnWrapperResult?> ExecuteWithConnectionAsync(
         Func<NpOnDbConnection, Task<INpOnWrapperResult?>> action)
     {
         if (Factory == null) return null;
         NpOnDbConnection? connection = null;
         try
         {
-            connection = await Factory.GetConnectionAsync();
-            if (connection == null) return null; // Không có kết nối khả dụng
+            // retry DB calling  
+            long timeout = Factory.ConnectionTimeoutSessions();
+            TimeSpan timeoutSpan = timeout > 1000
+                ? TimeSpan.FromMilliseconds(timeout)
+                : TimeSpan.FromSeconds(timeout);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            while (connection == null && stopwatch.Elapsed < timeoutSpan)
+            {
+                connection = await Factory.GetConnectionAsync();
+                if (connection != null)
+                    break;
+                await Task.Delay(100).ConfigureAwait(false); // Retry 100ms
+            }
+
+            if (connection == null)
+                return null; // Không có kết nối khả dụng
             return await action(connection);
         }
         catch (Exception)
@@ -52,15 +67,30 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
         }
     }
 
-    protected async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>?> ExecuteWithConnectionAsync(
+    private async Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>?> ExecuteWithConnectionAsync(
         Func<NpOnDbConnection, Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>>> action)
     {
         if (Factory == null) return null;
         NpOnDbConnection? connection = null;
         try
         {
-            connection = await Factory.GetConnectionAsync();
-            if (connection == null) return null; // Không có kết nối khả dụng
+            // retry DB calling  
+            long timeout = Factory.ConnectionTimeoutSessions();
+            TimeSpan timeoutSpan = timeout > 1000
+                ? TimeSpan.FromMilliseconds(timeout)
+                : TimeSpan.FromSeconds(timeout);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            while (connection == null && stopwatch.Elapsed < timeoutSpan)
+            {
+                connection = await Factory.GetConnectionAsync();
+                if (connection != null)
+                    break;
+                await Task.Delay(100).ConfigureAwait(false); // Retry 100ms
+            }
+
+            if (connection == null)
+                return null; // Không có kết nối khả dụng
             return await action(connection);
         }
         catch (Exception)

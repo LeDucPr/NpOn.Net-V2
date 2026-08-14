@@ -542,7 +542,7 @@ public static class TaskExtensions
             {
                 foreach (var ex in t.Exception.Flatten().InnerExceptions)
                 {
-                    Console.WriteLine($"[Background Task Crash]: {ex.Message}");
+                    // Console.WriteLine($"[Background Task Crash]: {ex.Message}");
                 }
             }
         }, TaskContinuationOptions.OnlyOnFaulted);
