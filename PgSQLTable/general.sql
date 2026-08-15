@@ -1,12 +1,14 @@
 --
 -- PostgreSQL database dump
 --
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-\restrict YrBjzLapw78g6f5ymOxwIzSmdccPfC5uV9rbGVrDJMkH4IXNGlweYy4hDPfMyMe
+-- \restrict YrBjzLapw78g6f5ymOxwIzSmdccPfC5uV9rbGVrDJMkH4IXNGlweYy4hDPfMyMe
 
 -- Dumped from database version 18.3 (Debian 18.3-1.pgdg13+1)
 -- Dumped by pg_dump version 18.3 (Ubuntu 18.3-1.pgdg24.04+1)
 
+ 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
