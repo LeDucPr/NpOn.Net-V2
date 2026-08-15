@@ -24,11 +24,11 @@ HostDomain: "http://0.0.0.0"
 WorkerThreadMin: 2500
 
 IsUsePostgres: true
-PostgresConnectionString: "Host=192.168.1.11;Port=5432;Username=postgres;Password=password;Database=account;"
+PostgresConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=password;Database=account;"
 PostgresConnectionNumber: 100 #00
 
 IsUseRedisCache: true
-RedisConnectString: "192.168.1.11:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+RedisConnectString: "localhost:6379,user=default,password=NpOn.Net-V2_Dragonfly"
 RedisConnectionNumber: 200 #00
 
 
@@ -43,13 +43,13 @@ IsAutomaticKeyGeneration: true
 IsDevEnvironment: true
 
 IsUseKafka: false
-KafkaConnection: "192.168.1.11:19092"
+KafkaConnection: "localhost:19092"
 KafkaTopicName: NpOn_V2.AccountService
 SaslUsername: npon_admin
 SaslPassword: npon_admin_pass
 
 IsUseRabbitMq: true
-RabbitMqConnection: "amqp://rabbitmq:password@192.168.1.11:5672/"
+RabbitMqConnection: "amqp://rabbitmq:password@localhost:5672/"
 RabbitMqExchangeName: NpOn_V2.AccountService
 
 LoginTokenExpiresTime: 1
