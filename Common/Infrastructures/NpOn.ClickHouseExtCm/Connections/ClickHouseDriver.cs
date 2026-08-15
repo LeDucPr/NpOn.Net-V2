@@ -1,4 +1,5 @@
 using System.Data;
+using ClickHouse.Client;
 using ClickHouse.Client.ADO;
 using ClickHouse.Client.ADO.Parameters;
 using ClickHouse.Client.ADO.Readers;
@@ -159,9 +160,14 @@ public class ClickHouseDriver : NpOnDbDriver
             resultSet.Init(reader);
             return resultSet;
         }
-        catch (Exception ex)
+        catch (ClickHouseServerException)
         {
-            return CreateFailResult(ex);
+            throw; // System.Data.Common.DbException
+        }
+        catch (Exception)
+        {
+            throw new ObjectDisposedException("");
+            // return CreateFailResult(ex);
         }
         finally
         {

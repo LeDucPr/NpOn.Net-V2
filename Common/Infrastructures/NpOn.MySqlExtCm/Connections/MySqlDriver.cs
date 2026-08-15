@@ -1,4 +1,5 @@
 using System.Data;
+using System.Net.Sockets;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonDb.DbTransactions;
@@ -43,7 +44,7 @@ public class MySqlDriver : NpOnDbDriver
         Connection ??= new MySqlConnection(Option.ConnectionString);
         await Connection.OpenAsync(cancellationToken);
         Version = Connection.ServerVersion;
-            Name = Connection.Database;
+        Name = Connection.Database;
         // else
         //     Name = $"MySqlSql {_connection.ServerVersion}"; // ?????????????
     }
@@ -190,11 +191,17 @@ public class MySqlDriver : NpOnDbDriver
                 return wrapper;
             }
 
+            ResetSessionTimeout();
             return new MySqlResultSetWrapper(reader);
         }
-        catch (Exception ex)
+        catch (MySqlException ex) when (IsMySqlConnectionError(ex))
         {
-            return CreateFailResult(ex);
+            throw; // System.Data.Common.DbException
+        }
+        catch (Exception)
+        {
+            throw new ObjectDisposedException(""); 
+            // return CreateFailResult(ex);
         }
         finally
         {
@@ -224,6 +231,46 @@ public class MySqlDriver : NpOnDbDriver
                 return (string.Empty, null);
         }
     }
+    
+    private static bool IsMySqlConnectionError(MySqlException ex)
+    {
+        int code = ex.Number;
+        return MySqlConnectionErrorCodes.Contains(code) 
+               || MySqlClientErrorCodes.Contains(code)
+               || ex.InnerException is SocketException
+               || ex.InnerException is IOException;
+    }
+
+    // MySQL error codes liên quan đến mất kết nối
+    private static readonly int[] MySqlConnectionErrorCodes =
+    {
+        1040, // Too many connections
+        1042, // Can't get hostname for your address
+        1043, // Bad handshake
+        1045, // Access denied (wrong credentials)
+        1049, // Unknown database
+        1053, // Server shutdown in progress
+        1077, // MySQL shutdown in progress
+        1080, // Forcing close of thread
+        1152, // Aborted connection
+        1153, // Packet bigger than max_allowed_packet
+        1154, // Read error from connection pipe
+        1156, // Packets out of order
+        1158, // Error reading communication packets
+        1159, // Timeout reading communication packets
+        1160, // Error writing communication packets
+        1161, // Timeout writing communication packets
+    };
+
+    // Client error codes (prefix 2xxx)
+    private static readonly int[] MySqlClientErrorCodes =
+    {
+        2002, // Can't connect through socket
+        2003, // Can't connect to MySQL server on host
+        2006, // MySQL server has gone away
+        2013, // Lost connection during query
+        2026, // SSL connection error
+    };
 
     #endregion private
 }

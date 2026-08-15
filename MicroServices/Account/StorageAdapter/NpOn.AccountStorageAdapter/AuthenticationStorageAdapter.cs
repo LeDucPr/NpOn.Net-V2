@@ -24,7 +24,7 @@ public class AuthenticationStorageAdapter(
             return null;
         var result = await postgresFactoryWrapper.Execute(commandResponse.Data
             .AddParameterValue("phone_number", phoneNumber)
-            .AddParameterValue("email", email)
+            .AddParameterValue("email", email)  
             .AddParameterValue("username", username)
             .ToCommand());
         return result.ToList<AccountRModel>();

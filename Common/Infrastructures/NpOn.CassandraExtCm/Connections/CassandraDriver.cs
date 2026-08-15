@@ -102,13 +102,14 @@ public class CassandraDriver : NpOnDbDriver
                         values.Add(prm.ParamValue);
                     }
                 }
+
                 statement = new SimpleStatement(execCommand.CommandText, values.ToArray());
             }
             else
             {
                 statement = new SimpleStatement(execCommand.CommandText);
             }
-            
+
             RowSet rowSet = await _session.ExecuteAsync(statement).ConfigureAwait(false);
 
             HashSet<string>? primaryKeys = null;
@@ -131,9 +132,35 @@ public class CassandraDriver : NpOnDbDriver
 
             return new CassandraResultSetWrapper(rowSet, primaryKeys);
         }
+        catch (Cassandra.NoHostAvailableException ex)
+        {
+            // No Cassandra node is reachable
+            throw; // System.Data.Common.DbException
+            // return CreateFailResult(ex);
+        }
+        // TCP connection error to the cluster ???
+        catch ( /*Cassandra.*/ReadTimeoutException ex)
+        {
+            throw new ObjectDisposedException("");
+            // Read timeout (node did not respond in time) (pass)
+        }
+        catch ( /*Cassandra.*/WriteTimeoutException ex)
+        {
+            throw new ObjectDisposedException("");
+            // Write timeout (pass)
+        }
+        catch (UnavailableException ex)
+        {
+            throw; // Not enough replicas alive to execute the query
+        }
+        catch (DriverInternalError)
+        {
+            throw; // Driver internal error (usually a bug or corrupted state)
+        }
         catch (Exception ex)
         {
-            return CreateFailResult(ex);
+            throw new ObjectDisposedException("");
+            // return CreateFailResult(ex);
         }
         finally
         {
@@ -151,6 +178,7 @@ public class CassandraDriver : NpOnDbDriver
             wrapper.ReturnToPool = w => _resultSetPool.Return(w);
             return wrapper;
         }
+
         return new CassandraResultSetWrapper().SetFail(error);
     }
 
@@ -164,6 +192,7 @@ public class CassandraDriver : NpOnDbDriver
             wrapper.ReturnToPool = w => _resultSetPool.Return(w);
             return wrapper;
         }
+
         return new CassandraResultSetWrapper().SetFail(ex);
     }
 
@@ -186,7 +215,7 @@ public class CassandraDriver : NpOnDbDriver
 
         return primaryKeys;
     }
-    
+
     // protected override async ValueTask DisposeAsyncCore()
     // {
     //     await DisconnectAsync().ConfigureAwait(false);

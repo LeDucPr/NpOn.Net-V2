@@ -117,34 +117,6 @@ public class PostgresDriver : NpOnDbDriver
 
     #region private
 
-    protected INpOnWrapperResult CreateFailResult(EDbError error)
-    {
-        if (ResultSetPool != null)
-        {
-            var wrapper = ResultSetPool.Get();
-            wrapper.Reset();
-            wrapper.SetFail(error);
-            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
-            return wrapper;
-        }
-
-        return new PostgresResultSetWrapper().SetFail(error);
-    }
-
-    protected INpOnWrapperResult CreateFailResult(Exception ex)
-    {
-        if (ResultSetPool != null)
-        {
-            var wrapper = ResultSetPool.Get();
-            wrapper.Reset();
-            wrapper.SetFail(ex);
-            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
-            return wrapper;
-        }
-
-        return new PostgresResultSetWrapper().SetFail(ex);
-    }
-
     protected async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(
         string commandText,
         IEnumerable<INpOnDbCommandParam>? parameters,
@@ -181,6 +153,7 @@ public class PostgresDriver : NpOnDbDriver
 
             // Transaction (using)
             CommandBehavior commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
+            // not ex will be reset timeout of connection
             await using var reader = await pgCommand.ExecuteReaderAsync(commandBehavior);
 
             if (ResultSetPool != null)
@@ -194,15 +167,50 @@ public class PostgresDriver : NpOnDbDriver
 
             return new PostgresResultSetWrapper(reader);
         }
+        catch (NpgsqlException ex) when (ex.IsTransient)
+        {
+            throw; // System.Data.Common.DbException
+        }
         catch (Exception ex)
         {
-            return CreateFailResult(ex);
+            throw new ObjectDisposedException("");
+            // return CreateFailResult(ex);
         }
         finally
         {
             ResetSessionTimeout();
         }
     }
+
+
+    protected INpOnWrapperResult CreateFailResult(EDbError error)
+    {
+        if (ResultSetPool != null)
+        {
+            var wrapper = ResultSetPool.Get();
+            wrapper.Reset();
+            wrapper.SetFail(error);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
+            return wrapper;
+        }
+
+        return new PostgresResultSetWrapper().SetFail(error);
+    }
+
+    protected INpOnWrapperResult CreateFailResult(Exception ex)
+    {
+        if (ResultSetPool != null)
+        {
+            var wrapper = ResultSetPool.Get();
+            wrapper.Reset();
+            wrapper.SetFail(ex);
+            wrapper.ReturnToPool = w => ResultSetPool.Return(w);
+            return wrapper;
+        }
+
+        return new PostgresResultSetWrapper().SetFail(ex);
+    }
+
 
     private static (string CommandText, List<INpOnDbCommandParam>? Parameters) CommandCustomBuilder(
         IBaseNpOnDbCommand? command)
@@ -226,6 +234,57 @@ public class PostgresDriver : NpOnDbDriver
                 return (string.Empty, null);
         }
     }
+
+
+    // protected async Task<INpOnWrapperResult> ExecuteReaderInternalAsync(
+    //     string commandText,
+    //     IEnumerable<INpOnDbCommandParam>? parameters,
+    //     INpOnDbTransaction? transaction = null,
+    //     bool fetchKeyInfo = false)
+    // {
+    //     try
+    //     {
+    //         await using var pgCommand = new NpgsqlCommand(commandText, Connection);
+    //         if (transaction?.DbTransaction is NpgsqlTransaction dbTransaction) // use transaction 
+    //         {
+    //             pgCommand.Transaction = dbTransaction;
+    //         }
+    //
+    //         if (parameters != null)
+    //         {
+    //             foreach (var prm in parameters)
+    //             {
+    //                 var pgParam = new NpgsqlParameter { ParameterName = prm.ParamName };
+    //
+    //                 var targetDbType = NpgsqlDbType.Unknown;
+    //                 if (prm is NpOnDbCommandParam<NpgsqlDbType> typedParam)
+    //                     targetDbType = typedParam.ParamType;
+    //
+    //                 var adoNetValue = PostgresUtils.ConvertStringToNpgsqlType(prm.ParamValue, targetDbType);
+    //
+    //                 if (targetDbType != NpgsqlDbType.Unknown)
+    //                     pgParam.NpgsqlDbType = targetDbType;
+    //
+    //                 pgParam.Value = adoNetValue ?? DBNull.Value;
+    //                 pgCommand.Parameters.Add(pgParam);
+    //             }
+    //         }
+    //
+    //         // Transaction (using)
+    //         CommandBehavior commandBehavior = fetchKeyInfo ? CommandBehavior.KeyInfo : CommandBehavior.Default;
+    //         await using var reader = await pgCommand.ExecuteReaderAsync(commandBehavior);
+    //
+    //         if (ResultSetPool != null)
+    //         {
+    //             var wrapper = ResultSetPool.Get();
+    //             wrapper.Reset();
+    //             wrapper.Init(reader);
+    //             wrapper.ReturnToPool = w => ResultSetPool.Return(w); // Set return action
+    //             return wrapper;
+    //         }
+    //
+    //         return new PostgresResultSetWrapper(reader);
+    //    
 
     #endregion private
 }

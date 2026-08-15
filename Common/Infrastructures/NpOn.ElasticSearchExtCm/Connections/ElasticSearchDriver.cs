@@ -100,7 +100,7 @@ public class ElasticSearchDriver : NpOnDbDriver
                             if (esCommand.Id != null) idx.Index(esCommand.IndexName).Id(esCommand.Id);
                         });
                     var indexContainer = new ElasticSearchValueContainer(indexRes.IsValidResponse,
-                        NetJsonMode.ToJson(indexRes.Id)/*, null*/);
+                        NetJsonMode.ToJson(indexRes.Id) /*, null*/);
                     MapMetadata(indexContainer, indexRes);
                     return new ElasticSearchValueWrapper(indexContainer);
 
@@ -171,9 +171,28 @@ public class ElasticSearchDriver : NpOnDbDriver
                         EDbError.CommandNotSupported);
             }
         }
+        catch (Exception ex)when
+            (ex is
+                 TransportException or // Base transport error
+                 UnexpectedTransportException or // Lỗi bất ngờ trong transport layer
+                 PipelineException or // Pipeline gãy (selector không tìm được node)
+                 // ── HTTP / TCP / IO tầng thấp ──
+                 HttpRequestException or // HTTP fail (TLS, proxy, DNS)
+                 System.Net.Sockets.SocketException or // TCP reset, connection refused
+                 IOException or // Stream gãy giữa chừng
+                 TaskCanceledException or // HttpClient timeout
+                 TimeoutException or
+                 OperationCanceledException) // CancellationToken triggered
+        {
+            throw;
+            // return new ElasticSearchValueWrapper(
+            //     new ElasticSearchValueContainer(false)).SetFail(ex);
+        }
         catch (Exception ex)
         {
-            return new ElasticSearchValueWrapper(new ElasticSearchValueContainer(false)).SetFail(ex);
+            throw new ObjectDisposedException("");
+            // return new ElasticSearchValueWrapper(
+            //     new ElasticSearchValueContainer(false)).SetFail(ex);
         }
         finally
         {

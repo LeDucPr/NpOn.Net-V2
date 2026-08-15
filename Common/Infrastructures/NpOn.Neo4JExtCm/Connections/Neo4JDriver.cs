@@ -146,6 +146,23 @@ public class Neo4JDriver : NpOnDbDriver
                 throw;
             }
         }
+        catch (Exception ex) when (ex is
+                                       Neo4j.Driver.ServiceUnavailableException or     // Không connect được server nào trong cluster
+                                       Neo4j.Driver.SessionExpiredException or          // Session bị đứt giữa chừng
+                                       Neo4j.Driver.TransientException or               // Lỗi tạm thời phía server (retry được)
+                                       System.Net.Sockets.SocketException or            // TCP refused / reset
+                                       System.IO.IOException or                         // Stream gãy
+                                       System.Threading.Tasks.TaskCanceledException or  // Timeout
+                                       TimeoutException)
+        {
+            var failResult = new Neo4JResultSetWrapper().SetFail(ex);
+            foreach (var cmd in baseNpOnDbCommands)
+            {
+                results.TryAdd(cmd, failResult);
+            }
+
+            throw;
+        }
         catch (Exception ex)
         {
             if (results.Count == 0)
@@ -156,6 +173,7 @@ public class Neo4JDriver : NpOnDbDriver
                     results.TryAdd(cmd, failResult);
                 }
             }
+            throw new ObjectDisposedException("");
         }
         finally
         {
