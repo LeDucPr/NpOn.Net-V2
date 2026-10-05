@@ -33,10 +33,11 @@ public abstract class CommonProgram
             ConfigureBaseServices(services);
 #pragma warning restore CS0618 // Type or member is obsolete
             await ConfigureServices(services);
-            
+
             // Add certificate rotation background service if mTLS is enabled
             var useMtls = EApplicationConfiguration.InterServiceUseMTLS.GetAppSettingConfig().AsDefaultBool();
-            var autoGenerate = EApplicationConfiguration.InterServiceAutoGenerateCertificates.GetAppSettingConfig().AsDefaultBool(true);
+            var autoGenerate = EApplicationConfiguration.InterServiceAutoGenerateCertificates.GetAppSettingConfig()
+                .AsDefaultBool(true);
             if (useMtls && autoGenerate)
             {
                 var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
@@ -45,11 +46,11 @@ public abstract class CommonProgram
                     serviceName,
                     sp.GetRequiredService<ILogger<CertificateRotationBackgroundService>>()));
             }
-            
+
             return services;
         });
 
-            var app = builder.Build();
+        var app = builder.Build();
 
         await app.AddAppConfig(async (appConfig) =>
         {
@@ -81,6 +82,8 @@ public abstract class CommonProgram
             .UseDefaultAuthorizationMode() // authorization
             .UseDefaultAuthenticationMode(); // authentication
 
+        services.AddCors();
+
 #if DEBUG
         if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
             IdentityModelEventSource.ShowPII = true;
@@ -96,10 +99,14 @@ public abstract class CommonProgram
         var useMtls = EApplicationConfiguration.InterServiceUseMTLS.GetAppSettingConfig().AsDefaultBool();
         if (useMtls)
         {
-            var clientCertPath = EApplicationConfiguration.InterServiceClientCertPath.GetAppSettingConfig().AsDefaultString();
-            var clientCertPassword = EApplicationConfiguration.InterServiceClientCertPassword.GetAppSettingConfig().AsDefaultString();
-            var serverCertPath = EApplicationConfiguration.InterServiceServerCertPath.GetAppSettingConfig().AsDefaultString();
-            var serverCertPassword = EApplicationConfiguration.InterServiceServerCertPassword.GetAppSettingConfig().AsDefaultString();
+            var clientCertPath = EApplicationConfiguration.InterServiceClientCertPath.GetAppSettingConfig()
+                .AsDefaultString();
+            var clientCertPassword = EApplicationConfiguration.InterServiceClientCertPassword.GetAppSettingConfig()
+                .AsDefaultString();
+            var serverCertPath = EApplicationConfiguration.InterServiceServerCertPath.GetAppSettingConfig()
+                .AsDefaultString();
+            var serverCertPassword = EApplicationConfiguration.InterServiceServerCertPassword.GetAppSettingConfig()
+                .AsDefaultString();
             var caCertPath = EApplicationConfiguration.InterServiceCACertPath.GetAppSettingConfig().AsDefaultString();
 
             services.AddSingleton<IInterServiceCertificateService>(new InterServiceCertificateService(
@@ -110,16 +117,19 @@ public abstract class CommonProgram
                 caCertPath));
 
             // Register certificate generator for auto-generation
-            var autoGenerate = EApplicationConfiguration.InterServiceAutoGenerateCertificates.GetAppSettingConfig().AsDefaultBool();
+            var autoGenerate = EApplicationConfiguration.InterServiceAutoGenerateCertificates.GetAppSettingConfig()
+                .AsDefaultBool();
             if (autoGenerate)
             {
-                var storagePath = EApplicationConfiguration.InterServiceCertificateStoragePath.GetAppSettingConfig().AsDefaultString("/certs");
-                var validityDays = EApplicationConfiguration.InterServiceCertificateValidityDays.GetAppSettingConfig().AsDefaultInt(90);
-                
-                services.AddSingleton<ICertificateGenerator>(new CertificateGenerator(
-                    services.BuildServiceProvider().GetRequiredService<ILogger<CertificateGenerator>>(),
+                var storagePath = EApplicationConfiguration.InterServiceCertificateStoragePath.GetAppSettingConfig()
+                    .AsDefaultString("/certs");
+                var validityDays = EApplicationConfiguration.InterServiceCertificateValidityDays.GetAppSettingConfig()
+                    .AsDefaultInt(90);
+
+                services.AddSingleton<ICertificateGenerator>(sp => new CertificateGenerator(
+                    sp.GetRequiredService<ILogger<CertificateGenerator>>(),
                     storagePath));
-                
+
                 services.AddSingleton<ICertificateRotationService>(sp => new CertificateRotationService(
                     sp.GetRequiredService<ICertificateGenerator>(),
                     sp.GetRequiredService<IInterServiceCertificateService>(),
@@ -130,9 +140,12 @@ public abstract class CommonProgram
         }
 
         // Register JWT token service as fallback
-        var interServiceSecret = EApplicationConfiguration.InterServiceSecretKey.GetAppSettingConfig().AsDefaultString();
-        var tokenLifetimeMinutes = EApplicationConfiguration.InterServiceTokenLifetimeMinutes.GetAppSettingConfig().AsDefaultInt();
-        var keyRotationMinutes = EApplicationConfiguration.InterServiceKeyRotationMinutes.GetAppSettingConfig().AsDefaultInt();
+        var interServiceSecret =
+            EApplicationConfiguration.InterServiceSecretKey.GetAppSettingConfig().AsDefaultString();
+        var tokenLifetimeMinutes = EApplicationConfiguration.InterServiceTokenLifetimeMinutes.GetAppSettingConfig()
+            .AsDefaultInt();
+        var keyRotationMinutes = EApplicationConfiguration.InterServiceKeyRotationMinutes.GetAppSettingConfig()
+            .AsDefaultInt();
         services.AddSingleton<IInterServiceTokenService>(new InterServiceTokenService(
             interServiceSecret,
             TimeSpan.FromMinutes(tokenLifetimeMinutes),
@@ -153,6 +166,8 @@ public abstract class CommonProgram
         app.UseForwardedHeaders();
 
         app.UseRouting();
+
+        app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
         if (EApplicationConfiguration.IsUseResponseCompression.GetAppSettingConfig().AsDefaultBool())
             app.UseResponseCompression();

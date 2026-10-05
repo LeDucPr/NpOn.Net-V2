@@ -31,7 +31,6 @@ public abstract class HttpCommonProgram : CommonProgram
     protected override void ConfigureBasePipeline(WebApplication app)
     {
         string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
-        app.MapGet("/", () => $"NpOn.{appName}");
         base.ConfigureBasePipeline(app);
     }
 
