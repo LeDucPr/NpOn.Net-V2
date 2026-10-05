@@ -92,6 +92,22 @@ public enum EApplicationConfiguration
     #endregion Authen + Token
     
     
+    #region Inter-Service Authentication
+    [Display(Name = "InterServiceSecretKey")] InterServiceSecretKey, // - string
+    [Display(Name = "InterServiceTokenLifetimeMinutes")] InterServiceTokenLifetimeMinutes, // - int
+    [Display(Name = "InterServiceKeyRotationMinutes")] InterServiceKeyRotationMinutes, // - int
+    [Display(Name = "InterServiceClientCertPath")] InterServiceClientCertPath, // - string
+    [Display(Name = "InterServiceClientCertPassword")] InterServiceClientCertPassword, // - string
+    [Display(Name = "InterServiceServerCertPath")] InterServiceServerCertPath, // - string
+    [Display(Name = "InterServiceServerCertPassword")] InterServiceServerCertPassword, // - string
+    [Display(Name = "InterServiceCACertPath")] InterServiceCACertPath, // - string
+    [Display(Name = "InterServiceUseMTLS")] InterServiceUseMTLS, // - bool
+    [Display(Name = "InterServiceAutoGenerateCertificates")] InterServiceAutoGenerateCertificates, // - bool
+    [Display(Name = "InterServiceCertificateValidityDays")] InterServiceCertificateValidityDays, // - int
+    [Display(Name = "InterServiceCertificateStoragePath")] InterServiceCertificateStoragePath, // - string
+    #endregion Inter-Service Authentication
+    
+    
     #region Middleware
     [Display(Name = "IsUseMiddlewareLogger")] IsUseMiddlewareLogger, // - boolean
     #endregion Middleware 

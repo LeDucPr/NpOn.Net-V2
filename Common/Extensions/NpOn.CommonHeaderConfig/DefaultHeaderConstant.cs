@@ -9,6 +9,7 @@ public static class DefaultHeaderConstant
     public const string GrpcInternalCallerSessionCode = "caller-npon-ss"; // session
     public static readonly string GrpcInternalCallerSessionCodeDefaultValue = string.Empty;
     
-    // general
-    public static readonly string GrpcInternalCallerAuthentication = "authenticaion";
+    // inter-service authentication
+    public const string GrpcInterServiceAuthToken = "x-inter-service-token";
+    public const string GrpcInterServiceServiceName = "x-service-name";
 }

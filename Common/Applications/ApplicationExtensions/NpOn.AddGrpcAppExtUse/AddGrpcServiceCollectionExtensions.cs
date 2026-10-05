@@ -1,5 +1,6 @@
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
+using Grpc.Core.Interceptors;
 using Grpc.Net.Client.Balancer;
 using ProtoBuf.Grpc.Server;
 
@@ -26,6 +27,13 @@ public static class AddGrpcServiceCollectionExtensions
         services.AddSingleton<ResolverFactory>(
             new DnsResolverFactory(refreshInterval: TimeSpan.FromSeconds(dnsRefreshSeconds)));
         services.AddGrpc();
+        return services;
+    }
+
+    public static IServiceCollection AddGrpcServerInterceptor<TInterceptor>(this IServiceCollection services)
+        where TInterceptor : Interceptor
+    {
+        services.AddSingleton<TInterceptor>();
         return services;
     }
 }

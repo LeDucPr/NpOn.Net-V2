@@ -13,6 +13,8 @@
         <PackageReference Include="protobuf-net" Version="3.2.56"/>
         <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.187"/>
         <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.0.187"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.0"/>
     </ItemGroup>
 
     <ItemGroup>

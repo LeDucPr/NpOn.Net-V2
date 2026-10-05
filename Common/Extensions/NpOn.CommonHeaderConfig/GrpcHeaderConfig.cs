@@ -22,8 +22,19 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
     private readonly Metadata? _acceptMetadataHeaders;
     private readonly List<Metadata.Entry>? _metadataEntries;
     private readonly EGrpcEndUseType _endUseType;
+    private readonly IInterServiceTokenService? _tokenService;
+    private readonly string? _serviceName;
 
-    public GrpcHeaderConfig(EGrpcEndUseType endUseType, Dictionary<string, string>? headers = null)
+    public GrpcHeaderConfig(EGrpcEndUseType endUseType, Dictionary<string, string>? headers = null) 
+        : this(endUseType, headers, null, null)
+    {
+    }
+
+    public GrpcHeaderConfig(
+        EGrpcEndUseType endUseType, 
+        Dictionary<string, string>? headers = null,
+        IInterServiceTokenService? tokenService = null,
+        string? serviceName = null)
     {
         var decomposeEndUseTypes = endUseType.GetFlags();
         if (decomposeEndUseTypes.Length > 1)
@@ -32,6 +43,8 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
         endUseType = decomposeEndUseTypes.First();
         _metadataEntries ??= [];
         _endUseType = endUseType;
+        _tokenService = tokenService;
+        _serviceName = serviceName;
         if (_endUseType == EGrpcEndUseType.InternalServer)
         {
             _metadataHeaders = new Metadata();
@@ -41,6 +54,15 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
                 Environment.OSVersion.ToString()));
             _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerSessionCode,
                 _grpcInternalCallerSessionCodeValue));
+            
+            // Add inter-service authentication token if token service is available
+            if (_tokenService != null && !string.IsNullOrEmpty(_serviceName))
+            {
+                var token = _tokenService.GenerateToken(_serviceName);
+                _metadataEntries.Add(new Metadata.Entry(DefaultHeaderConstant.GrpcInterServiceAuthToken, token));
+                _metadataEntries.Add(new Metadata.Entry(DefaultHeaderConstant.GrpcInterServiceServiceName, _serviceName));
+            }
+            
             _metadataEntries.ForEach(x => _metadataHeaders.Add(x));
             return;
         }

@@ -30,40 +30,38 @@ public static class DefaultValueModeExtensions
     public static byte EnumAsByte<TEnum>(this TEnum value) where TEnum : struct, Enum
         => Convert.ToByte(value);
 
-    public static int AsDefaultInt(this object? obj)
+    
+    public static int AsDefaultInt(this object? obj, int defaultValue = DefaultValueMode.DefaultValueForInt)
     {
         if (obj == null)
-            return DefaultValueMode.DefaultValueForInt;
+            return defaultValue;
         if (int.TryParse(obj.ToString(), out int result))
             return result;
-        return DefaultValueMode.DefaultValueForInt;
+        return defaultValue;
     }
 
-
-    public static long AsDefaultLong(this object? obj)
+    public static long AsDefaultLong(this object? obj, long defaultValue = DefaultValueMode.DefaultValueForLong)
     {
         if (obj == null)
-            return DefaultValueMode.DefaultValueForLong;
+            return defaultValue;
         if (long.TryParse(obj.ToString(), out long result))
             return result;
-        return DefaultValueMode.DefaultValueForLong;
+        return defaultValue;
     }
 
-
-    public static int AsDefaultEnum<TEnum>(this object? obj) where TEnum : struct, Enum
+    public static int AsDefaultEnum<TEnum>(this object? obj, int defaultValue = DefaultValueMode.DefaultValueForEnumInt) where TEnum : struct, Enum
     {
         if (obj == null)
-            return DefaultValueMode.DefaultValueForEnumInt;
+            return defaultValue;
         if (Enum.TryParse(obj.ToString(), out TEnum result))
             return (int)(object)result;
-        return DefaultValueMode.DefaultValueForEnumInt;
+        return defaultValue;
     }
 
-
-    public static Guid AsDefaultGuid(this object? obj)
+    public static Guid AsDefaultGuid(this object? obj, Guid defaultValue = default)
     {
         if (obj == null)
-            return Guid.Empty;
+            return defaultValue;
 
         if (obj is Guid guid)
             return guid;
@@ -71,16 +69,17 @@ public static class DefaultValueModeExtensions
         if (Guid.TryParse(obj.ToString()?.Trim(), out var result))
             return result;
 
-        return Guid.Empty;
+        return defaultValue;
     }
-    public static string AsDefaultAscii(this object? obj)
+
+    public static string AsDefaultAscii(this object? obj, string defaultValue = "")
     {
         if (obj == null)
-            return string.Empty;
+            return defaultValue;
 
         var input = obj.ToString() ?? string.Empty;
         if (string.IsNullOrEmpty(input))
-            return string.Empty;
+            return defaultValue;
 
         var normalized = input.Normalize(NormalizationForm.FormD);
         var sb = new StringBuilder();
@@ -95,68 +94,68 @@ public static class DefaultValueModeExtensions
         }
 
         var result = sb.ToString().Normalize(NormalizationForm.FormC);
-        // tiếng Việt
         result = result.Replace('Đ', 'D').Replace('đ', 'd');
 
-        return result;
+        return string.IsNullOrEmpty(result) ? defaultValue : result;
     }
 
-
-
-    public static string AsDefaultString(this object? obj)
+    public static string AsDefaultString(this object? obj, string defaultValue = "")
     {
         if (obj == null)
-            return string.Empty;
-        return obj.ToString() ?? string.Empty;
+            return defaultValue;
+
+        string str = obj.ToString() ?? string.Empty;
+        return string.IsNullOrEmpty(str) ? defaultValue : str;
     }
 
-
-    public static string AsEmptyString(this object? obj)
+    public static string AsEmptyString(this object? obj, string defaultValue = "")
     {
         if (obj == null)
-            return string.Empty;
-        return obj.ToString()?.Trim() ?? string.Empty;
+            return defaultValue;
+
+        string str = obj.ToString()?.Trim() ?? string.Empty;
+        return string.IsNullOrEmpty(str) ? defaultValue : str;
     }
 
-
-    public static DateTime AsDefaultDateTime(this object? obj)
+    public static DateTime AsDefaultDateTime(this object? obj, DateTime? defaultValue = null)
     {
+        DateTime fallback = defaultValue ?? DateTime.MinValue;
         if (obj == null)
-            return DateTime.MinValue;
+            return fallback;
         if (DateTime.TryParse(obj.ToString(), out DateTime result))
             return result;
-        return DateTime.MinValue;
+        return fallback;
     }
 
-
-    public static bool AsDefaultBool(this object? obj)
+    public static bool AsDefaultBool(this object? obj, bool defaultValue = false)
     {
         if (obj == null)
-            return false;
+            return defaultValue;
         if (bool.TryParse(obj.ToString(), out bool result))
             return result;
-        return false;
+        return defaultValue;
     }
 
-
-    // convert to world standard
-    public static DateTime AsDefaultStandardDateTime(this object? obj)
+    // Convert to world standard
+    public static DateTime AsDefaultStandardDateTime(this object? obj, DateTime? defaultValue = null)
     {
+        DateTime fallback = defaultValue ?? DateTime.MinValue;
         if (obj == null)
-            return DateTime.MinValue;
+            return fallback;
         if (DateTime.TryParse(obj.ToString(),
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal,
                 out DateTime result)
            )
             return result;
-        return DateTime.MinValue;
+        return fallback;
     }
 
-    public static DateTime AsUtcDateTime(this object? obj)
+    public static DateTime AsUtcDateTime(this object? obj, DateTime? defaultValue = null)
     {
+        DateTime fallback = defaultValue ?? DateTime.MinValue;
         if (obj == null)
-            return DateTime.MinValue;
+            return fallback;
         if (DateTime.TryParse(obj.ToString(), out DateTime result))
         {
             if (result.Kind == DateTimeKind.Unspecified)
@@ -164,9 +163,11 @@ public static class DefaultValueModeExtensions
             return result.ToUniversalTime();
         }
 
-        return DateTime.MinValue;
+        return fallback;
     }
-
+    
+    
+    
     public static string AsArrayJoin(this IEnumerable<string>? strings)
         => strings != null ? string.Join(",", strings) : string.Empty;
 

@@ -37,11 +37,18 @@ public sealed class Program : HttpCommonProgram
     {
         // call load balancing services 
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+        {
+            var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
             services
                 .AddDefaultKestrelListenConfig(out _)
                 .AddGrpcDefaultMode()
-                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
+                .AddScoped<GrpcHeaderConfig>(sp => new GrpcHeaderConfig(
+                    EGrpcEndUseType.InternalServer,
+                    null,
+                    sp.GetRequiredService<IInterServiceTokenService>(),
+                    serviceName))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl);
+        }
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore().PreAllocate(

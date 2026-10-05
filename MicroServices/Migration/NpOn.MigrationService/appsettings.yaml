@@ -7,7 +7,24 @@ Kestrel:
   EndpointDefaults:
     Protocols: Http2
 
-AppName: AccountService
+AppName: MigrationService
+
+# Inter-service authentication
+InterServiceUseMTLS: false
+InterServiceAutoGenerateCertificates: true
+InterServiceCertificateValidityDays: 90
+InterServiceCertificateStoragePath: "/certs"
+InterServiceClientCertPath: "/certs/migration-client.pfx"
+InterServiceClientCertPassword: "NpOn_V2_Cert_Password"
+InterServiceServerCertPath: "/certs/migration-server.pfx"
+InterServiceServerCertPassword: "NpOn_V2_Cert_Password"
+InterServiceCACertPath: "/certs/ca.crt"
+
+# Fallback JWT (for gradual migration)
+InterServiceSecretKey: "NpOn-InterService-Secret-Key-2024-Change-In-Production"
+InterServiceTokenLifetimeMinutes: 60
+InterServiceKeyRotationMinutes: 360
+
 
 CookieDomain: ".npon_v2"
 CookieAuthenName: NpOn

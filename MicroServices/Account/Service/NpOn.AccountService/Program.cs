@@ -42,13 +42,20 @@ public sealed class Program : HttpCommonProgram
     protected override Task ConfigureServices(IServiceCollection services)
     {
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+        {
+            var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
             services
                 .AddDefaultKestrelListenConfig(out _)
                 .AddGrpcDefaultMode()
-                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
+                .AddScoped<GrpcHeaderConfig>(sp => new GrpcHeaderConfig(
+                    EGrpcEndUseType.InternalServer,
+                    null,
+                    sp.GetRequiredService<IInterServiceTokenService>(),
+                    serviceName))
                 .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
                 .AddConnectService(new TrackerServiceClientResolver(), null, EUrlConfiguration.TrackerServiceUrl)
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+        }
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
         IObjectPoolStore store = new ObjectPoolStore().PreAllocate(

@@ -10,6 +10,22 @@ Kestrel:
 AppName: GeneralService
 IsUseDataProtectionAutomaticKeyGeneration: true
 
+# Inter-service authentication
+InterServiceUseMTLS: true
+InterServiceAutoGenerateCertificates: true
+InterServiceCertificateValidityDays: 90
+InterServiceCertificateStoragePath: "/certs"
+InterServiceClientCertPath: "/certs/general-client.pfx"
+InterServiceClientCertPassword: "NpOn_V2_Cert_Password"
+InterServiceServerCertPath: "/certs/general-server.pfx"
+InterServiceServerCertPassword: "NpOn_V2_Cert_Password"
+InterServiceCACertPath: "/certs/ca.crt"
+
+# Fallback JWT (for gradual migration)
+InterServiceSecretKey: "NpOn-InterService-Secret-Key-2024-Change-In-Production"
+InterServiceTokenLifetimeMinutes: 60
+InterServiceKeyRotationMinutes: 360
+
 
 CookieDomain: ".npon_v2"  
 CookieAuthenName: NpOn

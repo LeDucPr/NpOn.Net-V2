@@ -19,19 +19,13 @@ public class SharedGrpcInterceptor(
 
     protected override void WriteHeader()
     {
+        // Forward session code from HTTP request to gRPC call if present
         string? sessionKey = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
                 x.Key.Equals(DefaultHeaderConstant.GrpcInternalCallerSessionCode,
                     StringComparison.CurrentCultureIgnoreCase))
             .Value;
         if (sessionKey?.Length > 0)
             _headerConfig.Replace(DefaultHeaderConstant.GrpcInternalCallerSessionCode, sessionKey);
-
-        string? authenKey = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
-                x.Key.Equals(DefaultHeaderConstant.GrpcInternalCallerAuthentication,
-                    StringComparison.CurrentCultureIgnoreCase))
-            .Value;
-        if (authenKey?.Length > 0)
-            _headerConfig.Replace(DefaultHeaderConstant.GrpcInternalCallerAuthentication, authenKey);
 
         // Forward External Authorization Header (e.g. Bearer token) if present
         string? authorizationExt = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>

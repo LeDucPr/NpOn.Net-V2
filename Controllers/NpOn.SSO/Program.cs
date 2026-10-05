@@ -30,11 +30,18 @@ public sealed class Program : HttpCommonProgram
     {
         HttpProtocols? protocols = null;
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
+        {
+            var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
             services
                 .AddDefaultKestrelListenConfig(out protocols)
                 .AddGrpcDefaultMode()
-                .AddScoped<GrpcHeaderConfig>(_ => new GrpcHeaderConfig(EGrpcEndUseType.InternalServer))
+                .AddScoped<GrpcHeaderConfig>(sp => new GrpcHeaderConfig(
+                    EGrpcEndUseType.InternalServer,
+                    null,
+                    sp.GetRequiredService<IInterServiceTokenService>(),
+                    serviceName))
                 .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+        }
 
         services.UseCorsDefaultMode() // cors
             .UseTokenValidatorDefaultMode(); // valid custom logic for yours 
