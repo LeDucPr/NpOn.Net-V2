@@ -77,7 +77,7 @@ public sealed class Program : HttpCommonProgram
             // app.UseRequestResponseLogging();
         }
 
-        app.ExportProtoFileOnDev(typeof(Program).Assembly);
+        app.ExportStandaloneProtoFileOnDev(typeof(Program).Assembly);
 
         app.UseTokenValidation();
         app.UsePermissionValidation();
