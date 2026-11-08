@@ -1,4 +1,5 @@
 using Common.Extensions.NpOn.HeaderConfig;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -32,6 +33,19 @@ public class GrpcServerAuthMiddleware
     {
         // Skip validation if auth is disabled
         if (!_requireAuth)
+        {
+            await _next(context);
+            return;
+        }
+
+        // Allow public REST endpoints, anonymous endpoints, and non-gRPC HTTP calls (e.g. /api/Account/Login, Health checks)
+        // GrpcServerAuthMiddleware is strictly for inter-service gRPC communication.
+        var endpoint = context.GetEndpoint();
+        bool isAllowAnonymous = endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null;
+        bool isGrpc = context.Request.ContentType?.StartsWith("application/grpc", StringComparison.OrdinalIgnoreCase) == true;
+        bool isRestApi = context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+
+        if (isAllowAnonymous || isRestApi || !isGrpc)
         {
             await _next(context);
             return;
