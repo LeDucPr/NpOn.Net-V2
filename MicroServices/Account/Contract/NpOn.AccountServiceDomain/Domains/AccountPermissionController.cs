@@ -8,7 +8,7 @@ namespace MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("acc_srv_account_permission_controller")]
-public sealed class AccountPermissionController : BaseAccountDomain
+public sealed record AccountPermissionController : BaseAccountDomain
 {
     [ProtoMember(1)]
     [Field("host_code")]

@@ -22,34 +22,95 @@ public static class TableMssqlExtensions
     public static (string CommandText, List<SqlParameter> Parameters) ToMssqlParamsInsert(
         this INpOnTableWrapper table, string tableName)
     {
+        // Fast-path: FlatData or RawData + NameToIndexMap
+        if (table.NameToIndexMap is { Count: > 0 } nameMap)
+        {
+            var columns = nameMap.OrderBy(k => k.Value).Select(k => k.Key).ToList();
+            var colIndices = columns.Select(c => nameMap[c]).ToArray();
+            var colNamesHeader = string.Join(",", columns.Select(c => $"[{c}]"));
+
+            var parameters = new List<SqlParameter>();
+            var valuesClauses = new List<string>();
+            int paramCounter = 0;
+
+            if (table.FlatData is { } flatData && table.RowCount > 0)
+            {
+                int colCount = table.ColCount;
+                int rowCount = table.RowCount;
+
+                for (int r = 0; r < rowCount; r++)
+                {
+                    int baseOffset = r * colCount;
+                    var rowPlaceholders = new string[colIndices.Length];
+                    for (int c = 0; c < colIndices.Length; c++)
+                    {
+                        var paramName = $"@p{paramCounter++}";
+                        rowPlaceholders[c] = paramName;
+                        var rawVal = flatData[baseOffset + colIndices[c]];
+                        var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(rawVal);
+                        var p = new SqlParameter(paramName, paramValue ?? DBNull.Value);
+                        if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
+                        parameters.Add(p);
+                    }
+                    valuesClauses.Add($"({string.Join(",", rowPlaceholders)})");
+                }
+            }
+            else if (table.RawData is { Count: > 0 } rawList)
+            {
+                foreach (var rowArr in rawList)
+                {
+                    var rowPlaceholders = new string[colIndices.Length];
+                    for (int c = 0; c < colIndices.Length; c++)
+                    {
+                        var paramName = $"@p{paramCounter++}";
+                        rowPlaceholders[c] = paramName;
+                        var rawVal = rowArr[colIndices[c]];
+                        var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(rawVal);
+                        var p = new SqlParameter(paramName, paramValue ?? DBNull.Value);
+                        if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
+                        parameters.Add(p);
+                    }
+                    valuesClauses.Add($"({string.Join(",", rowPlaceholders)})");
+                }
+            }
+
+            if (valuesClauses.Count > 0)
+            {
+                var sql = $"INSERT INTO [{tableName}] ({colNamesHeader}) VALUES {string.Join(",", valuesClauses)};";
+                return (sql, parameters);
+            }
+        }
+
+        // Fallback RowWrappers
         if (table.RowWrappers is not { Count: > 0 } rowWrappers) throw new ArgumentException("Table has no rows.");
         var firstRow = rowWrappers.Values.FirstOrDefault(r => r != null)?.GetRowWrapper();
         if (firstRow == null) throw new ArgumentException("Table contains no valid rows.");
         var columnNames = firstRow.Keys.ToList();
         
-        var parameters = new List<SqlParameter>();
-        var sql = new StringBuilder();
-        int paramCounter = 0;
+        var fallbackParams = new List<SqlParameter>();
+        var fallbackValuesClauses = new List<string>();
+        int fallbackParamCounter = 0;
 
         foreach (var rowWrapper in rowWrappers.Values)
         {
             if (rowWrapper == null) continue;
             var row = rowWrapper.GetRowWrapper();
-            var valueParams = new List<string>();
+            var valueParams = new List<string>(columnNames.Count);
 
             foreach (var colName in columnNames)
             {
-                var paramName = $"@p{paramCounter++}";
+                var paramName = $"@p{fallbackParamCounter++}";
                 valueParams.Add(paramName);
                 row.TryGetValue(colName, out var cell);
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell?.ValueAsObject);
                 var p = new SqlParameter(paramName, paramValue ?? DBNull.Value);
                 if (sqlType != SqlDbType.Variant) p.SqlDbType = sqlType;
-                parameters.Add(p);
+                fallbackParams.Add(p);
             }
-            sql.Append($"INSERT INTO [{tableName}] ({string.Join(",", columnNames.Select(c => $"[{c}]"))}) VALUES ({string.Join(",", valueParams)});");
+            fallbackValuesClauses.Add($"({string.Join(",", valueParams)})");
         }
-        return (sql.ToString(), parameters);
+        var fallbackSql = $"INSERT INTO [{tableName}] ({string.Join(",", columnNames.Select(c => $"[{c}]"))}) VALUES {string.Join(",", fallbackValuesClauses)};";
+        return (fallbackSql, fallbackParams);
     }
 
     public static (string CommandText, List<SqlParameter> Parameters) ToMssqlParamsUpdate(
@@ -92,7 +153,6 @@ public static class TableMssqlExtensions
                     throw new InvalidOperationException($"PK for '{pkColName}' cannot be null.");
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell.ValueAsObject);
                 var p = new SqlParameter(pkParamName, paramValue);
-                // if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
                 parameters.Add(p);
             }
             sql.Append($"UPDATE [{tableName}] SET {string.Join(", ", setClauses)} WHERE {string.Join(" AND ", whereClauses)};");
@@ -109,7 +169,6 @@ public static class TableMssqlExtensions
 
         var pkColumnNames = GetPrimaryKeyColumnNames(firstRow);
         var allColumnNames = firstRow.Keys.ToList();
-        // var updateColumnNames = allColumnNames.Except(pkColumnNames).ToList();
 
         var parameters = new List<SqlParameter>();
         var sql = new StringBuilder();
@@ -176,7 +235,6 @@ public static class TableMssqlExtensions
                     throw new InvalidOperationException($"PK for '{pkColName}' cannot be null.");
                 var (paramValue, sqlType) = MssqlUtils.NormalizeForMssql(cell.ValueAsObject);
                 var p = new SqlParameter(pkParamName, paramValue);
-                // if (sqlType.HasValue) p.SqlDbType = sqlType.Value;
                 parameters.Add(p);
             }
             whereClauses.Add($"({string.Join(" AND ", pkConditions)})");

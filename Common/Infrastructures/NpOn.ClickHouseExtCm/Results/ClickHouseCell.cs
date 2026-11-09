@@ -9,6 +9,8 @@ namespace Common.Infrastructures.NpOn.ClickHouseExtCm.Results;
 
 public class ClickHouseCell<T> : NpOnCell<T>
 {
+    private static readonly DbType CachedDbType = ClickHouseUtils.GetDbType(typeof(T));
+
     private ClickHouseCell(object? value, DbType dbType, string sourceTypeName, bool isPrimaryKey)
         : base(value, dbType, sourceTypeName, isPrimaryKey)
     {
@@ -16,8 +18,7 @@ public class ClickHouseCell<T> : NpOnCell<T>
 
     public static ClickHouseCell<T> FromClickHouse(object? value, string sourceTypeName, bool isPrimaryKey)
     {
-        var dbType = ClickHouseUtils.GetDbType(typeof(T));
-        return new ClickHouseCell<T>(value, dbType, sourceTypeName, isPrimaryKey);
+        return new ClickHouseCell<T>(value, CachedDbType, sourceTypeName, isPrimaryKey);
     }
 }
 

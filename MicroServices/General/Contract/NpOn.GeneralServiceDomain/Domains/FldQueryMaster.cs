@@ -6,7 +6,7 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("fld_query_master")]
-public class FldQueryMaster : BaseGeneralDomain
+public record FldQueryMaster : BaseGeneralDomain
 {
     [ProtoMember(1)]
     [Field("id")]

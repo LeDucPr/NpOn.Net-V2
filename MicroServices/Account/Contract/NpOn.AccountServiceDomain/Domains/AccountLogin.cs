@@ -8,7 +8,7 @@ namespace MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("acc_srv_account_login")]
-public sealed class AccountLogin : BaseAccountDomain
+public sealed record AccountLogin : BaseAccountDomain
 {
     [ProtoMember(1)]
     [Field("id")]

@@ -8,8 +8,10 @@ namespace Common.Infrastructures.NpOn.CassandraExtCm.Results;
 
 public class CassandraCell<T> : NpOnCell<T>
 {
-    private CassandraCell(object? value, DbType dbType, string sourceTypeName, bool isPrimaryKey)
-        : base(value, dbType, sourceTypeName, isPrimaryKey)
+    public static readonly DbType CachedDbType = CassandraUtils.GetDbType(typeof(T));
+
+    private CassandraCell(object? value, string sourceTypeName, bool isPrimaryKey)
+        : base(value, CachedDbType, sourceTypeName, isPrimaryKey)
     {
     }
 
@@ -18,8 +20,7 @@ public class CassandraCell<T> : NpOnCell<T>
     /// </summary>
     public static CassandraCell<T> FromCassandra(object? value, string sourceTypeName, bool isPrimaryKey)
     {
-        var dbType = CassandraUtils.GetDbType(typeof(T));
-        return new CassandraCell<T>(value, dbType, sourceTypeName, isPrimaryKey);
+        return new CassandraCell<T>(value, sourceTypeName, isPrimaryKey);
     }
 }
 
@@ -38,7 +39,7 @@ public static class CassandraCellDynamicFactory
         var dynamicMethod = new DynamicMethod(
             $"CreateCassandraCell_{type.Name}",
             typeof(INpOnCell),
-            new[] { typeof(object), typeof(string), typeof(bool) },
+            [typeof(object), typeof(string), typeof(bool)],
             typeof(CassandraCellDynamicFactory).Module,
             true
         );
@@ -49,7 +50,7 @@ public static class CassandraCellDynamicFactory
             nameof(CassandraCell<object>.FromCassandra),
             BindingFlags.Public | BindingFlags.Static,
             null,
-            new[] { typeof(object), typeof(string), typeof(bool) }, // overload parameters
+            [typeof(object), typeof(string), typeof(bool)],
             null
         );
 

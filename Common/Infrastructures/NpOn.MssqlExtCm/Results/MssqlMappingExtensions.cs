@@ -1,14 +1,41 @@
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Reflection;
 using System.Reflection.Emit;
 using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Microsoft.Data.SqlClient;
 
 namespace Common.Infrastructures.NpOn.MssqlExtCm.Results;
 
 public static class MssqlMappingExtensions
 {
+    private static readonly ConcurrentDictionary<string, Func<object[], IReadOnlyDictionary<string, INpOnCell>>> RowMapperCache = new();
+    private static readonly ConcurrentDictionary<string, Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>> ColumnMapperCache = new();
+    private static readonly ConcurrentDictionary<string, Func<DbDataReader, object[]>> ArrayRowMapperCache = new();
+
+    public static Func<object[], IReadOnlyDictionary<string, INpOnCell>> GetOrCreateRowMapper(
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
+    {
+        var cacheKey = string.Join(";", schemaMap.Values.Select(s => $"{s.ColumnName}:{s.DataType.FullName}:{s.IsPrimaryKey}"));
+        return RowMapperCache.GetOrAdd(cacheKey, _ => CreateRowMapper(schemaMap, nameToIndexMap));
+    }
+
+    public static Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> GetOrCreateColumnMapper(
+        string columnName,
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
+    {
+        var cacheKey = $"{columnName};{string.Join(";", schemaMap.Values.Select(s => $"{s.ColumnName}:{s.DataType.FullName}"))}";
+        return ColumnMapperCache.GetOrAdd(cacheKey, _ => CreateColumnMapper(columnName, schemaMap, nameToIndexMap));
+    }
+
+    public static Func<DbDataReader, object[]> GetOrCreateArrayRowMapper(DbDataReader reader, MethodInfo? normalizerMethod = null)
+    {
+        var cacheKey = $"{reader.FieldCount};{string.Join(";", Enumerable.Range(0, reader.FieldCount).Select(i => $"{reader.GetName(i)}:{reader.GetFieldType(i).FullName}"))}";
+        return ArrayRowMapperCache.GetOrAdd(cacheKey, _ => CreateArrayRowMapper(reader, normalizerMethod));
+    }
+
     public static Func<object[], IReadOnlyDictionary<string, INpOnCell>> CreateRowMapper(
         IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
         IReadOnlyDictionary<string, int> nameToIndexMap)

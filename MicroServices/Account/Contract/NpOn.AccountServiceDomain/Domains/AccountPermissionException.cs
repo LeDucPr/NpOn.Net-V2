@@ -8,7 +8,7 @@ namespace MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("acc_srv_account_permission_exception")]
-public sealed class AccountPermissionException : BaseAccountDomain
+public sealed record AccountPermissionException : BaseAccountDomain
 {
     [ProtoMember(1)]
     [Field("acc_srv_account_id")]

@@ -1,64 +1,44 @@
-﻿using Common.Extensions.NpOn.HandleFlow.Raising;
+﻿using System.Collections.Concurrent;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 
 namespace Common.Extensions.NpOn.HandleFlow;
 
 public static class ResultConverter
 {
-    public static IEnumerable<BaseCtrl>? GenericConverter(this INpOnWrapperResult result, Type ctrlType)
+    private static readonly ConcurrentDictionary<Type, Func<INpOnWrapperResult, IEnumerable<object>>> CachedListInvokers = new();
+
+    /// <summary>
+    /// Generic high-performance converter using Dynamic IL Emit.
+    /// Does not require BaseCtrl - supports any class or record.
+    /// </summary>
+    public static IEnumerable<T>? GenericConverter<T>(this INpOnWrapperResult? result) where T : class, new()
     {
-        if (!ctrlType.IsChildOfBaseCtrl())
-            return null;
+        if (result == null) return null;
+        return result.ToList<T>();
+    }
 
-        if (result is not INpOnTableWrapper tableWrapper)
-            return null;
+    /// <summary>
+    /// Type-driven converter using cached compiled delegates and Dynamic IL Emit.
+    /// Removes the hard requirement for BaseCtrl, supporting any class or record.
+    /// </summary>
+    public static IEnumerable<object>? GenericConverter(this INpOnWrapperResult? result, Type targetType)
+    {
+        if (result == null) return null;
 
-        string[] columnNames = tableWrapper.CollectionWrappers.Keys.ToArray();
-        if (columnNames.Length == 0)
-            return null;
-
-        var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
-        FieldInfo? mapField = emptyCtrl.MapperFieldInfo();
-        if (mapField == null)
-            return null;
-
-        if (mapField.KeyProperties is not { Count: > 0 }) // is not has any mapper field/property
-            return null;
-
-        List<BaseCtrl> ctrlList = new();
-        foreach (var row in tableWrapper.RowWrappers)
+        var invoker = CachedListInvokers.GetOrAdd(targetType, t =>
         {
-            var newCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
-            if (newCtrl == null)
-                continue;
-            foreach (var kvProp in mapField.KeyProperties)
+            var method = typeof(NpOnWrapperResultExtensions)
+                .GetMethod(nameof(NpOnWrapperResultExtensions.ToList), [typeof(INpOnWrapperResult)])!
+                .MakeGenericMethod(t);
+
+            return (r) =>
             {
-                INpOnCell? cell = null;
-                bool isExist = row.Value?.GetRowWrapper().TryGetValue(kvProp.Key, out cell) ?? false;
-                if (isExist && cell is { ValueType: not null })
-                {
-                    object? convertedValue = cell.ValueAsObject == null 
-                        ? null 
-                        : Convert.ChangeType(cell.ValueAsObject, Nullable.GetUnderlyingType(cell.ValueType) ?? cell.ValueType);
-                    Type curType = kvProp.Value.PropertyType;
-                    var actualType = Nullable.GetUnderlyingType(curType) ?? curType;
-                    if (actualType.IsEnum)
-                    {
-                        // var enumValue = Enum.ToObject(actualType, convertedValue);
-                        // kvProp.Value.SetValue(newCtrl, enumValue);
-                        var underlying = Enum.GetUnderlyingType(actualType);
-                        var numeric = Convert.ChangeType(convertedValue, underlying);
-                        var enumValue = Enum.ToObject(actualType, numeric);
-                        kvProp.Value.SetValue(newCtrl, enumValue);
-                    }
-                    else
-                        kvProp.Value.SetValue(newCtrl, convertedValue, null);
-                }
-            }
+                var res = method.Invoke(null, [r]);
+                return (res as System.Collections.IEnumerable)?.Cast<object>() ?? [];
+            };
+        });
 
-            ctrlList.Add(newCtrl);
-        }
-
-        return ctrlList;
+        return invoker(result);
     }
 }

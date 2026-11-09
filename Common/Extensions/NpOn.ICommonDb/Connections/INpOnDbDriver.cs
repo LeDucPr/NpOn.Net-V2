@@ -14,6 +14,7 @@ public interface INpOnDbDriver
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command);
+    Task<List<T>> QueryAsync<T>(IBaseNpOnDbCommand? command) where T : class;
 
     Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>> ExecuteWithTransaction(
         IEnumerable<IBaseNpOnDbCommand> commands,

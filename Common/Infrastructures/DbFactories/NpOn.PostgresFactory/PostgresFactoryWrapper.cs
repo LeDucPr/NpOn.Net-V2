@@ -1,5 +1,6 @@
 using Common.Extensions.NpOn.BaseDbFactory.Generics;
 using Common.Extensions.NpOn.CommonBaseDomain;
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
 using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
@@ -123,15 +124,16 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
             _ => throw new ArgumentOutOfRangeException(nameof(actionType), actionType, null)
         };
 
-        List<INpOnDbCommandParam> parameters = npgsqlParameters
-            .Select(p => new NpOnDbCommandParam<NpgsqlDbType>
+        var parameters = new List<INpOnDbCommandParam>();
+        foreach (var p in npgsqlParameters)
+        {
+            parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
             {
                 ParamName = p.ParameterName,
                 ParamValue = p.Value ?? DBNull.Value,
                 ParamType = p.NpgsqlDbType
-            })
-            .Cast<INpOnDbCommandParam>()
-            .ToList();
+            });
+        }
         return (commandText, parameters);
     }
 
@@ -177,16 +179,36 @@ public class PostgresFactoryWrapper : BaseDbFactoryWrapper, IPostgresFactoryWrap
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
         };
 
-        var parameters = npgsqlParameters
-            .Select(p => new NpOnDbCommandParam<NpgsqlDbType>
+        var parameters = new List<INpOnDbCommandParam>(npgsqlParameters.Count);
+        for (int i = 0; i < npgsqlParameters.Count; i++)
+        {
+            var p = npgsqlParameters[i];
+            parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
             {
                 ParamName = p.ParameterName,
                 ParamValue = p.Value ?? DBNull.Value,
                 ParamType = p.NpgsqlDbType
-            })
-            .Cast<INpOnDbCommandParam>()
-            .ToList();
+            });
+        }
 
         return new NpOnDbCommand(DbType, commandText, parameters);
+    }
+
+    public async Task<INpOnWrapperResult?> BulkCopy(INpOnTableWrapper table, string tableName)
+    {
+        if (table.NameToIndexMap == null || table.RawData == null)
+            throw new ArgumentException("Table must provide fast-path NameToIndexMap and RawData for BulkCopy.");
+
+        var columns = table.NameToIndexMap.OrderBy(k => k.Value).Select(k => k.Key).ToList();
+        var rawData = table.RawData;
+
+        return await ExecuteWithConnectionAsync(async connection =>
+        {
+            if (connection.Driver is PostgresDriver pgDriver)
+            {
+                return await pgDriver.BinaryCopyAsync(tableName, columns, rawData);
+            }
+            throw new InvalidOperationException("Connection is not a valid Postgres connection.");
+        });
     }
 }

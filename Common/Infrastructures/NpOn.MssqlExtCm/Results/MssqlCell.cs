@@ -3,22 +3,53 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Common.Extensions.NpOn.CommonInternalCache.ObjectCachings;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using Microsoft.Data.SqlClient;
 
 namespace Common.Infrastructures.NpOn.MssqlExtCm.Results;
 
 public class MssqlCell<T> : NpOnCell<T>
 {
-    private MssqlCell(object? value, DbType dbType, string sourceTypeName, bool isPrimaryKey)
-        : base(value, dbType, sourceTypeName, isPrimaryKey)
+    public static readonly DbType CachedDbType = ResolveDbType(typeof(T));
+
+    public static DbType ResolveDbType(Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        if (type.IsEnum) type = Enum.GetUnderlyingType(type);
+
+        return Type.GetTypeCode(type) switch
+        {
+            TypeCode.Boolean => DbType.Boolean,
+            TypeCode.Byte => DbType.Byte,
+            TypeCode.SByte => DbType.SByte,
+            TypeCode.Int16 => DbType.Int16,
+            TypeCode.UInt16 => DbType.UInt16,
+            TypeCode.Int32 => DbType.Int32,
+            TypeCode.UInt32 => DbType.UInt32,
+            TypeCode.Int64 => DbType.Int64,
+            TypeCode.UInt64 => DbType.UInt64,
+            TypeCode.Single => DbType.Single,
+            TypeCode.Double => DbType.Double,
+            TypeCode.Decimal => DbType.Decimal,
+            TypeCode.DateTime => DbType.DateTime,
+            TypeCode.String => DbType.String,
+            _ => type switch
+            {
+                _ when type == typeof(Guid) => DbType.Guid,
+                _ when type == typeof(byte[]) => DbType.Binary,
+                _ when type == typeof(DateTimeOffset) => DbType.DateTimeOffset,
+                _ when type == typeof(TimeSpan) => DbType.Time,
+                _ => DbType.Object
+            }
+        };
+    }
+
+    public MssqlCell(object? value, string sourceTypeName, bool isPrimaryKey)
+        : base(value, CachedDbType, sourceTypeName, isPrimaryKey)
     {
     }
 
     public static MssqlCell<T> FromMssql(object? value, string sourceTypeName, bool isPrimaryKey)
     {
-        var tempParam = new SqlParameter { Value = default(T) }; 
-        var dbType = tempParam.DbType;
-        return new MssqlCell<T>(value, dbType, sourceTypeName, isPrimaryKey);
+        return new MssqlCell<T>(value, sourceTypeName, isPrimaryKey);
     }
 }
 

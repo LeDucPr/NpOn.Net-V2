@@ -3,6 +3,7 @@ using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
+using Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 using Common.Extensions.NpOn.ICommonDb.Transactions;
 
 namespace Common.Extensions.NpOn.CommonDb.Connections;
@@ -55,6 +56,12 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public virtual Task<INpOnWrapperResult> Execute(IBaseNpOnDbCommand? command)
     {
         throw new NotImplementedException("Need to override this method");
+    }
+
+    public virtual async Task<List<T>> QueryAsync<T>(IBaseNpOnDbCommand? command) where T : class
+    {
+        var result = await Execute(command).ConfigureAwait(false);
+        return result.ToList<T>() ?? new List<T>(0);
     }
 
     public virtual Task<Dictionary<IBaseNpOnDbCommand, INpOnWrapperResult>> ExecuteWithTransaction(

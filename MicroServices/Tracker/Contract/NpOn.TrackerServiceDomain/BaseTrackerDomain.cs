@@ -2,7 +2,7 @@
 
 namespace MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain;
 
-public abstract class BaseTrackerDomain : BaseDomain
+public abstract record BaseTrackerDomain : BaseDomain
 {
     public BaseTrackerDomain()
     {

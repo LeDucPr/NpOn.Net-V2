@@ -6,7 +6,7 @@ using ProtoBuf;
 namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 
 [ProtoContract]
-public class CommandRModel : BaseGeneralRModel
+public record CommandRModel : BaseGeneralRModel
 {
     [ProtoMember(1)] public required string CommandText { get; set; }
     [ProtoMember(2)] public byte[]? ParamsPayload { get; set; }

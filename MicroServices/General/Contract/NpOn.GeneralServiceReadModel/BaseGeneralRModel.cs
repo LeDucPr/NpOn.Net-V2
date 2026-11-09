@@ -7,7 +7,7 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel;
 [ProtoContract]
 [ProtoInclude(100, typeof(TblFldRModel))]
 [ProtoInclude(200, typeof(CommandRModel))]
-public abstract class BaseGeneralRModel : BaseCtrl
+public abstract record BaseGeneralRModel : BaseCtrl
 {
     #region Field Config
     [ProtoMember(1)] public override Dictionary<string, string>? FieldMap { get; protected set; }

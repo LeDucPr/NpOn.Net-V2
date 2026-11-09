@@ -6,7 +6,7 @@ namespace Common.Extensions.NpOn.CommonBaseDomain;
 public interface IBaseDomain;
 
 [ProtoContract]
-public class BaseDomain : BaseCtrl, IBaseDomain
+public record BaseDomain : BaseCtrl, IBaseDomain
 {
     public BaseDomain()
     {

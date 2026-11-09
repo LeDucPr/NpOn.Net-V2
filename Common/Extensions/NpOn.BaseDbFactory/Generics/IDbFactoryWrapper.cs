@@ -11,6 +11,9 @@ public interface IDbFactoryWrapper
     Task<INpOnWrapperResult?> ExecuteAsync(IBaseNpOnDbCommand dbCommand);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters);
 
+    Task<List<T>> QueryAsync<T>(IBaseNpOnDbCommand dbCommand) where T : class;
+    Task<List<T>> QueryAsync<T>(string queryString, List<INpOnDbCommandParam>? parameters = null) where T : class;
+
     Task<INpOnWrapperResult?> ExecuteFuncParams(string funcName,
         List<INpOnDbCommandParam>? parameters);
 

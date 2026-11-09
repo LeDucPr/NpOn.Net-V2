@@ -6,7 +6,7 @@ using ProtoBuf;
 namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 
 [ProtoContract]
-public class TblFldRModel : BaseGeneralRModel
+public record TblFldRModel : BaseGeneralRModel
 {
     [ProtoMember(1)] public Guid? TblMaterId { get; set; }
     [ProtoMember(2)] public string? TblMaterCode { get; set; }

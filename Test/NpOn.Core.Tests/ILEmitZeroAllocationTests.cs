@@ -20,6 +20,30 @@ public class MockRowWrapper : INpOnRowWrapper
     public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => _cells;
 }
 
+public class MockVectorTableWrapper : INpOnTableWrapper, INpOnWrapperResult
+{
+    public IReadOnlyList<Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.NpOnDataPage>? Pages { get; }
+    public IReadOnlyDictionary<string, int>? NameToIndexMap { get; }
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers => new Dictionary<int, INpOnRowWrapper?>();
+    public INpOnCollectionWrapper CollectionWrappers => throw new NotImplementedException();
+    public bool Status { get; set; } = true;
+    public long QueryTimeMilliseconds { get; set; } = 1;
+
+    public MockVectorTableWrapper(
+        IReadOnlyList<Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.NpOnDataPage> pages,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
+    {
+        Pages = pages;
+        NameToIndexMap = nameToIndexMap;
+    }
+
+    public void Dispose() { }
+    public void SetSuccess() => Status = true;
+    public INpOnWrapperResult SetFail(Common.Extensions.NpOn.CommonEnums.DatabaseEnums.EDbError error) { Status = false; return this; }
+    public INpOnWrapperResult SetFail(string errorString) { Status = false; return this; }
+    public INpOnWrapperResult SetFail(Exception ex) { Status = false; return this; }
+}
+
 public class MockTableWrapper : INpOnSuperTableWrapper
 {
     private readonly List<INpOnRowWrapper> _rows;
@@ -142,5 +166,50 @@ public class ILEmitZeroAllocationTests
         Assert.Null(model.FullName);
         Assert.Null(model.Email);
         Assert.Equal(EAccountStatus.Unactive, model.Status);
+    }
+
+    [Fact]
+    public void DynamicObjectMapper_VectorizedPages_ShouldMapWithZeroBoxing()
+    {
+        // Arrange
+        var expectedId = Guid.NewGuid();
+        var idBlock = new Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.GuidBlock(1);
+        idBlock.Buffer[0] = expectedId;
+
+        var userBlock = new Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.StringBlock(1);
+        userBlock.Buffer[0] = "vector_user";
+
+        var passBlock = new Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.StringBlock(1);
+        passBlock.Buffer[0] = "vector_pass";
+
+        var statusBlock = new Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.Int32Block(1);
+        statusBlock.Buffer[0] = (int)EAccountStatus.Active;
+
+        var nameMap = new Dictionary<string, int>
+        {
+            ["id"] = 0,
+            ["username"] = 1,
+            ["password"] = 2,
+            ["status"] = 3
+        };
+
+        var page = new Common.Extensions.NpOn.ICommonDb.DbResults.Blocks.NpOnDataPage(
+            1, [idBlock, userBlock, passBlock, statusBlock], nameMap);
+
+        var table = new MockVectorTableWrapper([page], nameMap);
+
+        // Act
+        var results = table.ToList<AccountRModel>();
+
+        // Assert
+        Assert.NotNull(results);
+        Assert.Single(results);
+        var model = results[0];
+        Assert.Equal(expectedId, model.Id);
+        Assert.Equal("vector_user", model.UserName);
+        Assert.Equal("vector_pass", model.Password);
+        Assert.Equal(EAccountStatus.Active, model.Status);
+
+        page.Dispose();
     }
 }

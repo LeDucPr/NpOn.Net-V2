@@ -3,7 +3,7 @@
 namespace Common.Extensions.NpOn.HandleFlow;
 
 [ProtoContract]
-public abstract class BaseCtrl
+public abstract record BaseCtrl
 {
     #region Field Config
 

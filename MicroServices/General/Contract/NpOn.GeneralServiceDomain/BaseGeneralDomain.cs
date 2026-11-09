@@ -7,7 +7,7 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceDomain;
 [ProtoContract]
 [ProtoInclude(100, typeof(TblMaster))]
 [ProtoInclude(200, typeof(FldQueryMaster))]
-public abstract class BaseGeneralDomain : BaseDomain
+public abstract record BaseGeneralDomain : BaseDomain
 {
     public BaseGeneralDomain()
     {

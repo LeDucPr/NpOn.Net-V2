@@ -12,7 +12,7 @@ namespace MicroServices.Account.Contracts.NpOn.AccountServiceDomain;
 [ProtoInclude(500, typeof(AccountPermissionException))]
 [ProtoInclude(600, typeof(AccountAddress))]
 
-public abstract class BaseAccountDomain : BaseDomain
+public abstract record BaseAccountDomain : BaseDomain
 {
     public BaseAccountDomain()
     {

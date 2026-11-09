@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using Common.Extensions.NpOn.CommonDb.Results;
@@ -56,7 +58,7 @@ public class MssqlColumnCollection : IReadOnlyDictionary<string, MssqlColumnWrap
 
         foreach (var schemaInfo in schemaMap.Values)
         {
-            var mapper = MssqlMappingExtensions.CreateColumnMapper(schemaInfo.ColumnName, schemaMap, nameToIndexMap);
+            var mapper = MssqlMappingExtensions.GetOrCreateColumnMapper(schemaInfo.ColumnName, schemaMap, nameToIndexMap);
             _columnWrappers.Add(new MssqlColumnWrapper(data, mapper));
         }
     }
@@ -133,10 +135,47 @@ public class MssqlColumnCollection : IReadOnlyDictionary<string, MssqlColumnWrap
 
 public class MssqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
-    private IReadOnlyDictionary<int, MssqlRowWrapper> Rows { get; set; } = new Dictionary<int, MssqlRowWrapper>();
-    private MssqlColumnCollection? Columns { get; set; }
+    private static readonly ConcurrentDictionary<string, (Dictionary<string, NpOnColumnSchemaInfo> SchemaMap, Dictionary<string, int> NameToIndexMap, HashSet<string> PrimaryKeys)> SchemaCache = new();
+
+    private IReadOnlyDictionary<int, MssqlRowWrapper>? _rows;
+    private MssqlColumnCollection? _columns;
+
+    private object?[]? _rentedFlatBuffer;
+    private int _flatCount = 0;
+    private int _rowCount = 0;
+    private int _colCount = 0;
+
+    private Dictionary<string, int>? _nameToIndexMap;
+    private Dictionary<string, NpOnColumnSchemaInfo>? _schemaMap;
+    private HashSet<string>? _primaryKeyColumns;
+    private List<object[]>? _legacyRawData;
 
     public Action<MssqlResultSetWrapper>? ReturnToPool { get; set; }
+
+    public IReadOnlyDictionary<string, int>? NameToIndexMap => _nameToIndexMap;
+    public object?[]? FlatData => _rentedFlatBuffer;
+    public int RowCount => _rowCount;
+    public int ColCount => _colCount;
+    public IReadOnlySet<string>? PrimaryKeyColumns => _primaryKeyColumns;
+
+    public IReadOnlyList<object[]>? RawData
+    {
+        get
+        {
+            if (_legacyRawData != null) return _legacyRawData;
+            if (_rentedFlatBuffer == null || _colCount == 0 || _rowCount == 0) return null;
+
+            var list = new List<object[]>(_rowCount);
+            for (int r = 0; r < _rowCount; r++)
+            {
+                var rowArr = new object[_colCount];
+                Array.Copy(_rentedFlatBuffer, r * _colCount, rowArr, 0, _colCount);
+                list.Add(rowArr);
+            }
+            _legacyRawData = list;
+            return _legacyRawData;
+        }
+    }
 
     public MssqlResultSetWrapper()
     {
@@ -161,69 +200,129 @@ public class MssqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
             return;
         }
 
-        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>(reader.FieldCount);
-        var nameToIndexMap = new Dictionary<string, int>(reader.FieldCount);
-        
-        // MSSQL SqlDataReader doesn't have CanGetColumnSchema but we can use GetColumnSchema() directly
-        var columnSchema = reader.GetColumnSchema();
+        _colCount = reader.FieldCount;
 
-        for (int i = 0; i < reader.FieldCount; i++)
+        // Permanent concurrent schema cache
+        var schemaKey = $"{_colCount};{string.Join(";", Enumerable.Range(0, _colCount).Select(i => reader.GetName(i)))}";
+        if (!SchemaCache.TryGetValue(schemaKey, out var cached))
         {
-            var columnName = reader.GetName(i);
-            var isPrimaryKey = columnSchema[i].IsKey ?? false;
-            var schemaInfo = new NpOnColumnSchemaInfo(
-                columnName,
-                reader.GetFieldType(i),
-                reader.GetDataTypeName(i),
-                isPrimaryKey
-            );
-            schemaMap.Add(columnName, schemaInfo);
-            nameToIndexMap.Add(columnName, i);
+            var columnSchema = reader.GetColumnSchema();
+            var sm = new Dictionary<string, NpOnColumnSchemaInfo>(_colCount, StringComparer.OrdinalIgnoreCase);
+            var ni = new Dictionary<string, int>(_colCount, StringComparer.OrdinalIgnoreCase);
+            var pk = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 0; i < _colCount; i++)
+            {
+                var columnName = reader.GetName(i);
+                var isPrimaryKey = columnSchema[i].IsKey ?? false;
+                var schemaInfo = new NpOnColumnSchemaInfo(
+                    columnName,
+                    reader.GetFieldType(i),
+                    reader.GetDataTypeName(i),
+                    isPrimaryKey
+                );
+                sm[columnName] = schemaInfo;
+                ni[columnName] = i;
+                if (isPrimaryKey) pk.Add(columnName);
+            }
+            cached = (sm, ni, pk);
+            SchemaCache.TryAdd(schemaKey, cached);
         }
 
-        var normalizeMethod = typeof(MssqlUtils).GetMethod(nameof(MssqlUtils.NormalizeMssqlValue), [typeof(object)]);
-        var mapper = MssqlMappingExtensions.CreateArrayRowMapper(reader, normalizeMethod);
+        _schemaMap = cached.SchemaMap;
+        _nameToIndexMap = cached.NameToIndexMap;
+        _primaryKeyColumns = cached.PrimaryKeys;
 
-        var data = new List<object[]>();
+        // Rent contiguous 1D flat buffer
+        int initialCapacity = Math.Max(256 * _colCount, 1024);
+        _rentedFlatBuffer = ArrayPool<object?>.Shared.Rent(initialCapacity);
+        int flatIdx = 0;
+        _rowCount = 0;
+
         while (reader.Read())
         {
-            data.Add(mapper(reader));
+            if (flatIdx + _colCount > _rentedFlatBuffer.Length)
+            {
+                int newCapacity = _rentedFlatBuffer.Length * 2;
+                var newBuffer = ArrayPool<object?>.Shared.Rent(newCapacity);
+                Array.Copy(_rentedFlatBuffer, 0, newBuffer, 0, flatIdx);
+                ArrayPool<object?>.Shared.Return(_rentedFlatBuffer);
+                _rentedFlatBuffer = newBuffer;
+            }
+
+            for (int c = 0; c < _colCount; c++)
+            {
+                _rentedFlatBuffer[flatIdx++] = reader.GetValue(c);
+            }
+            _rowCount++;
         }
 
-        var rowMapper = MssqlMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
-        var rows = new Dictionary<int, MssqlRowWrapper>(data.Count);
-        for (int i = 0; i < data.Count; i++)
-        {
-            rows.Add(i, new MssqlRowWrapper(data[i], rowMapper));
-        }
-
-        Rows = rows;
-        Columns = new MssqlColumnCollection(data, schemaMap, nameToIndexMap);
+        _flatCount = flatIdx;
         SetSuccess();
     }
 
     public void Reset()
     {
-        Rows = new Dictionary<int, MssqlRowWrapper>();
-        Columns = null;
-        // Status and error are reset by SetSuccess/SetFail
+        if (_rentedFlatBuffer != null)
+        {
+            ArrayPool<object?>.Shared.Return(_rentedFlatBuffer);
+            _rentedFlatBuffer = null;
+        }
+        _flatCount = 0;
+        _rowCount = 0;
+        _colCount = 0;
+        _rows = null;
+        _columns = null;
+        _nameToIndexMap = null;
+        _schemaMap = null;
+        _primaryKeyColumns = null;
+        _legacyRawData = null;
     }
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
     {
         get
         {
-            Dictionary<int, INpOnRowWrapper?> result = new();
-            foreach (var row in Rows)
-                result.Add(row.Key, row.Value);
-            return result;
+            if (_rows != null)
+            {
+                Dictionary<int, INpOnRowWrapper?> dict = new(_rows.Count);
+                foreach (var kvp in _rows) dict.Add(kvp.Key, kvp.Value);
+                return dict;
+            }
+
+            if (_schemaMap == null || _nameToIndexMap == null || RawData == null)
+                return new Dictionary<int, INpOnRowWrapper?>();
+
+            var rowMapper = MssqlMappingExtensions.GetOrCreateRowMapper(_schemaMap, _nameToIndexMap);
+            var raw = RawData;
+            var rows = new Dictionary<int, MssqlRowWrapper>(raw.Count);
+            for (int i = 0; i < raw.Count; i++)
+            {
+                rows.Add(i, new MssqlRowWrapper(raw[i], rowMapper));
+            }
+            _rows = rows;
+
+            Dictionary<int, INpOnRowWrapper?> res = new(_rows.Count);
+            foreach (var kvp in _rows) res.Add(kvp.Key, kvp.Value);
+            return res;
         }
     }
 
-    public INpOnCollectionWrapper CollectionWrappers => Columns!;
+    public INpOnCollectionWrapper CollectionWrappers
+    {
+        get
+        {
+            if (_columns == null && _schemaMap != null && _nameToIndexMap != null && RawData is List<object[]> dataList)
+            {
+                _columns = new MssqlColumnCollection(dataList, _schemaMap, _nameToIndexMap);
+            }
+            return _columns!;
+        }
+    }
 
     public override void Dispose()
     {
+        Reset();
         ReturnToPool?.Invoke(this);
     }
 }

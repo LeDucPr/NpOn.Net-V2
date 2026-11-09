@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
@@ -9,62 +11,186 @@ using NpgsqlTypes;
 
 namespace Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 
+public class DomainFieldMetadata
+{
+    public string ColumnName { get; set; } = string.Empty;
+    public MemberInfo Member { get; set; } = null!;
+    public Type MemberType { get; set; } = null!;
+    public bool IsPrimaryKey { get; set; }
+    public Func<object, object?> FastGetter { get; set; } = null!;
+}
+
+public class DomainEntityMetadata
+{
+    public Type EntityType { get; set; } = null!;
+    public TableLoaderAttribute? TableLoader { get; set; }
+    public string TableName => TableLoader?.TableName ?? string.Empty;
+    public List<DomainFieldMetadata> Fields { get; set; } = [];
+    public List<DomainFieldMetadata> PrimaryKeys { get; set; } = [];
+}
+
 public static class BaseDomainExtensions
 {
-    public static (string CommandText, List<NpgsqlParameter> Parameters) ToPostgresParamsInsert
-        (this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
+    // Thread-safe metadata cache for BaseDomain entities (compiled once via IL Emit, reused across all threads)
+    private static readonly ConcurrentDictionary<Type, DomainEntityMetadata> EntityMetadataCache = new();
+
+    private static DomainEntityMetadata GetOrCreateMetadata(Type type)
+    {
+        return EntityMetadataCache.GetOrAdd(type, CompileEntityMetadata);
+    }
+
+    private static DomainEntityMetadata CompileEntityMetadata(Type type)
+    {
+        var meta = new DomainEntityMetadata
+        {
+            EntityType = type,
+            TableLoader = type.GetCustomAttribute<TableLoaderAttribute>(true)
+        };
+
+        var fields = new List<DomainFieldMetadata>();
+
+        foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var fa = p.GetCustomAttributes(true).OfType<FieldAttribute>().FirstOrDefault();
+            if (fa != null && !string.IsNullOrWhiteSpace(fa.FieldName))
+            {
+                var isPk = p.GetCustomAttributes(typeof(PkAttribute), true).Any();
+                fields.Add(new DomainFieldMetadata
+                {
+                    ColumnName = fa.FieldName,
+                    Member = p,
+                    MemberType = p.PropertyType,
+                    IsPrimaryKey = isPk,
+                    FastGetter = CompilePropertyGetter(type, p)
+                });
+            }
+        }
+
+        foreach (var f in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var fa = f.GetCustomAttributes(true).OfType<FieldAttribute>().FirstOrDefault();
+            if (fa != null && !string.IsNullOrWhiteSpace(fa.FieldName))
+            {
+                var isPk = f.GetCustomAttributes(typeof(PkAttribute), true).Any();
+                fields.Add(new DomainFieldMetadata
+                {
+                    ColumnName = fa.FieldName,
+                    Member = f,
+                    MemberType = f.FieldType,
+                    IsPrimaryKey = isPk,
+                    FastGetter = CompileFieldGetter(type, f)
+                });
+            }
+        }
+
+        meta.Fields = fields;
+        meta.PrimaryKeys = fields.Where(f => f.IsPrimaryKey).ToList();
+
+        return meta;
+    }
+
+    private static Func<object, object?> CompilePropertyGetter(Type type, PropertyInfo prop)
+    {
+        var getMethod = prop.GetGetMethod(true);
+        if (getMethod == null)
+        {
+            return instance => prop.GetValue(instance);
+        }
+
+        var dm = new DynamicMethod(
+            $"FastGet_{type.Name}_{prop.Name}",
+            typeof(object),
+            [typeof(object)],
+            type.Module,
+            true);
+
+        var il = dm.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        if (type.IsValueType)
+            il.Emit(OpCodes.Unbox_Any, type);
+        else
+            il.Emit(OpCodes.Castclass, type);
+
+        il.Emit(OpCodes.Callvirt, getMethod);
+        if (prop.PropertyType.IsValueType)
+            il.Emit(OpCodes.Box, prop.PropertyType);
+
+        il.Emit(OpCodes.Ret);
+        return (Func<object, object?>)dm.CreateDelegate(typeof(Func<object, object?>));
+    }
+
+    private static Func<object, object?> CompileFieldGetter(Type type, FieldInfo field)
+    {
+        var dm = new DynamicMethod(
+            $"FastGet_{type.Name}_{field.Name}",
+            typeof(object),
+            [typeof(object)],
+            type.Module,
+            true);
+
+        var il = dm.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        if (type.IsValueType)
+            il.Emit(OpCodes.Unbox_Any, type);
+        else
+            il.Emit(OpCodes.Castclass, type);
+
+        il.Emit(OpCodes.Ldfld, field);
+        if (field.FieldType.IsValueType)
+            il.Emit(OpCodes.Box, field.FieldType);
+
+        il.Emit(OpCodes.Ret);
+        return (Func<object, object?>)dm.CreateDelegate(typeof(Func<object, object?>));
+    }
+
+    public static (string CommandText, List<NpgsqlParameter> Parameters) ToPostgresParamsInsert(
+        this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
     {
         if (domains == null || domains.Count == 0)
             throw new Exception("Empty domain list");
 
-        if (!domains.TryGetSingleTableAttribute(out var tableLoader) || tableLoader == null)
+        var type = domains[0].GetType();
+        var meta = GetOrCreateMetadata(type);
+        if (meta.TableLoader == null || string.IsNullOrEmpty(meta.TableName))
             throw new Exception("Invalid table attribute");
 
-        var type = domains[0].GetType();
-        if (domains.Any(d => d.GetType() != type))
-            throw new Exception("All domains must be of the same type");
-
-        // 1) Pre-scan: collect [Field] mappings (column -> member), independent of property names
-        var mappedMembers = GetFieldMappedMembers(type); // (columnName, member, memberType)
-        if (mappedMembers.Count == 0)
+        if (meta.Fields.Count == 0)
             throw new Exception($"Type {type.Name} has no [Field] mapped members");
 
-        var parameters = new List<NpgsqlParameter>();
-        var sql = new StringBuilder();
+        var parameters = new List<NpgsqlParameter>(domains.Count * meta.Fields.Count);
+        var sql = new StringBuilder(domains.Count * meta.Fields.Count * 20);
 
-        // 2) Build one INSERT per row to truly skip nulls without column mismatch
         for (int i = 0; i < domains.Count; i++)
         {
             var cols = new List<string>();
             var paramNames = new List<string>();
 
-            foreach (var (columnName, member, memberType) in mappedMembers)
+            foreach (var field in meta.Fields)
             {
-                var raw = GetMemberValue(member, domains[i]);
-                if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, memberType)))
+                var raw = field.FastGetter(domains[i]);
+                if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, field.MemberType)))
                 {
                     continue;
                 }
 
-                var (paramValue, npgType) = NormalizeForNpgsql(raw);
+                var (paramValue, npgType) = PostgresUtils.NormalizeForNpgsql(raw);
                 string param = $"@p_{i}_{cols.Count}";
-                cols.Add(columnName);
+                cols.Add(field.ColumnName);
                 paramNames.Add(param);
 
                 var p = new NpgsqlParameter(param, paramValue ?? DBNull.Value);
-                if (npgType.HasValue) p.NpgsqlDbType = npgType.Value;
+                if (npgType != NpgsqlDbType.Unknown) p.NpgsqlDbType = npgType;
                 parameters.Add(p);
             }
 
-            if (cols.Count == 0) continue; // nothing to insert for this row
+            if (cols.Count == 0) continue;
 
             sql.Append(
-                $"INSERT INTO {tableLoader.TableName} ({string.Join(",", cols)}) VALUES ({string.Join(",", paramNames)});");
+                $"INSERT INTO {meta.TableName} ({string.Join(",", cols)}) VALUES ({string.Join(",", paramNames)});");
         }
 
         return (sql.ToString(), parameters);
     }
-
 
     public static (string CommandText, List<NpgsqlParameter> Parameters) ToPostgresParamsUpdate(
         this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
@@ -73,68 +199,61 @@ public static class BaseDomainExtensions
             throw new Exception("Empty domain list");
 
         var type = domains[0].GetType();
-        var mappedMembers = GetFieldMappedMembers(type);
-        var pkMembers = mappedMembers.Where(m => m.Member.GetCustomAttributes(typeof(PkAttribute), true).Any())
-            .ToList();
-        if (!pkMembers.Any())
+        var meta = GetOrCreateMetadata(type);
+        if (meta.PrimaryKeys.Count == 0)
             throw new Exception($"Type {type.Name} has no primary key");
 
-        var parameters = new List<NpgsqlParameter>();
-        var sql = new StringBuilder();
-        var tableName = type.GetCustomAttribute<TableLoaderAttribute>()?.TableName;
+        var parameters = new List<NpgsqlParameter>(domains.Count * meta.Fields.Count);
+        var sql = new StringBuilder(domains.Count * meta.Fields.Count * 20);
 
-        // Foreach domain → create UPDATE command
         for (int i = 0; i < domains.Count; i++)
         {
             var setClauses = new List<string>();
 
-            foreach (var (colName, member, memberType) in mappedMembers)
+            foreach (var field in meta.Fields)
             {
-                // skip PK
-                if (pkMembers.Any(pk => pk.ColumnName == colName))
-                    continue;
+                if (field.IsPrimaryKey) continue;
 
-                var raw = GetMemberValue(member, domains[i]);
-                if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, memberType)))
+                var raw = field.FastGetter(domains[i]);
+                if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, field.MemberType)))
                 {
                     continue;
                 }
 
-                var (val, npgType) = NormalizeForNpgsql(raw);
-                string param = $"@v_{i}_{colName}";
+                var (val, npgType) = PostgresUtils.NormalizeForNpgsql(raw);
+                string param = $"@v_{i}_{field.ColumnName}";
                 var p = new NpgsqlParameter(param, val ?? DBNull.Value);
-                if (npgType.HasValue) p.NpgsqlDbType = npgType.Value;
+                if (npgType != NpgsqlDbType.Unknown) p.NpgsqlDbType = npgType;
                 parameters.Add(p);
 
-                setClauses.Add($"{colName} = {param}");
+                setClauses.Add($"{field.ColumnName} = {param}");
             }
 
             if (setClauses.Count == 0) continue;
 
             var pkConditions = new List<string>();
-            for (int j = 0; j < pkMembers.Count; j++)
+            for (int j = 0; j < meta.PrimaryKeys.Count; j++)
             {
-                var pkMember = pkMembers[j];
+                var pkField = meta.PrimaryKeys[j];
                 string pkParam = $"@pk_{i}_{j}";
-                var pkVal = GetMemberValue(pkMember.Member, domains[i]);
+                var pkVal = pkField.FastGetter(domains[i]);
                 if (pkVal == null)
                     throw new Exception(
-                        $"Primary key value for {pkMember.ColumnName} cannot be null in domain at index {i}");
+                        $"Primary key value for {pkField.ColumnName} cannot be null in domain at index {i}");
 
-                var (pkValue, pkType) = NormalizeForNpgsql(pkVal);
+                var (pkValue, pkType) = PostgresUtils.NormalizeForNpgsql(pkVal);
                 var pkParamObj = new NpgsqlParameter(pkParam, pkValue);
-                if (pkType.HasValue) pkParamObj.NpgsqlDbType = pkType.Value;
+                if (pkType != NpgsqlDbType.Unknown) pkParamObj.NpgsqlDbType = pkType;
                 parameters.Add(pkParamObj);
-                pkConditions.Add($"{pkMember.ColumnName} = {pkParam}");
+                pkConditions.Add($"{pkField.ColumnName} = {pkParam}");
             }
 
             sql.Append(
-                $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE {string.Join(" AND ", pkConditions)};");
+                $"UPDATE {meta.TableName} SET {string.Join(", ", setClauses)} WHERE {string.Join(" AND ", pkConditions)};");
         }
 
         return (sql.ToString(), parameters);
     }
-
 
     public static (string CommandText, List<NpgsqlParameter> Parameters) ToPostgresParamsMerge(
         this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
@@ -143,54 +262,48 @@ public static class BaseDomainExtensions
             throw new Exception("Empty domain list");
 
         var type = domains[0].GetType();
-        var mappedMembers = GetFieldMappedMembers(type);
-        var pkMembers = mappedMembers.Where(m => m.Member.GetCustomAttributes(typeof(PkAttribute), true).Any())
-            .ToList();
-        if (!pkMembers.Any())
+        var meta = GetOrCreateMetadata(type);
+        if (meta.PrimaryKeys.Count == 0)
             throw new Exception($"Type {type.Name} has no primary key");
 
-        var tableName = type.GetCustomAttribute<TableLoaderAttribute>()?.TableName;
-        if (string.IsNullOrEmpty(tableName))
+        if (string.IsNullOrEmpty(meta.TableName))
             throw new Exception($"Type {type.Name} is missing TableLoaderAttribute");
 
-        var parameters = new List<NpgsqlParameter>();
-        var sql = new StringBuilder();
+        var parameters = new List<NpgsqlParameter>(domains.Count * meta.Fields.Count);
+        var sql = new StringBuilder(domains.Count * meta.Fields.Count * 20);
 
-        // Build one INSERT per row to handle nulls correctly
         for (int i = 0; i < domains.Count; i++)
         {
             var domain = domains[i];
             var cols = new List<string>();
             var paramNames = new List<string>();
 
-            foreach (var (colName, member, memberType) in mappedMembers)
+            foreach (var field in meta.Fields)
             {
-                var raw = GetMemberValue(member, domain);
-                // Skip properties with null or default value type (e.g., Guid.Empty)
-                // This allows the database to use its default value (e.g., gen_random_uuid())
-                if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, memberType)))
+                var raw = field.FastGetter(domain);
+                if (!isUseDefaultWhenNull && (raw == null || IsDefaultValue(raw, field.MemberType)))
                 {
                     continue;
                 }
 
-                var (val, npgType) = NormalizeForNpgsql(raw);
-                string param = $"@p_{i}_{colName}";
+                var (val, npgType) = PostgresUtils.NormalizeForNpgsql(raw);
+                string param = $"@p_{i}_{field.ColumnName}";
 
-                cols.Add(colName);
+                cols.Add(field.ColumnName);
                 paramNames.Add(param);
 
                 var p = new NpgsqlParameter(param, val ?? DBNull.Value);
-                if (npgType.HasValue) p.NpgsqlDbType = npgType.Value;
+                if (npgType != NpgsqlDbType.Unknown) p.NpgsqlDbType = npgType;
                 parameters.Add(p);
             }
 
-            if (cols.Count == 0) continue; // Nothing to insert for this domain
+            if (cols.Count == 0) continue;
 
-            sql.Append($"INSERT INTO {tableName} ({string.Join(",", cols)}) VALUES ({string.Join(",", paramNames)})");
-            sql.Append($" ON CONFLICT ({string.Join(",", pkMembers.Select(m => m.ColumnName))}) DO UPDATE SET ");
+            sql.Append($"INSERT INTO {meta.TableName} ({string.Join(",", cols)}) VALUES ({string.Join(",", paramNames)})");
+            sql.Append($" ON CONFLICT ({string.Join(",", meta.PrimaryKeys.Select(m => m.ColumnName))}) DO UPDATE SET ");
 
-            var updateSetClauses = mappedMembers.Where(m =>
-                    pkMembers.All(pk => pk.ColumnName != m.ColumnName) && cols.Contains(m.ColumnName))
+            var updateSetClauses = meta.Fields
+                .Where(m => !m.IsPrimaryKey && cols.Contains(m.ColumnName))
                 .Select(m => $"{m.ColumnName} = EXCLUDED.{m.ColumnName}");
             sql.Append(string.Join(", ", updateSetClauses));
             sql.Append(';');
@@ -199,7 +312,6 @@ public static class BaseDomainExtensions
         return (sql.ToString(), parameters);
     }
 
-
     public static (string CommandText, List<NpgsqlParameter> Parameters) ToPostgresParamsDelete(
         this List<BaseDomain> domains, bool isUseDefaultWhenNull = false)
     {
@@ -207,19 +319,50 @@ public static class BaseDomainExtensions
             throw new Exception("Empty domain list");
 
         var type = domains[0].GetType();
-        var mappedMembers = GetFieldMappedMembers(type);
-        var pkMembers = mappedMembers
-            .Where(m => m.Member.GetCustomAttributes(typeof(PkAttribute), true).Any())
-            .ToList();
-
-        if (!pkMembers.Any())
+        var meta = GetOrCreateMetadata(type);
+        if (meta.PrimaryKeys.Count == 0)
             throw new Exception($"Type {type.Name} has no primary key");
 
-        var parameters = new List<NpgsqlParameter>();
-        var sql = new StringBuilder();
+        var parameters = new List<NpgsqlParameter>(domains.Count * meta.PrimaryKeys.Count);
+        var sql = new StringBuilder(domains.Count * 32);
 
-        var tableName = type.GetCustomAttribute<TableLoaderAttribute>()?.TableName;
-        sql.Append($"DELETE FROM {tableName} WHERE ");
+        if (meta.PrimaryKeys.Count == 1)
+        {
+            var pkField = meta.PrimaryKeys[0];
+            var pkParams = new List<string>(domains.Count);
+            for (int i = 0; i < domains.Count; i++)
+            {
+                var raw = pkField.FastGetter(domains[i]);
+                if (raw == null)
+                {
+                    if (isUseDefaultWhenNull)
+                    {
+                        raw = pkField.MemberType.IsValueType
+                            ? Activator.CreateInstance(pkField.MemberType)!
+                            : string.Empty;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                string pkParam = $"@pk_{i}";
+                pkParams.Add(pkParam);
+                var (val, npgType) = PostgresUtils.NormalizeForNpgsql(raw);
+                var p = new NpgsqlParameter(pkParam, val);
+                if (npgType != NpgsqlDbType.Unknown) p.NpgsqlDbType = npgType;
+                parameters.Add(p);
+            }
+
+            if (pkParams.Count == 0)
+                throw new Exception("No valid primary key conditions generated");
+
+            sql.Append($"DELETE FROM {meta.TableName} WHERE {pkField.ColumnName} IN ({string.Join(", ", pkParams)});");
+            return (sql.ToString(), parameters);
+        }
+
+        sql.Append($"DELETE FROM {meta.TableName} WHERE ");
 
         var whereClauses = new List<string>();
         for (int i = 0; i < domains.Count; i++)
@@ -227,18 +370,18 @@ public static class BaseDomainExtensions
             var domain = domains[i];
             var pkConditions = new List<string>();
 
-            for (int j = 0; j < pkMembers.Count; j++)
+            for (int j = 0; j < meta.PrimaryKeys.Count; j++)
             {
-                var pkMember = pkMembers[j];
+                var pkField = meta.PrimaryKeys[j];
                 string pkParam = $"@pk_{i}_{j}";
-                var raw = GetMemberValue(pkMember.Member, domain);
+                var raw = pkField.FastGetter(domain);
 
                 if (raw == null)
                 {
                     if (isUseDefaultWhenNull)
                     {
-                        object defaultVal = pkMember.MemberType.IsValueType
-                            ? Activator.CreateInstance(pkMember.MemberType)!
+                        object defaultVal = pkField.MemberType.IsValueType
+                            ? Activator.CreateInstance(pkField.MemberType)!
                             : string.Empty;
                         raw = defaultVal;
                     }
@@ -248,20 +391,20 @@ public static class BaseDomainExtensions
                     }
                 }
 
-                var (val, npgType) = NormalizeForNpgsql(raw);
+                var (val, npgType) = PostgresUtils.NormalizeForNpgsql(raw);
                 var p = new NpgsqlParameter(pkParam, val);
-                if (npgType.HasValue) p.NpgsqlDbType = npgType.Value;
+                if (npgType != NpgsqlDbType.Unknown) p.NpgsqlDbType = npgType;
                 parameters.Add(p);
-                pkConditions.Add($"{pkMember.ColumnName} = {pkParam}");
+                pkConditions.Add($"{pkField.ColumnName} = {pkParam}");
             }
 
-            if (pkConditions.Any())
+            if (pkConditions.Count > 0)
             {
                 whereClauses.Add($"({string.Join(" AND ", pkConditions)})");
             }
         }
 
-        if (!whereClauses.Any())
+        if (whereClauses.Count == 0)
             throw new Exception("No valid primary key conditions generated");
 
         sql.Append(string.Join(" OR ", whereClauses));
@@ -269,95 +412,16 @@ public static class BaseDomainExtensions
         return (sql.ToString(), parameters);
     }
 
-
-    private static bool TryGetSingleTableAttribute(
-        this IEnumerable<BaseDomain> domains,
-        out TableLoaderAttribute? tableAttr)
-    {
-        tableAttr = null;
-        var validDomains = domains
-            .Where(x => x is BaseDomain)
-            .ToList();
-        if (!validDomains.Any())
-            return false;
-
-        var attrs = validDomains
-            .Select(x => x.GetType()
-                .GetCustomAttributes(typeof(TableLoaderAttribute), true)
-                .FirstOrDefault() as TableLoaderAttribute)
-            .ToList();
-
-        if (attrs.Any(a => a == null))
-            return false;
-
-        var distinctTables = attrs
-            .Select(a => a!.TableName)
-            .Distinct()
-            .ToList();
-
-        if (distinctTables.Count != 1)
-            return false;
-
-        tableAttr = attrs.First();
-        return true;
-    }
-
-    #region private
-
-    private static List<(string ColumnName, MemberInfo Member, Type MemberType)>
-        GetFieldMappedMembers(Type type)
-    {
-        var list = new List<(string, MemberInfo, Type)>();
-
-        foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            var fa = p.GetCustomAttributes(true).OfType<FieldAttribute>().FirstOrDefault();
-            if (fa != null && !string.IsNullOrWhiteSpace(fa.FieldName))
-                list.Add((fa.FieldName, p, p.PropertyType));
-        }
-
-        foreach (var f in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
-        {
-            var fa = f.GetCustomAttributes(true).OfType<FieldAttribute>().FirstOrDefault();
-            if (fa != null && !string.IsNullOrWhiteSpace(fa.FieldName))
-                list.Add((fa.FieldName, f, f.FieldType));
-        }
-
-        return list;
-    }
-
-    private static object? GetMemberValue(MemberInfo member, object instance)
-    {
-        return member switch
-        {
-            PropertyInfo pi => pi.GetValue(instance),
-            FieldInfo fi => fi.GetValue(instance),
-            _ => null
-        };
-    }
-
-    // Convert enums and common types to safe Npgsql representations by using the centralized utility
-    private static (object? Value, NpgsqlDbType? DbType) NormalizeForNpgsql(object? raw)
-    {
-        return PostgresUtils.NormalizeForNpgsql(raw);
-    }
-
-    /// <summary>
-    /// Checks if a value is the default for its type (e.g., 0 for int, Guid.Empty for Guid).
-    /// This is used to avoid inserting default values for columns that have database-side defaults (like auto-generated UUIDs).
-    /// </summary>
     private static bool IsDefaultValue(object value, Type type)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
         if (!underlyingType.IsValueType)
-            return false; // Reference types are already handled by the null check.
+            return false;
 
         if (underlyingType == typeof(Guid) && value is Guid g) return g == Guid.Empty;
         if (underlyingType == typeof(DateTime) && value is DateTime d) return d == DateTime.MinValue;
 
         return false;
     }
-
-    #endregion private
 }

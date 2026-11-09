@@ -9,7 +9,7 @@ namespace MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("acc_srv_account")]
-public class Account : BaseAccountDomain
+public record Account : BaseAccountDomain
 {
     [ProtoMember(1)]
     [Field("id")]

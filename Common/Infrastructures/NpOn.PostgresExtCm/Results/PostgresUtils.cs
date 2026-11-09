@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Data;
 using Common.Extensions.NpOn.CommonMode;
 using Npgsql;
@@ -8,10 +9,38 @@ namespace Common.Infrastructures.NpOn.PostgresExtCm.Results;
 
 public static class PostgresUtils
 {
+    // Thread-safe type to NpgsqlDbType cache
+    private static readonly ConcurrentDictionary<Type, NpgsqlDbType> TypeToNpgsqlDbTypeCache = new();
+
+    // Thread-safe NpgsqlDbType to DbType cache
+    private static readonly ConcurrentDictionary<NpgsqlDbType, DbType> NpgsqlDbTypeToDbTypeCache = new();
+
+    static PostgresUtils()
+    {
+        // Pre-populate fast primitive mappings (Zero allocation lookup)
+        TypeToNpgsqlDbTypeCache[typeof(int)] = NpgsqlDbType.Integer;
+        TypeToNpgsqlDbTypeCache[typeof(long)] = NpgsqlDbType.Bigint;
+        TypeToNpgsqlDbTypeCache[typeof(short)] = NpgsqlDbType.Smallint;
+        TypeToNpgsqlDbTypeCache[typeof(byte)] = NpgsqlDbType.Smallint;
+        TypeToNpgsqlDbTypeCache[typeof(sbyte)] = NpgsqlDbType.Smallint;
+        TypeToNpgsqlDbTypeCache[typeof(uint)] = NpgsqlDbType.Bigint;
+        TypeToNpgsqlDbTypeCache[typeof(ulong)] = NpgsqlDbType.Numeric;
+        TypeToNpgsqlDbTypeCache[typeof(ushort)] = NpgsqlDbType.Integer;
+        TypeToNpgsqlDbTypeCache[typeof(string)] = NpgsqlDbType.Text;
+        TypeToNpgsqlDbTypeCache[typeof(bool)] = NpgsqlDbType.Boolean;
+        TypeToNpgsqlDbTypeCache[typeof(Guid)] = NpgsqlDbType.Uuid;
+        TypeToNpgsqlDbTypeCache[typeof(float)] = NpgsqlDbType.Real;
+        TypeToNpgsqlDbTypeCache[typeof(double)] = NpgsqlDbType.Double;
+        TypeToNpgsqlDbTypeCache[typeof(decimal)] = NpgsqlDbType.Numeric;
+        TypeToNpgsqlDbTypeCache[typeof(byte[])] = NpgsqlDbType.Bytea;
+        TypeToNpgsqlDbTypeCache[typeof(char)] = NpgsqlDbType.Char;
+        TypeToNpgsqlDbTypeCache[typeof(TimeSpan)] = NpgsqlDbType.Interval;
+        TypeToNpgsqlDbTypeCache[typeof(DateTime)] = NpgsqlDbType.TimestampTz;
+        TypeToNpgsqlDbTypeCache[typeof(DateTimeOffset)] = NpgsqlDbType.TimestampTz;
+    }
+
     public static object? NormalizePostgresValue(this object? value)
     {
-        // if (value is DateTime { Kind: DateTimeKind.Utc } dt) // timestamptz (offset)
-        //     return dt.ToLocalTime();
         return value;
     }
 
@@ -20,16 +49,9 @@ public static class PostgresUtils
         if (raw == null || raw == DBNull.Value)
             return (DBNull.Value, NpgsqlDbType.Unknown);
 
-        // Infer NpgsqlParameter 
-        // Driver -> FindDataTypeName
-        var p = new NpgsqlParameter { Value = raw };
-        var npgsqlDbType = p.NpgsqlDbType;
-
         // DateTime handling logic specific to Postgres 6.0+ (requires UTC for Timestamptz)
         if (raw is DateTime dt)
         {
-            // Npgsql 6.0+ default: Kind.Utc -> TimestampTz, Kind.Unspecified/Local -> Timestamp
-            // If we want to force everything to Timestamptz (UTC)
             if (dt.Kind == DateTimeKind.Unspecified)
             {
                 return (DateTime.SpecifyKind(dt, DateTimeKind.Utc), NpgsqlDbType.TimestampTz);
@@ -40,20 +62,25 @@ public static class PostgresUtils
                 return (dt.ToUniversalTime(), NpgsqlDbType.TimestampTz);
             }
 
-            // Already Utc
             return (dt, NpgsqlDbType.TimestampTz);
         }
 
-        // For Json/Jsonb: If p.NpgsqlDbType still returns Text/Unknown, 
-        // we could check the type name of 'raw' (JObject, JsonDocument...)
-        // But usually Npgsql handles this via Resolver Factories
+        var type = raw.GetType();
+
+        // Fast lookup for cached / primitive types without allocating NpgsqlParameter
+        if (!TypeToNpgsqlDbTypeCache.TryGetValue(type, out var npgsqlDbType))
+        {
+            // Compute once and cache for future threads
+            var tempParam = new NpgsqlParameter { Value = raw };
+            npgsqlDbType = tempParam.NpgsqlDbType;
+            TypeToNpgsqlDbTypeCache.TryAdd(type, npgsqlDbType);
+        }
 
         // Check if it's not a traditional type (Inferred as Text/Unknown/Object) and not a string
-        var type = raw.GetType();
         if (raw is not string
             && !type.IsEnum
             && type is { IsPrimitive: false, IsValueType: false }
-            && (npgsqlDbType == NpgsqlDbType.Unknown || npgsqlDbType == NpgsqlDbType.Text || p.DbType == DbType.Object))
+            && (npgsqlDbType == NpgsqlDbType.Unknown || npgsqlDbType == NpgsqlDbType.Text))
         {
             try
             {
@@ -70,7 +97,6 @@ public static class PostgresUtils
     }
 
     public static object? ConvertStringToNpgsqlType(object? value, NpgsqlDbType npgsqlDbType)
-        // mapping pre build command param 
     {
         if (value == null || value == DBNull.Value) return DBNull.Value;
 
@@ -91,8 +117,13 @@ public static class PostgresUtils
         if (npgsqlDbType == NpgsqlDbType.Unknown)
             return value;
 
-        var p = new NpgsqlParameter { NpgsqlDbType = npgsqlDbType };
-        var adoNetType = p.DbType;
+        // Lookup DbType from static cache without allocating NpgsqlParameter
+        if (!NpgsqlDbTypeToDbTypeCache.TryGetValue(npgsqlDbType, out var adoNetType))
+        {
+            var tempParam = new NpgsqlParameter { NpgsqlDbType = npgsqlDbType };
+            adoNetType = tempParam.DbType;
+            NpgsqlDbTypeToDbTypeCache.TryAdd(npgsqlDbType, adoNetType);
+        }
 
         Type targetType = adoNetType switch
         {

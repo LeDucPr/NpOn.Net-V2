@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -8,7 +9,39 @@ namespace Common.Infrastructures.NpOn.ClickHouseExtCm.Results;
 
 public static class ClickHouseMappingExtensions
 {
+    // Thread-safe delegate caches: compiled once per schema signature, reused across all queries
+    private static readonly ConcurrentDictionary<(int FieldCount, MethodInfo? Normalizer), Func<DbDataReader, object[]>>
+        ArrayRowMapperCache = new();
+
+    private static readonly ConcurrentDictionary<string, Func<object[], IReadOnlyDictionary<string, INpOnCell>>>
+        RowMapperCache = new();
+
+    private static readonly ConcurrentDictionary<string, Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>>
+        ColumnMapperCache = new();
+
     public static Func<object[], IReadOnlyDictionary<string, INpOnCell>> CreateRowMapper(
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
+    {
+        var schemaKey = BuildSchemaFingerprint(schemaMap, nameToIndexMap);
+        return RowMapperCache.GetOrAdd(schemaKey, _ => CompileRowMapper(schemaMap, nameToIndexMap));
+    }
+
+    private static string BuildSchemaFingerprint(
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
+    {
+        var parts = new string[schemaMap.Count];
+        int idx = 0;
+        foreach (var s in schemaMap.Values)
+        {
+            var colIdx = nameToIndexMap.TryGetValue(s.ColumnName, out var ci) ? ci : idx;
+            parts[idx++] = $"{s.ColumnName}:{s.DataType.FullName}:{s.ProviderDataTypeName}:{s.IsPrimaryKey}:{colIdx}";
+        }
+        return string.Join(";", parts);
+    }
+
+    private static Func<object[], IReadOnlyDictionary<string, INpOnCell>> CompileRowMapper(
         IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
         IReadOnlyDictionary<string, int> nameToIndexMap)
     {
@@ -26,7 +59,7 @@ public static class ClickHouseMappingExtensions
 
         var dictCtor = typeof(Dictionary<string, INpOnCell>).GetConstructor([typeof(int)]);
         var dictAdd = typeof(Dictionary<string, INpOnCell>).GetMethod(nameof(Dictionary<string, INpOnCell>.Add));
-        var createCell = typeof(ClickHouseCellDynamicFactory).GetMethod(nameof(ClickHouseCellDynamicFactory.Create));
+        var fallbackCreateCell = typeof(ClickHouseCellDynamicFactory).GetMethod(nameof(ClickHouseCellDynamicFactory.Create));
         var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
 
         // var dictionary = new Dictionary<string, INpOnCell>(schemaMap.Count);
@@ -38,16 +71,37 @@ public static class ClickHouseMappingExtensions
         {
             var columnIndex = nameToIndexMap[schemaInfo.ColumnName];
 
-            // INpOnCell cell = ClickHouseCellDynamicFactory.Create(...)
-            il.Emit(OpCodes.Ldtoken, schemaInfo.DataType);
-            if (getTypeFromHandle != null) il.Emit(OpCodes.Call, getTypeFromHandle);
-            il.Emit(OpCodes.Ldarg_0); // parent object[]
-            il.Emit(OpCodes.Ldc_I4, columnIndex);
-            il.Emit(OpCodes.Ldelem_Ref); // cellValue
-            il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
-            il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); // isPrimaryKey
-            if (createCell != null) il.Emit(OpCodes.Call, createCell);
-            il.Emit(OpCodes.Stloc, cell);
+            var genericCellType = typeof(ClickHouseCell<>).MakeGenericType(schemaInfo.DataType);
+            var directFromClickHouse = genericCellType.GetMethod(
+                nameof(ClickHouseCell<object>.FromClickHouse),
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                [typeof(object), typeof(string), typeof(bool)],
+                null
+            );
+
+            if (directFromClickHouse != null)
+            {
+                il.Emit(OpCodes.Ldarg_0); // parent object[]
+                il.Emit(OpCodes.Ldc_I4, columnIndex);
+                il.Emit(OpCodes.Ldelem_Ref); // cellValue
+                il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
+                il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); // isPrimaryKey
+                il.Emit(OpCodes.Call, directFromClickHouse);
+                il.Emit(OpCodes.Stloc, cell);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldtoken, schemaInfo.DataType);
+                if (getTypeFromHandle != null) il.Emit(OpCodes.Call, getTypeFromHandle);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldc_I4, columnIndex);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
+                il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                if (fallbackCreateCell != null) il.Emit(OpCodes.Call, fallbackCreateCell);
+                il.Emit(OpCodes.Stloc, cell);
+            }
 
             // dictionary.Add(schemaInfo.ColumnName, cell);
             il.Emit(OpCodes.Ldloc, dictionary);
@@ -65,6 +119,18 @@ public static class ClickHouseMappingExtensions
     }
 
     public static Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> CreateColumnMapper(
+        string columnName,
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
+        IReadOnlyDictionary<string, int> nameToIndexMap)
+    {
+        var schemaInfo = schemaMap[columnName];
+        var columnIndex = nameToIndexMap[columnName];
+        var cacheKey = $"{columnName}:{schemaInfo.DataType.FullName}:{schemaInfo.ProviderDataTypeName}:{schemaInfo.IsPrimaryKey}:{columnIndex}";
+
+        return ColumnMapperCache.GetOrAdd(cacheKey, _ => CompileColumnMapper(columnName, schemaMap, nameToIndexMap));
+    }
+
+    private static Func<List<object[]>, IReadOnlyDictionary<int, INpOnCell>> CompileColumnMapper(
         string columnName,
         IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap,
         IReadOnlyDictionary<string, int> nameToIndexMap)
@@ -87,15 +153,24 @@ public static class ClickHouseMappingExtensions
         var cell = il.DeclareLocal(typeof(INpOnCell));
 
         var listCountGetter = typeof(List<object[]>).GetProperty(nameof(List<object[]>.Count))?.GetGetMethod();
-        var listIndexerGetter = typeof(List<object[]>).GetMethod("get_Item"); 
+        var listIndexerGetter = typeof(List<object[]>).GetMethod("get_Item");
         var dictCtor = typeof(Dictionary<int, INpOnCell>).GetConstructor([typeof(int)]);
         var dictAdd = typeof(Dictionary<int, INpOnCell>).GetMethod(nameof(Dictionary<int, INpOnCell>.Add));
-        var createCell = typeof(ClickHouseCellDynamicFactory).GetMethod(nameof(ClickHouseCellDynamicFactory.Create));
+        var fallbackCreateCell = typeof(ClickHouseCellDynamicFactory).GetMethod(nameof(ClickHouseCellDynamicFactory.Create));
         var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), [typeof(RuntimeTypeHandle)]);
+
+        var genericCellType = typeof(ClickHouseCell<>).MakeGenericType(schemaInfo.DataType);
+        var directFromClickHouse = genericCellType.GetMethod(
+            nameof(ClickHouseCell<object>.FromClickHouse),
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            [typeof(object), typeof(string), typeof(bool)],
+            null
+        );
 
         // Load Argument 0
         il.Emit(OpCodes.Ldarg_0);
-        if (listCountGetter != null) il.Emit(OpCodes.Callvirt, listCountGetter); 
+        if (listCountGetter != null) il.Emit(OpCodes.Callvirt, listCountGetter);
         il.Emit(OpCodes.Stloc, rowCount);
 
         il.Emit(OpCodes.Ldloc, rowCount);
@@ -111,17 +186,32 @@ public static class ClickHouseMappingExtensions
 
         il.MarkLabel(loopStart);
 
-        il.Emit(OpCodes.Ldtoken, schemaInfo.DataType); 
-        if (getTypeFromHandle != null) il.Emit(OpCodes.Call, getTypeFromHandle);
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldloc, i);
-        if (listIndexerGetter != null) il.Emit(OpCodes.Callvirt, listIndexerGetter);
-        il.Emit(OpCodes.Ldc_I4, columnIndex);
-        il.Emit(OpCodes.Ldelem_Ref);
-        il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
-        il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); // isPrimaryKey
-        if (createCell != null) il.Emit(OpCodes.Call, createCell);
-        il.Emit(OpCodes.Stloc, cell);
+        if (directFromClickHouse != null)
+        {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc, i);
+            if (listIndexerGetter != null) il.Emit(OpCodes.Callvirt, listIndexerGetter);
+            il.Emit(OpCodes.Ldc_I4, columnIndex);
+            il.Emit(OpCodes.Ldelem_Ref);
+            il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
+            il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, directFromClickHouse);
+            il.Emit(OpCodes.Stloc, cell);
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldtoken, schemaInfo.DataType);
+            if (getTypeFromHandle != null) il.Emit(OpCodes.Call, getTypeFromHandle);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc, i);
+            if (listIndexerGetter != null) il.Emit(OpCodes.Callvirt, listIndexerGetter);
+            il.Emit(OpCodes.Ldc_I4, columnIndex);
+            il.Emit(OpCodes.Ldelem_Ref);
+            il.Emit(OpCodes.Ldstr, schemaInfo.ProviderDataTypeName);
+            il.Emit(schemaInfo.IsPrimaryKey ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            if (fallbackCreateCell != null) il.Emit(OpCodes.Call, fallbackCreateCell);
+            il.Emit(OpCodes.Stloc, cell);
+        }
 
         il.Emit(OpCodes.Ldloc, dictionary);
         il.Emit(OpCodes.Ldloc, i);
@@ -138,7 +228,7 @@ public static class ClickHouseMappingExtensions
         il.MarkLabel(loopCheck);
         il.Emit(OpCodes.Ldloc, i);
         il.Emit(OpCodes.Ldloc, rowCount);
-        il.Emit(OpCodes.Blt, loopStart); // branch if less than // break
+        il.Emit(OpCodes.Blt, loopStart);
 
         il.Emit(OpCodes.Ldloc, dictionary);
         il.Emit(OpCodes.Ret);
@@ -150,8 +240,14 @@ public static class ClickHouseMappingExtensions
     public static Func<DbDataReader, object[]> CreateArrayRowMapper(this DbDataReader reader,
         MethodInfo? normalizerMethod = null)
     {
+        var key = (reader.FieldCount, normalizerMethod);
+        return ArrayRowMapperCache.GetOrAdd(key, k => CompileArrayRowMapper(k.FieldCount, k.Normalizer));
+    }
+
+    private static Func<DbDataReader, object[]> CompileArrayRowMapper(int fieldCount, MethodInfo? normalizerMethod)
+    {
         var dynamicMethod = new DynamicMethod(
-            nameof(CreateArrayRowMapper),
+            $"{nameof(CreateArrayRowMapper)}_{fieldCount}",
             typeof(object[]),
             [typeof(DbDataReader)],
             typeof(ClickHouseMappingExtensions).Module,
@@ -161,28 +257,28 @@ public static class ClickHouseMappingExtensions
 
         var getValueMethod = typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetValue), [typeof(int)]);
 
-        // var values = new object[reader.FieldCount];
-        il.Emit(OpCodes.Ldc_I4, reader.FieldCount);
+        // var values = new object[fieldCount];
+        il.Emit(OpCodes.Ldc_I4, fieldCount);
         il.Emit(OpCodes.Newarr, typeof(object));
 
         var values = il.DeclareLocal(typeof(object[]));
         il.Emit(OpCodes.Stloc, values);
 
-        for (int i = 0; i < reader.FieldCount; i++)
+        for (int i = 0; i < fieldCount; i++)
         {
             // values[i] = ...
-            il.Emit(OpCodes.Ldloc, values); // Array
-            il.Emit(OpCodes.Ldc_I4, i); // Index
+            il.Emit(OpCodes.Ldloc, values);
+            il.Emit(OpCodes.Ldc_I4, i);
 
             // reader.GetValue(i)
-            il.Emit(OpCodes.Ldarg_0); // Reader
-            il.Emit(OpCodes.Ldc_I4, i); // Index
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4, i);
             if (getValueMethod != null) il.Emit(OpCodes.Callvirt, getValueMethod);
 
             // if (normalizerMethod != null) normalizerMethod(value)
-            if (normalizerMethod != null) il.Emit(OpCodes.Call, normalizerMethod); // customize
+            if (normalizerMethod != null) il.Emit(OpCodes.Call, normalizerMethod);
 
-            il.Emit(OpCodes.Stelem_Ref); // Store in array
+            il.Emit(OpCodes.Stelem_Ref);
         }
 
         il.Emit(OpCodes.Ldloc, values);

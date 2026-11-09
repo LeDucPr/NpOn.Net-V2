@@ -9,17 +9,44 @@ namespace Common.Infrastructures.NpOn.MySqlExtCm.Results;
 
 public class MySqlCell<T> : NpOnCell<T>
 {
+    private static readonly DbType CachedDbType = ResolveDbType(typeof(T));
+
     private MySqlCell(object? value, DbType dbType, string sourceTypeName, bool isPrimaryKey)
         : base(value, dbType, sourceTypeName, isPrimaryKey)
     {
     }
 
+    private static DbType ResolveDbType(Type type)
+    {
+        var underlying = Nullable.GetUnderlyingType(type) ?? type;
+        if (underlying == typeof(Guid)) return DbType.Guid;
+        if (underlying == typeof(byte[])) return DbType.Binary;
+        if (underlying.IsEnum) return ResolveDbType(Enum.GetUnderlyingType(underlying));
+
+        return Type.GetTypeCode(underlying) switch
+        {
+            TypeCode.Boolean => DbType.Boolean,
+            TypeCode.Byte => DbType.Byte,
+            TypeCode.SByte => DbType.SByte,
+            TypeCode.Int16 => DbType.Int16,
+            TypeCode.UInt16 => DbType.UInt16,
+            TypeCode.Int32 => DbType.Int32,
+            TypeCode.UInt32 => DbType.UInt32,
+            TypeCode.Int64 => DbType.Int64,
+            TypeCode.UInt64 => DbType.UInt64,
+            TypeCode.Single => DbType.Single,
+            TypeCode.Double => DbType.Double,
+            TypeCode.Decimal => DbType.Decimal,
+            TypeCode.DateTime => DbType.DateTime,
+            TypeCode.String => DbType.String,
+            _ => DbType.Object
+        };
+    }
+
     /// Cell ( MySqlConnector -> DbType ) 
     public static MySqlCell<T> FromMySqlConnector(object? value, string sourceTypeName, bool isPrimaryKey)
     {
-        var tempParam = new MySqlParameter { Value = default(T) }; // Inference MySqlConnector (the best performance gen type)
-        var dbType = tempParam.DbType;
-        return new MySqlCell<T>(value, dbType, sourceTypeName, isPrimaryKey);
+        return new MySqlCell<T>(value, CachedDbType, sourceTypeName, isPrimaryKey);
     }
 }
 

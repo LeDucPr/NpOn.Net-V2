@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections;
+using System.Collections.ObjectModel;
 using System.Data.Common;
 using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
@@ -7,30 +8,47 @@ using MySqlConnector;
 
 namespace Common.Infrastructures.NpOn.MySqlExtCm.Results;
 
-/// <summary>
-/// ColumnWrapper
-/// </summary>
-public class MySqlRowWrapper : NpOnWrapperResult<object[], IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
+public class MySqlRowWrapper : INpOnRowWrapper, INpOnWrapperResult<object[], IReadOnlyDictionary<string, INpOnCell>>
 {
-    private readonly Func<object[], IReadOnlyDictionary<string, INpOnCell>> _mapper;
+    private object[] _parent;
+    private Func<object[], IReadOnlyDictionary<string, INpOnCell>> _mapper;
+    private IReadOnlyDictionary<string, INpOnCell>? _result;
 
-    public MySqlRowWrapper(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper) :
-        base(parent)
+    public MySqlRowWrapper(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper)
     {
+        _parent = parent;
         _mapper = mapper;
+        _result = null;
     }
 
-    protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
+    public void ReInit(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper)
     {
-        return _mapper(Parent);
+        _parent = parent;
+        _mapper = mapper;
+        _result = null;
     }
 
-    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
+    public object[] Parent => _parent;
+    public IReadOnlyDictionary<string, INpOnCell> Result => GetRowWrapper();
+
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper()
+    {
+        return _result ??= _mapper(_parent);
+    }
+
+    public void SetSuccess() { }
+    public INpOnWrapperResult SetFail(EDbError error) => this;
+    public INpOnWrapperResult SetFail(string errorString) => this;
+    public INpOnWrapperResult SetFail(Exception ex) => this;
+    public long QueryTimeMilliseconds => 0;
+    public bool Status => true;
+
+    public void Dispose()
+    {
+        _result = null;
+    }
 }
 
-/// <summary>
-/// ColumnWrapper (truy cập được từ Key-integer hoặc Key-string)
-/// </summary>
 public class MySqlColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>,
     INpOnColumnWrapper
 {
@@ -50,9 +68,6 @@ public class MySqlColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnlyDic
     public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
 }
 
-/// <summary>
-/// Collection bọc Column -> truy cập theo cột/hàng 
-/// </summary>
 public class MySqlColumnCollection : IReadOnlyDictionary<string, MySqlColumnWrapper>,
     IReadOnlyDictionary<int, MySqlColumnWrapper>, INpOnCollectionWrapper
 {
@@ -75,7 +90,6 @@ public class MySqlColumnCollection : IReadOnlyDictionary<string, MySqlColumnWrap
     public MySqlColumnWrapper this[string columnName] => _columnWrappers[_nameToIndexMap[columnName]];
     public MySqlColumnWrapper this[int columnIndex] => _columnWrappers[columnIndex];
 
-    // reader
     public IEnumerable<string> Keys => _nameToIndexMap.Keys;
     public IEnumerable<MySqlColumnWrapper> Values => _columnWrappers;
     public int Count => _columnWrappers.Count;
@@ -101,7 +115,6 @@ public class MySqlColumnCollection : IReadOnlyDictionary<string, MySqlColumnWrap
         }
     }
 
-    // IReadOnlyDictionary<int, ...>
     IEnumerable<int> IReadOnlyDictionary<int, MySqlColumnWrapper>.Keys => Enumerable.Range(0, Count);
     bool IReadOnlyDictionary<int, MySqlColumnWrapper>.ContainsKey(int key) => key >= 0 && key < Count;
 
@@ -126,7 +139,7 @@ public class MySqlColumnCollection : IReadOnlyDictionary<string, MySqlColumnWrap
         }
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndexes(int[] indexes)
     {
@@ -139,7 +152,7 @@ public class MySqlColumnCollection : IReadOnlyDictionary<string, MySqlColumnWrap
 
     public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnNames(string[]? columnNames = null)
     {
-        columnNames ??= Keys.ToArray(); // get all
+        columnNames ??= Keys.ToArray();
         Dictionary<string, INpOnColumnWrapper?> result = new();
         foreach (var colName in columnNames)
             if (TryGetValue(colName, out var value))
@@ -148,46 +161,113 @@ public class MySqlColumnCollection : IReadOnlyDictionary<string, MySqlColumnWrap
     }
 }
 
+public class MySqlRowWrapperDictionaryView : IReadOnlyDictionary<int, INpOnRowWrapper?>
+{
+    private readonly MySqlResultSetWrapper _owner;
+
+    public MySqlRowWrapperDictionaryView(MySqlResultSetWrapper owner)
+    {
+        _owner = owner;
+    }
+
+    public INpOnRowWrapper? this[int key] => _owner.GetRowWrapperAt(key);
+    public IEnumerable<int> Keys => Enumerable.Range(0, _owner.ActiveRowCount);
+
+    public IEnumerable<INpOnRowWrapper?> Values
+    {
+        get
+        {
+            for (int i = 0; i < _owner.ActiveRowCount; i++)
+                yield return _owner.GetRowWrapperAt(i);
+        }
+    }
+
+    public int Count => _owner.ActiveRowCount;
+    public bool ContainsKey(int key) => key >= 0 && key < _owner.ActiveRowCount;
+
+    public bool TryGetValue(int key, out INpOnRowWrapper? value)
+    {
+        if (ContainsKey(key))
+        {
+            value = _owner.GetRowWrapperAt(key);
+            return true;
+        }
+        value = null;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, INpOnRowWrapper?>> GetEnumerator()
+    {
+        for (int i = 0; i < _owner.ActiveRowCount; i++)
+            yield return new KeyValuePair<int, INpOnRowWrapper?>(i, _owner.GetRowWrapperAt(i));
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
 public class MySqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
-    private IReadOnlyDictionary<int, MySqlRowWrapper> Rows { get; set; }
-    private MySqlColumnCollection Columns { get; set; }
+    private readonly List<object[]> _data = new();
+    private readonly List<MySqlRowWrapper> _pooledRows = new();
+    private int _activeRowCount = 0;
+    private IReadOnlyDictionary<string, int> _nameToIndexMap = null!;
+    private IReadOnlyList<string>? _primaryKeyColumns;
+    private Func<object[], IReadOnlyDictionary<string, INpOnCell>>? _rowMapper;
 
-    // Delegate to return this object to the pool
+    private readonly MySqlRowWrapperDictionaryView _rowWrappersView;
+
+    // Fast Tabular interface implementation
+    public IReadOnlyDictionary<string, int> NameToIndexMap => _nameToIndexMap;
+    public IReadOnlyList<object[]> RawData => _data;
+    public IReadOnlyList<string>? PrimaryKeyColumns => _primaryKeyColumns;
+
+    private Func<MySqlColumnCollection>? _columnsFactory;
+    private MySqlColumnCollection? _columns;
+
     public Action<MySqlResultSetWrapper>? ReturnToPool { get; set; }
+    public int ActiveRowCount => _activeRowCount;
+
+    public MySqlRowWrapper? GetRowWrapperAt(int index)
+    {
+        if (index >= 0 && index < _activeRowCount && _rowMapper != null)
+        {
+            while (_pooledRows.Count <= index)
+            {
+                _pooledRows.Add(new MySqlRowWrapper(_data[_pooledRows.Count], _rowMapper));
+            }
+            _pooledRows[index].ReInit(_data[index], _rowMapper);
+            return _pooledRows[index];
+        }
+        return null;
+    }
 
     public MySqlResultSetWrapper()
     {
-        // Default constructor for pooling
-        Rows = new Dictionary<int, MySqlRowWrapper>();
-        Columns = null!;
+        _rowWrappersView = new MySqlRowWrapperDictionaryView(this);
     }
 
-    public MySqlResultSetWrapper(MySqlDataReader? reader = null)
+    public MySqlResultSetWrapper(MySqlDataReader? reader = null) : this()
     {
         Init(reader);
     }
 
     public void Init(MySqlDataReader? reader)
     {
+        Reset();
+
         if (reader == null)
         {
             SetFail(EDbError.MySqlDataTableNull);
-            Rows = new Dictionary<int, MySqlRowWrapper>();
-            Columns = null!; // Or an empty collection
             return;
         }
 
         if (!reader.HasRows)
         {
-            Rows = new Dictionary<int, MySqlRowWrapper>();
-            Columns = null!;
             SetSuccess();
             return;
         }
 
-        // 1. Build schema and name-to-index map
-        ReadOnlyCollection<DbColumn> columnSchema = null;
+        ReadOnlyCollection<DbColumn>? columnSchema = null;
         if (reader.CanGetColumnSchema())
         {
             columnSchema = reader.GetColumnSchema();
@@ -195,10 +275,14 @@ public class MySqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         
         var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>(reader.FieldCount);
         var nameToIndexMap = new Dictionary<string, int>(reader.FieldCount);
+        var pkCols = new List<string>();
+
         for (int i = 0; i < reader.FieldCount; i++)
         {
             var columnName = reader.GetName(i);
             var isPrimaryKey = columnSchema?[i].IsKey ?? false;
+            if (isPrimaryKey) pkCols.Add(columnName);
+
             var schemaInfo = new NpOnColumnSchemaInfo(
                 columnName,
                 reader.GetFieldType(i),
@@ -209,57 +293,43 @@ public class MySqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
             nameToIndexMap.Add(columnName, i);
         }
 
-        // 2. Create high-performance mapper using Extension Method
+        if (pkCols.Count == 0 && reader.FieldCount > 0)
+        {
+            pkCols.Add(reader.GetName(0));
+        }
+
+        _nameToIndexMap = nameToIndexMap;
+        _primaryKeyColumns = pkCols;
+
         var normalizeMethod =
             typeof(MySqlUtils).GetMethod(nameof(MySqlUtils.NormalizeMySqlValue), new[] { typeof(object) });
         var mapper = MySqlMappingExtensions.CreateArrayRowMapper(reader, normalizeMethod);
 
-        var data = new List<object[]>();
-
-        // 3. Read data
         while (reader.Read())
         {
-            data.Add(mapper(reader));
+            _data.Add(mapper(reader));
         }
 
-        // 4. Wrap data
-        var rowMapper = MySqlMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
-        var rows = new Dictionary<int, MySqlRowWrapper>(data.Count);
-        for (int i = 0; i < data.Count; i++)
-        {
-            rows.Add(i, new MySqlRowWrapper(data[i], rowMapper));
-        }
-
-        Rows = rows;
-
-        Columns = new MySqlColumnCollection(data, schemaMap, nameToIndexMap);
+        _activeRowCount = _data.Count;
+        _rowMapper = MySqlMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
+        _columnsFactory = () => new MySqlColumnCollection(_data, schemaMap, nameToIndexMap);
 
         SetSuccess();
     }
 
-    public void Reset() // for objectPooling // Reset state for reuse
+    public void Reset()
     {
-        Rows = new Dictionary<int, MySqlRowWrapper>();
-        Columns = null!;
-        // Reset base class state if needed (e.g. Status, Error)
-        // Assuming SetSuccess/SetFail handles this, but we might need to clear errors manually if SetSuccess doesn't.
-        // NpOnWrapperResult usually has Status and Error properties.
+        _activeRowCount = 0;
+        _data.Clear();
+        _nameToIndexMap = null!;
+        _primaryKeyColumns = null;
+        _rowMapper = null;
+        _columnsFactory = null;
+        _columns = null;
     }
 
-    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
-    {
-        get
-        {
-            Dictionary<int, INpOnRowWrapper?> result = new();
-            if (Rows is not { Count: > 0 })
-                return result;
-            foreach (var row in Rows)
-                result.Add(row.Key, row.Value);
-            return result;
-        }
-    }
-
-    public INpOnCollectionWrapper CollectionWrappers => Columns;
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers => _rowWrappersView;
+    public INpOnCollectionWrapper CollectionWrappers => _columns ??= (_columnsFactory?.Invoke() ?? null!);
 
     public override void Dispose()
     {

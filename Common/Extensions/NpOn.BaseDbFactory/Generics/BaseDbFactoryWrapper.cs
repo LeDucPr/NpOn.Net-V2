@@ -93,7 +93,7 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
     ///  MaxExecutionRetryAttempts small (default: 1 retry) and making writes idempotent where possible
     ///  (e.g. via a natural key / upsert) is the safest way to rely on this.
     /// </summary>
-    private async Task<TResult?> ExecuteWithConnectionAsync<TResult>(
+    protected async Task<TResult?> ExecuteWithConnectionAsync<TResult>(
         Func<NpOnDbConnection, Task<TResult>> action) where TResult : class
     {
         var factory = Factory ?? throw new InvalidOperationException("Database Factory has not been initialized.");
@@ -205,6 +205,17 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
     public async Task<INpOnWrapperResult?> ExecuteAsync(IBaseNpOnDbCommand dbCommand)
     {
         return await ExecuteWithConnectionAsync(connection => connection.Driver.Execute(dbCommand));
+    }
+
+    public async Task<List<T>> QueryAsync<T>(IBaseNpOnDbCommand dbCommand) where T : class
+    {
+        return await ExecuteWithConnectionAsync(connection => connection.Driver.QueryAsync<T>(dbCommand)).ConfigureAwait(false) ?? new List<T>(0);
+    }
+
+    public async Task<List<T>> QueryAsync<T>(string queryString, List<INpOnDbCommandParam>? parameters = null) where T : class
+    {
+        INpOnDbCommand command = new NpOnDbCommand(DbType, queryString, parameters ?? []);
+        return await QueryAsync<T>(command).ConfigureAwait(false);
     }
 
     public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<INpOnDbCommandParam> parameters)

@@ -8,7 +8,7 @@ using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
 namespace MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain.Domains;
 
 [TableLoader("system_log")]
-public class SystemLog : BaseTrackerDomain
+public record SystemLog : BaseTrackerDomain
 {
     [Field("id")] [Pk("id")] public Guid Id { get; set; }
     [Field("created_at")] public DateTime CreatedAt { get; set; }

@@ -7,7 +7,7 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceDomain.Domains;
 
 [ProtoContract]
 [TableLoader("tblmaster")]
-public class TblMaster : BaseGeneralDomain
+public record TblMaster : BaseGeneralDomain
 {
     [ProtoMember(1)]
     [Field("id")]

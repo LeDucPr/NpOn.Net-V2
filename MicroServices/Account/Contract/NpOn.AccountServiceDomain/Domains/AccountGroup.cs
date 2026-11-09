@@ -8,7 +8,7 @@ using ProtoBuf;
 namespace MicroServices.Account.Contracts.NpOn.AccountServiceDomain.Domains;
 
 [TableLoader("acc_srv_account_group")]
-public sealed class AccountGroup : BaseAccountDomain
+public sealed record AccountGroup : BaseAccountDomain
 {
     [ProtoMember(1)]
     [Field("id")]

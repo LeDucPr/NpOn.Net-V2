@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
     <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
     <ProjectReference Include="..\..\Common\Infrastructures\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
+    <ProjectReference Include="..\..\Common\Infrastructures\DbFactories\NpOn.PostgresFactory\NpOn.PostgresFactory.csproj" />
     <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceReadModel\NpOn.AccountServiceReadModel.csproj" />
     <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceCommand\NpOn.AccountServiceCommand.csproj" />
     <ProjectReference Include="..\..\MicroServices\Account\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj" />

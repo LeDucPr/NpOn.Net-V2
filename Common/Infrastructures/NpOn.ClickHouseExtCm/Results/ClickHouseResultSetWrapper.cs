@@ -1,26 +1,52 @@
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Data.Common;
+using ClickHouse.Client.ADO.Readers;
 using Common.Extensions.NpOn.CommonDb.Results;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using ClickHouse.Client.ADO.Readers;
 
 namespace Common.Infrastructures.NpOn.ClickHouseExtCm.Results;
 
-public class ClickHouseRowWrapper : NpOnWrapperResult<object[], IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
+public class ClickHouseRowWrapper : INpOnRowWrapper, INpOnWrapperResult<object[], IReadOnlyDictionary<string, INpOnCell>>
 {
-    private readonly Func<object[], IReadOnlyDictionary<string, INpOnCell>> _mapper;
+    private object[] _parent;
+    private Func<object[], IReadOnlyDictionary<string, INpOnCell>> _mapper;
+    private IReadOnlyDictionary<string, INpOnCell>? _result;
 
-    public ClickHouseRowWrapper(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper) :
-        base(parent)
+    public ClickHouseRowWrapper(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper)
     {
+        _parent = parent;
         _mapper = mapper;
+        _result = null;
     }
 
-    protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
+    public void ReInit(object[] parent, Func<object[], IReadOnlyDictionary<string, INpOnCell>> mapper)
     {
-        return _mapper(Parent);
+        _parent = parent;
+        _mapper = mapper;
+        _result = null;
     }
 
-    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
+    public object[] Parent => _parent;
+    public IReadOnlyDictionary<string, INpOnCell> Result => GetRowWrapper();
+
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper()
+    {
+        return _result ??= _mapper(_parent);
+    }
+
+    public void SetSuccess() { }
+    public INpOnWrapperResult SetFail(EDbError error) => this;
+    public INpOnWrapperResult SetFail(string errorString) => this;
+    public INpOnWrapperResult SetFail(Exception ex) => this;
+    public long QueryTimeMilliseconds => 0;
+    public bool Status => true;
+
+    public void Dispose()
+    {
+        _result = null;
+    }
 }
 
 public class ClickHouseColumnWrapper : NpOnWrapperResult<List<object[]>, IReadOnlyDictionary<int, INpOnCell>>,
@@ -113,7 +139,7 @@ public class ClickHouseColumnCollection : IReadOnlyDictionary<string, ClickHouse
         }
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndexes(int[] indexes)
     {
@@ -135,24 +161,100 @@ public class ClickHouseColumnCollection : IReadOnlyDictionary<string, ClickHouse
     }
 }
 
+public class ClickHouseRowWrapperDictionaryView : IReadOnlyDictionary<int, INpOnRowWrapper?>
+{
+    private readonly ClickHouseResultSetWrapper _owner;
+
+    public ClickHouseRowWrapperDictionaryView(ClickHouseResultSetWrapper owner)
+    {
+        _owner = owner;
+    }
+
+    public INpOnRowWrapper? this[int key] => _owner.GetRowWrapperAt(key);
+    public IEnumerable<int> Keys => Enumerable.Range(0, _owner.ActiveRowCount);
+
+    public IEnumerable<INpOnRowWrapper?> Values
+    {
+        get
+        {
+            for (int i = 0; i < _owner.ActiveRowCount; i++)
+                yield return _owner.GetRowWrapperAt(i);
+        }
+    }
+
+    public int Count => _owner.ActiveRowCount;
+    public bool ContainsKey(int key) => key >= 0 && key < _owner.ActiveRowCount;
+
+    public bool TryGetValue(int key, out INpOnRowWrapper? value)
+    {
+        if (ContainsKey(key))
+        {
+            value = _owner.GetRowWrapperAt(key);
+            return true;
+        }
+        value = null;
+        return false;
+    }
+
+    public IEnumerator<KeyValuePair<int, INpOnRowWrapper?>> GetEnumerator()
+    {
+        for (int i = 0; i < _owner.ActiveRowCount; i++)
+            yield return new KeyValuePair<int, INpOnRowWrapper?>(i, _owner.GetRowWrapperAt(i));
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
 public class ClickHouseResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
-    private IReadOnlyDictionary<int, ClickHouseRowWrapper> Rows { get; set; } = new Dictionary<int, ClickHouseRowWrapper>();
-    private ClickHouseColumnCollection? Columns { get; set; }
+    private readonly List<object[]> _data = new();
+    private readonly List<ClickHouseRowWrapper> _pooledRows = new();
+    private int _activeRowCount = 0;
+    private IReadOnlyDictionary<string, int> _nameToIndexMap = null!;
+    private IReadOnlyList<string>? _primaryKeyColumns;
+    private Func<object[], IReadOnlyDictionary<string, INpOnCell>>? _rowMapper;
+
+    private readonly ClickHouseRowWrapperDictionaryView _rowWrappersView;
+
+    // Fast Tabular interface implementation
+    public IReadOnlyDictionary<string, int> NameToIndexMap => _nameToIndexMap;
+    public IReadOnlyList<object[]> RawData => _data;
+    public IReadOnlyList<string>? PrimaryKeyColumns => _primaryKeyColumns;
+
+    private Func<ClickHouseColumnCollection>? _columnsFactory;
+    private ClickHouseColumnCollection? _columns;
 
     public Action<ClickHouseResultSetWrapper>? ReturnToPool { get; set; }
+    public int ActiveRowCount => _activeRowCount;
+
+    public ClickHouseRowWrapper? GetRowWrapperAt(int index)
+    {
+        if (index >= 0 && index < _activeRowCount && _rowMapper != null)
+        {
+            while (_pooledRows.Count <= index)
+            {
+                _pooledRows.Add(new ClickHouseRowWrapper(_data[_pooledRows.Count], _rowMapper));
+            }
+            _pooledRows[index].ReInit(_data[index], _rowMapper);
+            return _pooledRows[index];
+        }
+        return null;
+    }
 
     public ClickHouseResultSetWrapper()
     {
+        _rowWrappersView = new ClickHouseRowWrapperDictionaryView(this);
     }
 
-    public ClickHouseResultSetWrapper(ClickHouseDataReader? reader = null)
+    public ClickHouseResultSetWrapper(ClickHouseDataReader? reader = null) : this()
     {
         Init(reader);
     }
 
     public void Init(ClickHouseDataReader? reader)
     {
+        Reset();
+
         if (reader == null)
         {
             SetFail(EDbError.ClickHouseDataTableNull);
@@ -167,8 +269,8 @@ public class ClickHouseResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 
         var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>(reader.FieldCount);
         var nameToIndexMap = new Dictionary<string, int>(reader.FieldCount);
+        var pkCols = new List<string>();
 
-        // ClickHouse.Client DataReader schema
         for (int i = 0; i < reader.FieldCount; i++)
         {
             var columnName = reader.GetName(i);
@@ -178,51 +280,48 @@ public class ClickHouseResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
                 columnName,
                 reader.GetFieldType(i) ?? typeof(object),
                 clickHouseType,
-                false // ClickHouse drivers don't always expose PK info in schema
+                false
             );
             schemaMap.Add(columnName, schemaInfo);
             nameToIndexMap.Add(columnName, i);
         }
 
+        if (reader.FieldCount > 0)
+        {
+            pkCols.Add(reader.GetName(0));
+        }
+
+        _nameToIndexMap = nameToIndexMap;
+        _primaryKeyColumns = pkCols;
+
         var normalizeMethod = typeof(ClickHouseUtils).GetMethod(nameof(ClickHouseUtils.NormalizeClickHouseValue), new[] { typeof(object) });
         var mapper = ClickHouseMappingExtensions.CreateArrayRowMapper(reader, normalizeMethod!);
 
-        var data = new List<object[]>();
         while (reader.Read())
         {
-            data.Add(mapper(reader));
+            _data.Add(mapper(reader));
         }
 
-        var rowMapper = ClickHouseMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
-        var rows = new Dictionary<int, ClickHouseRowWrapper>(data.Count);
-        for (int i = 0; i < data.Count; i++)
-        {
-            rows.Add(i, new ClickHouseRowWrapper(data[i], rowMapper));
-        }
+        _activeRowCount = _data.Count;
+        _rowMapper = ClickHouseMappingExtensions.CreateRowMapper(schemaMap, nameToIndexMap);
+        _columnsFactory = () => new ClickHouseColumnCollection(_data, schemaMap, nameToIndexMap);
 
-        Rows = rows;
-        Columns = new ClickHouseColumnCollection(data, schemaMap, nameToIndexMap);
         SetSuccess();
     }
 
     public void Reset()
     {
-        Rows = new Dictionary<int, ClickHouseRowWrapper>();
-        Columns = null;
+        _activeRowCount = 0;
+        _data.Clear();
+        _nameToIndexMap = null!;
+        _primaryKeyColumns = null;
+        _rowMapper = null;
+        _columnsFactory = null;
+        _columns = null;
     }
 
-    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
-    {
-        get
-        {
-            Dictionary<int, INpOnRowWrapper?> result = new();
-            foreach (var row in Rows)
-                result.Add(row.Key, row.Value);
-            return result;
-        }
-    }
-
-    public INpOnCollectionWrapper CollectionWrappers => Columns!;
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers => _rowWrappersView;
+    public INpOnCollectionWrapper CollectionWrappers => _columns ??= (_columnsFactory?.Invoke() ?? null!);
 
     public override void Dispose()
     {
