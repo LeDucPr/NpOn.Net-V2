@@ -57,13 +57,14 @@ services:
       - 10000:10000 # rest api
     networks:
       vnet:
+        ipv4_address: 172.18.0.11
 
   scylla-node2:
     container_name: scylla-node2
     hostname: scylla-node2
     image: scylladb/scylla:latest
     restart: unless-stopped
-    command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
+    command: --developer-mode 1 --smp 1 --seeds 172.18.0.11 --api-address 0.0.0.0
     volumes:
       - scylla_data_node2:/var/lib/scylla
       - ./config/node2/scylla.yaml:/etc/scylla/scylla.yaml
@@ -77,17 +78,18 @@ services:
       - 9101:9100
       - 9161:9160
       - 7200:7199
-    # depends_on:
-    #   - scylla-node1
+    depends_on:
+      - scylla-node1
     networks:
       vnet:
+        ipv4_address: 172.18.0.3
 
   scylla-node3:
     container_name: scylla-node3
     hostname: scylla-node3
     image: scylladb/scylla:latest
     restart: unless-stopped
-    command: --developer-mode 1 --smp 1 --seeds scylla-node1 --api-address 0.0.0.0
+    command: --developer-mode 1 --smp 1 --seeds 172.18.0.11 --api-address 0.0.0.0
     volumes:
       - scylla_data_node3:/var/lib/scylla
       - ./config/node3/scylla.yaml:/etc/scylla/scylla.yaml
@@ -101,15 +103,18 @@ services:
       - 9102:9100
       - 9162:9160
       - 7201:7199
-    # depends_on:
-    #   - scylla-node1
-    #   - scylla-node2
+    depends_on:
+      - scylla-node1
     networks:
       vnet:
+        ipv4_address: 172.18.0.4
 
 networks:
   vnet:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
 
 volumes:
   scylla_data_node1:

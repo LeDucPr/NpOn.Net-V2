@@ -10,6 +10,8 @@
   <ItemGroup>
     <PackageReference Include="Dapper"/>
     <PackageReference Include="Npgsql"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
     <PackageReference Include="NetEscapades.Configuration.Yaml"/>
   </ItemGroup>
 

@@ -258,7 +258,7 @@ public class CassandraResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 
             for (int c = 0; c < _colCount; c++)
             {
-                _rentedFlatBuffer[flatIdx++] = row.GetValue(cached.OrderedSchemas[c].DataType, c);
+                _rentedFlatBuffer[flatIdx++] = row.IsNull(c) ? null : row.GetValue(cached.OrderedSchemas[c].DataType, c).NormalizeCassandraValue();
             }
             _rowCount++;
         }

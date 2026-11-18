@@ -116,5 +116,107 @@ Hệ thống `NpOn.Net-V2` được thiết kế theo mô hình Microservices ph
 
 # Chạy Benchmark so sánh Dapper vs Unified UDAL
 dotnet run --project Test/NpOn.OmsDapper/NpOn.OmsDapper.csproj
+
+# Kích hoạt Git Hook pre-push bảo vệ tại máy Local (1 lần duy nhất)
+.\setup-hooks.ps1
 ```
+
+---
+
+## 5. Quản Lý Gói Tập Trung (Central Package Management - CPM)
+
+- Toàn bộ Solution kích hoạt **Central Package Management (CPM)** qua `Directory.Packages.props`.
+- **Quy tắc tuyệt đối**: Không bao giờ khai báo `Version="..."` trong thẻ `<PackageReference>` của các file `.csproj`.
+- Mọi cập nhật version thư viện chỉ được thực hiện tại `Directory.Packages.props`.
+
+---
+
+## 6. Kiến Trúc Saga Phân Tán Không Khóa & Native Merge Audit (`Common\Extensions\NpOn.Saga`)
+
+- **Không dùng Distributed Lock**: Áp dụng Saga Local Transactions với Eventual Consistency.
+- **Transactional Outbox / Inbox**: Bảo vệ Dual-Write và chống trùng lặp (Idempotent Consumer).
+- **Tối ưu cực đại lệnh `MERGE`**:
+  * Tận dụng PostgreSQL `RETURNING (xmax = 0)` để phân loại Insert vs Update trong 1 chu kỳ duy nhất.
+  * Ghi batch audit siêu tốc qua Binary Protocol `NpgsqlBinaryImporter` (`COPY ... FROM STDIN BINARY`) đạt 350,000+ rec/s.
+  * Đệm bất đồng bộ qua `System.Threading.Channels` đẩy sang Dedicated Audit DB (Postgres / ClickHouse).
+- Chi tiết xem tại: [ARCHITECTURE.md](file:///d:/LeDucPr/NpOn.Net-V2/Common/Extensions/NpOn.Saga/ARCHITECTURE.md).
+
+---
+
+## 7. Quy Trình CI/CD Tự Động & Git Hook 2-Tier Shield
+
+- **Tier 1 (Local)**: Git Hook `.githooks/pre-push` chặn đứng code lỗi tại máy trạm trước khi push.
+- **Tier 2 (Cloud)**: GitHub Actions `.github/workflows/build-ci.yml`:
+  * Job 1 `verify-and-test`: Biên dịch 0 lỗi và 29/29 Unit Tests pass.
+  * Job 2 `build-and-push-images`: Kích hoạt khi merge PR hoặc commit message chứa `%buildCI%` (không phân biệt hoa thường).
+  * Đóng gói Docker chiseled siêu nhẹ (137 MB – 210 MB) và đẩy lên `ghcr.io`.
+  * **Retention**: Tự động dọn dẹp, chỉ giữ lại đúng 2 image (Latest + 1 bản liền kề).
+- Chi tiết xem tại: [CI_CD_WORKFLOW_FLOW.md](file:///d:/LeDucPr/NpOn.Net-V2/manifests/CI_CD_WORKFLOW_FLOW.md).
+
+---
+
+## 8. Bản Đồ Kỹ Năng Agent (.agents/skills) & Tài Liệu Kiến Trúc
+
+Mọi AI Bot khi truy cập hệ thống cần tham chiếu các tài liệu và kỹ năng chuyên biệt sau:
+- **Kiến trúc tổng thể**: [.agents/ARCHITECTURE.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/ARCHITECTURE.md)
+- **Kỹ năng Phân tích kiến trúc**: [.agents/skills/architecture-analysis/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/architecture-analysis/SKILL.md)
+- **Kỹ năng Dynamic IL Emit**: [.agents/skills/il-emit-engineering/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/il-emit-engineering/SKILL.md)
+- **Kỹ năng Đo lường hiệu năng**: [.agents/skills/performance-benchmarking/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/performance-benchmarking/SKILL.md)
+- **Kỹ năng Saga & Native Audit**: [.agents/skills/saga-and-audit/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/saga-and-audit/SKILL.md)
+- **Kỹ năng Chẩn đoán sự cố**: [.agents/skills/troubleshooting-diagnostics/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/troubleshooting-diagnostics/SKILL.md)
+- **Kỹ năng Review Code Đỉnh Cao (Google/Microsoft)**: [.agents/skills/code-review-excellence/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/code-review-excellence/SKILL.md)
+- **Kỹ năng Rà Soát Bảo Mật (OWASP API Top 10/CWE)**: [.agents/skills/security-audit-hardening/SKILL.md](file:///d:/LeDucPr/NpOn.Net-V2/.agents/skills/security-audit-hardening/SKILL.md)
+
+---
+
+## 9. Quy Chuẩn Enum Gõ Mạnh & Cấm Tuyệt Đối Magic Numbers
+
+- Mọi trạng thái (`status`), kết quả xử lý (`result`), hoặc hành vi dữ liệu (`operation`) trong toàn bộ Entities, DTOs, Controllers, và Database queries **bắt buộc phải được định nghĩa bằng Strongly-Typed Enum** (như `EMergeClassification`, `ESagaStatus`, `ESagaInboxProcessingResult`).
+- Thuộc tính `[Display(Name = "...")]` của Enum **bắt buộc phải viết bằng tiếng Anh** (ví dụ: `[Display(Name = "Pending")]`).
+- Tuyệt đối cấm sử dụng số nguyên trần (Magic Numbers: `0`, `1`, `2`, `-1`,...) trong mã nguồn.
+
+---
+
+## 10. Quy Chuẩn Đối Xứng Tuyệt Đối Driver Database: Postgres & ScyllaDB/Cassandra (Database Driver Parity)
+
+> [!IMPORTANT]
+> **NGUYÊN TẮC ĐỐI XỨNG TUYỆT ĐỐI (DRIVER PARITY STANDARD)**:
+> - Mọi tính năng, trường hợp kiểm thử (test cases), kịch bản kiểm tra hiệu năng (benchmarks), và các kiểm chứng an toàn dữ liệu đã được thiết lập cho **PostgreSQL** (`NpOn.PostgresExtCm`) **BẮT BUỘC PHẢI ĐƯỢC KIỂM THỬ VÀ ĐẠT CHUẨN TƯƠNG ĐƯƠNG TRÊN CASSANDRA / SCYLLADB** (`NpOn.CassandraExtCm`).
+> - Tuyệt đối không để xảy ra tình trạng "Postgres chạy tốt nhưng Cassandra bỏ ngỏ hoặc chưa test".
+
+### 10.1. Kiểm thử toàn bộ 22 kiểu dữ liệu Cassandra/ScyllaDB
+Toàn bộ các kiểu dữ liệu CQL phải được kiểm thử đọc/ghi và ánh xạ bằng Dynamic IL Emit sang C# ReadModel:
+- **Số học & Nguyên thủy**: `uuid` (Guid), `ascii` (string), `bigint` (long), `smallint` (short), `tinyint` (sbyte), `int` (int), `double` (double), `float` (float), `decimal` (decimal), `boolean` (bool).
+- **Nhị phân & Định danh thời gian**: `blob` (byte[]), `timeuuid` (TimeUuid -> Guid).
+- **Thời gian (Temporal)**: `date` (LocalDate -> DateTime/DateOnly), `time` (LocalTime -> TimeSpan/TimeOnly), `timestamp` (DateTimeOffset/DateTime), `duration` (TimeSpan).
+- **Mạng & Số nguyên lớn**: `inet` (System.Net.IPAddress), `varint` (System.Numerics.BigInteger).
+- **Tập hợp (Collections)**: `list<T>` (List<T>/T[]), `set<T>` (HashSet<T>/ISet<T>), `map<K,V>` (Dictionary<K,V>/IDictionary<K,V>).
+- **Cấu trúc & Nullable**: `tuple<...>`, Strongly-Typed Enums, và Null safety (tombstones / DBNull).
+
+### 10.2. Bảo đảm Null-Safety và Triệt Tiêu Exception
+- Khi đọc giá trị từ `Cassandra.Row`, bắt buộc phải kiểm tra `row.IsNull(c)` trước khi gọi `row.GetValue(Type, c)`. Tuyệt đối không được để ném `NullReferenceException: Cannot convert null to ... because it is a value type`.
+- Trường hợp giá trị null, `FlatData` lưu trữ `null` và `NpOnTypeConverter` ánh xạ an toàn về default value hoặc nullable type (`int?`, `Guid?`, `bool?`).
+
+### 10.3. Đối xứng các kịch bản kiểm thử (Test Matrix Parity)
+- **Stress Concurrency**: 50 task song song đồng thời thực hiện query/login (`Cassandra_AccountQuery_Concurrent50Tasks_ShouldAllSucceed`).
+- **Loop Stability**: 100 lần lặp liên tục không suy giảm hiệu năng (`Cassandra_AccountQuery_ShouldSucceed100TimesWithoutFailure`).
+- **Delegate Caching**: Delegate mapping sinh bởi Dynamic IL Emit phải được cache 100% (`GetOrCreateRowMapper`), 0 re-compilation.
+- **Multi-thread Thread-Safety**: Mapping đồng thời trên 20 threads song song không bị xung đột tài nguyên (`Cassandra_MultiThreaded_ConcurrentMapping_ShouldBeThreadSafe`).
+- **Static Type & DbType Caching**: `CassandraCell<T>` cache tĩnh `DbType`, không gọi Reflection trên hot-path.
+
+### 10.4. Kiểm thử hiệu năng ánh xạ (Mapping Performance & Zero GC Leak)
+- Sau khi kiểm tra chức năng, **bắt buộc phải kiểm thử hiệu năng Dynamic IL Emit Mapping** với 10,000 iterations:
+  * Throughput đạt tối thiểu **> 10,000 operations/giây** (thực tế UDAL đạt 200,000+ operations/sec).
+  * Kiểm soát bộ nhớ rác: **GC Gen2 = 0** tuyệt đối (`Assert.Equal(0, finalGen2)`), Gen1 <= 2.
+  * Tái sử dụng bộ nhớ: 100% buffer dữ liệu phẳng được cấp phát qua `ArrayPool<object?>.Shared`.
+
+### 10.5. Chuẩn so sánh đa Framework (3-Way Multi-Framework Benchmark)
+- Đối với các Database có hỗ trợ nhiều ORM/Driver (Postgres qua `Test/NpOn.OmsDapper`):
+  * **So sánh đồng thời 3 framework**: `Unified UDAL` vs `Dapper 2.1` vs `EF Core 9.0` (`AsNoTracking`).
+  * **Khử định kiến cache (Rotated Execution)**: Xoay vòng thứ tự thực thi giữa UDAL, Dapper, và EF Core để kết quả đo đạc hoàn toàn khách quan.
+  * **Đo đạc 4 chiều**: Throughput (rec/s), Latency (mean/min/max/P95), GC Gen0/1/2 delta, và kích thước thư viện (DLL Footprint: UDAL ~48 KB vs Dapper ~230 KB vs EF Core ~2.5 MB).
+
+
+
+
 

@@ -356,7 +356,7 @@ public static partial class NpOnWrapperResultExtensions
             else if (targetType == typeof(string))
             {
                 il.Emit(OpCodes.Ldloc, valueLocal);
-                il.Emit(OpCodes.Castclass, typeof(string));
+                il.Emit(OpCodes.Call, typeof(Convert).GetMethod(nameof(Convert.ToString), [typeof(object)])!);
             }
             else
             {
@@ -464,7 +464,7 @@ public static partial class NpOnWrapperResultExtensions
             else if (targetType == typeof(string))
             {
                 il.Emit(OpCodes.Ldloc, valueLocal);
-                il.Emit(OpCodes.Castclass, typeof(string));
+                il.Emit(OpCodes.Call, typeof(Convert).GetMethod(nameof(Convert.ToString), [typeof(object)])!);
             }
             else
             {

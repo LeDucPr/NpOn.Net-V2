@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Cassandra;
 using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
@@ -159,7 +160,7 @@ public class CassandraDriver : NpOnDbDriver
         }
         catch (Exception ex)
         {
-            throw new ObjectDisposedException("");
+            throw;
             // return CreateFailResult(ex);
         }
         finally
@@ -196,23 +197,57 @@ public class CassandraDriver : NpOnDbDriver
         return new CassandraResultSetWrapper().SetFail(ex);
     }
 
+    private static readonly ConcurrentDictionary<string, HashSet<string>> PrimaryKeyCache = new(StringComparer.OrdinalIgnoreCase);
+
     private HashSet<string> GetPrimaryKeys(string keyspaceName, string tableName)
     {
-        var primaryKeys = new HashSet<string>();
+        var cacheKey = $"{keyspaceName}.{tableName}";
+        if (PrimaryKeyCache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
+        var primaryKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (_cluster == null) return primaryKeys;
 
-        // Metadata.GetTable là hàm đồng bộ trong driver Cassandra
-        var table = _cluster.Metadata.GetTable(keyspaceName, tableName);
-        if (table == null) return primaryKeys;
+        try
+        {
+            var table = _cluster.Metadata.GetTable(keyspaceName, tableName);
+            if (table != null)
+            {
+                if (table.PartitionKeys != null)
+                    foreach (var col in table.PartitionKeys)
+                        primaryKeys.Add(col.Name);
 
-        if (table.PartitionKeys != null)
-            foreach (var col in table.PartitionKeys)
-                primaryKeys.Add(col.Name);
+                if (table.ClusteringKeys != null)
+                    foreach (var cluster in table.ClusteringKeys)
+                        primaryKeys.Add(cluster.Item1.Name);
+            }
+        }
+        catch
+        {
+            // Fallback for ScyllaDB schema parser compatibility
+            try
+            {
+                if (_session != null)
+                {
+                    var cql = $"SELECT column_name, kind FROM system_schema.columns WHERE keyspace_name = '{keyspaceName}' AND table_name = '{tableName}';";
+                    var rs = _session.Execute(cql);
+                    foreach (var row in rs)
+                    {
+                        var kind = row.GetValue<string>("kind");
+                        if (kind == "partition_key" || kind == "clustering")
+                        {
+                            primaryKeys.Add(row.GetValue<string>("column_name"));
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Non-fatal
+            }
+        }
 
-        if (table.ClusteringKeys != null)
-            foreach (var cluster in table.ClusteringKeys)
-                primaryKeys.Add(cluster.Item1.Name); // ClusteringKey - Tuple<TableColumn, SortOrder>
-
+        PrimaryKeyCache[cacheKey] = primaryKeys;
         return primaryKeys;
     }
 

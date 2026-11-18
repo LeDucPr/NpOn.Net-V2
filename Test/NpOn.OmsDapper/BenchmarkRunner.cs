@@ -7,9 +7,52 @@ using Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using Dapper;
 using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 namespace NpOn.OmsDapper;
+
+public class BenchmarkDbContext : DbContext
+{
+    private readonly string _connectionString;
+
+    public BenchmarkDbContext(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
+    public DbSet<AccountRModel> Accounts => Set<AccountRModel>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql(_connectionString);
+        optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AccountRModel>(entity =>
+        {
+            entity.ToTable("acc_srv_account");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserName).HasColumnName("username");
+            entity.Property(e => e.Password).HasColumnName("password");
+            entity.Property(e => e.FullName).HasColumnName("full_name");
+            entity.Property(e => e.PhoneNumber).HasColumnName("phone_number");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+            entity.Property(e => e.Permission).HasColumnName("permission");
+            entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.ProcessUId).HasColumnName("process_uid");
+            entity.Property(e => e.TotalRow).HasColumnName("total_row");
+            entity.Ignore(e => e.Permissions);
+            entity.Ignore(e => e.FieldMap);
+        });
+    }
+}
 
 public class BenchmarkMetrics
 {
@@ -101,6 +144,18 @@ public class BenchmarkRunner
         }
         await Task.WhenAll(dTasks);
 
+        // Pre-warm EF Core pool
+        var efTasks = new Task[maxConcurrency];
+        for (int i = 0; i < maxConcurrency; i++)
+        {
+            efTasks[i] = Task.Run(async () =>
+            {
+                await using var db = new BenchmarkDbContext(_connectionString);
+                var efList = await db.Accounts.AsNoTracking().Take(1).ToListAsync();
+            });
+        }
+        await Task.WhenAll(efTasks);
+
         // Pre-warm UDAL pool
         var uTasks = new Task[maxConcurrency];
         for (int i = 0; i < maxConcurrency; i++)
@@ -135,6 +190,14 @@ public class BenchmarkRunner
                 await using var conn = new NpgsqlConnection(_connectionString);
                 await conn.OpenAsync();
                 var list = (await conn.QueryAsync<AccountRModel>("SELECT * FROM acc_srv_account")).ToList();
+                sw.Stop();
+                latencies.Add(sw.Elapsed.TotalMilliseconds);
+                totalRecords += list.Count;
+            }
+            else if (framework.Equals("EFCore", StringComparison.OrdinalIgnoreCase))
+            {
+                await using var db = new BenchmarkDbContext(_connectionString);
+                var list = await db.Accounts.AsNoTracking().ToListAsync();
                 sw.Stop();
                 latencies.Add(sw.Elapsed.TotalMilliseconds);
                 totalRecords += list.Count;
@@ -194,6 +257,14 @@ public class BenchmarkRunner
                     await using var conn = new NpgsqlConnection(_connectionString);
                     await conn.OpenAsync();
                     var list = (await conn.QueryAsync<AccountRModel>("SELECT * FROM acc_srv_account")).ToList();
+                    sw.Stop();
+                    latencies.Add(sw.Elapsed.TotalMilliseconds);
+                    recordsCount.Add(list.Count);
+                }
+                else if (framework.Equals("EFCore", StringComparison.OrdinalIgnoreCase))
+                {
+                    await using var db = new BenchmarkDbContext(_connectionString);
+                    var list = await db.Accounts.AsNoTracking().ToListAsync();
                     sw.Stop();
                     latencies.Add(sw.Elapsed.TotalMilliseconds);
                     recordsCount.Add(list.Count);
@@ -301,6 +372,104 @@ public class BenchmarkRunner
 
         return (
             Aggregate("Dapper", concurrency, totalRuns, dapperTrials),
+            Aggregate("UDAL", concurrency, totalRuns, udalTrials)
+        );
+    }
+
+    public async Task<(AggregatedBenchmarkMetrics Dapper, AggregatedBenchmarkMetrics EfCore, AggregatedBenchmarkMetrics Udal)> RunTriadSequentialBenchmarkAsync(
+        int iterationsPerRun,
+        int totalRuns,
+        Action<int, int, BenchmarkMetrics, BenchmarkMetrics, BenchmarkMetrics>? onProgress = null)
+    {
+        var dapperTrials = new List<BenchmarkMetrics>(totalRuns);
+        var efCoreTrials = new List<BenchmarkMetrics>(totalRuns);
+        var udalTrials = new List<BenchmarkMetrics>(totalRuns);
+
+        for (int run = 1; run <= totalRuns; run++)
+        {
+            BenchmarkMetrics dapperM;
+            BenchmarkMetrics efCoreM;
+            BenchmarkMetrics udalM;
+
+            int mode = run % 3;
+            if (mode == 1)
+            {
+                dapperM = await RunSingleSequentialAsync("Dapper", iterationsPerRun);
+                efCoreM = await RunSingleSequentialAsync("EFCore", iterationsPerRun);
+                udalM = await RunSingleSequentialAsync("UDAL", iterationsPerRun);
+            }
+            else if (mode == 2)
+            {
+                efCoreM = await RunSingleSequentialAsync("EFCore", iterationsPerRun);
+                udalM = await RunSingleSequentialAsync("UDAL", iterationsPerRun);
+                dapperM = await RunSingleSequentialAsync("Dapper", iterationsPerRun);
+            }
+            else
+            {
+                udalM = await RunSingleSequentialAsync("UDAL", iterationsPerRun);
+                dapperM = await RunSingleSequentialAsync("Dapper", iterationsPerRun);
+                efCoreM = await RunSingleSequentialAsync("EFCore", iterationsPerRun);
+            }
+
+            dapperTrials.Add(dapperM);
+            efCoreTrials.Add(efCoreM);
+            udalTrials.Add(udalM);
+
+            onProgress?.Invoke(run, totalRuns, dapperM, efCoreM, udalM);
+        }
+
+        return (
+            Aggregate("Dapper", 1, totalRuns, dapperTrials),
+            Aggregate("EFCore", 1, totalRuns, efCoreTrials),
+            Aggregate("UDAL", 1, totalRuns, udalTrials)
+        );
+    }
+
+    public async Task<(AggregatedBenchmarkMetrics Dapper, AggregatedBenchmarkMetrics EfCore, AggregatedBenchmarkMetrics Udal)> RunTriadConcurrentBenchmarkAsync(
+        int concurrency,
+        int totalRuns,
+        Action<int, int, BenchmarkMetrics, BenchmarkMetrics, BenchmarkMetrics>? onProgress = null)
+    {
+        var dapperTrials = new List<BenchmarkMetrics>(totalRuns);
+        var efCoreTrials = new List<BenchmarkMetrics>(totalRuns);
+        var udalTrials = new List<BenchmarkMetrics>(totalRuns);
+
+        for (int run = 1; run <= totalRuns; run++)
+        {
+            BenchmarkMetrics dapperM;
+            BenchmarkMetrics efCoreM;
+            BenchmarkMetrics udalM;
+
+            int mode = run % 3;
+            if (mode == 1)
+            {
+                dapperM = await RunConcurrentBenchmarkAsync("Dapper", concurrency);
+                efCoreM = await RunConcurrentBenchmarkAsync("EFCore", concurrency);
+                udalM = await RunConcurrentBenchmarkAsync("UDAL", concurrency);
+            }
+            else if (mode == 2)
+            {
+                efCoreM = await RunConcurrentBenchmarkAsync("EFCore", concurrency);
+                udalM = await RunConcurrentBenchmarkAsync("UDAL", concurrency);
+                dapperM = await RunConcurrentBenchmarkAsync("Dapper", concurrency);
+            }
+            else
+            {
+                udalM = await RunConcurrentBenchmarkAsync("UDAL", concurrency);
+                dapperM = await RunConcurrentBenchmarkAsync("Dapper", concurrency);
+                efCoreM = await RunConcurrentBenchmarkAsync("EFCore", concurrency);
+            }
+
+            dapperTrials.Add(dapperM);
+            efCoreTrials.Add(efCoreM);
+            udalTrials.Add(udalM);
+
+            onProgress?.Invoke(run, totalRuns, dapperM, efCoreM, udalM);
+        }
+
+        return (
+            Aggregate("Dapper", concurrency, totalRuns, dapperTrials),
+            Aggregate("EFCore", concurrency, totalRuns, efCoreTrials),
             Aggregate("UDAL", concurrency, totalRuns, udalTrials)
         );
     }

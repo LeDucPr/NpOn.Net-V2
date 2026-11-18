@@ -45,6 +45,7 @@ public static class CassandraUtils
         {
             LocalDate ld => new DateTime(ld.Year, ld.Month, ld.Day),
             LocalTime lt => new TimeSpan(lt.TotalNanoseconds / 100),
+            TimeUuid tu => (Guid)tu,
             _ => value
         };
     }
