@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.72" />
-    <PackageReference Include="Npgsql" Version="9.0.2" />
-    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
+    <PackageReference Include="Dapper"/>
+    <PackageReference Include="Npgsql"/>
+    <PackageReference Include="NetEscapades.Configuration.Yaml"/>
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
+using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 

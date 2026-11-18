@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonBaseDomain;
+using Common.Extensions.NpOn.CommonBaseDomain;
 
 namespace MicroServices.Tracker.Contract.NpOn.TrackerServiceDomain;
 

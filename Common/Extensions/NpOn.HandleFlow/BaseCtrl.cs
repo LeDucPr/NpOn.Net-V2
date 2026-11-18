@@ -1,4 +1,4 @@
-﻿using ProtoBuf;
+using ProtoBuf;
 
 namespace Common.Extensions.NpOn.HandleFlow;
 

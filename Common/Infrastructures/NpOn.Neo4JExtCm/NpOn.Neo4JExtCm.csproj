@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <!-- Neo4j .NET Driver — openCypher compatible, also works with Memgraph -->
-        <PackageReference Include="Neo4j.Driver" Version="5.28.0"/>
+        <PackageReference Include="Neo4j.Driver"/>
     </ItemGroup>
 
     <ItemGroup>

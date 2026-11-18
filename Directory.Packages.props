@@ -1,0 +1,56 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="CassandraCSharpDriver" Version="3.22.0" />
+    <PackageVersion Include="ClickHouse.Client" Version="7.14.0" />
+    <PackageVersion Include="Confluent.Kafka" Version="2.12.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Dapper" Version="2.1.72" />
+    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.2.2" />
+    <PackageVersion Include="FluentValidation" Version="12.1.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.64.0" />
+    <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.5.0" />
+    <PackageVersion Include="MySqlConnector" Version="2.5.0" />
+    <PackageVersion Include="Neo4j.Driver" Version="5.28.0" />
+    <PackageVersion Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
+    <PackageVersion Include="NetMQ" Version="4.0.4.2" />
+    <PackageVersion Include="NetMQ.ReactiveExtensions" Version="0.9.3" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="Npgsql" Version="9.0.2" />
+    <PackageVersion Include="NpgsqlYugabyteDB" Version="9.0.2.1" />
+    <PackageVersion Include="Polly" Version="8.6.3" />
+    <PackageVersion Include="protobuf-net" Version="3.2.56" />
+    <PackageVersion Include="protobuf-net.Core" Version="3.2.56" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.1.1" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc.ClientFactory" Version="1.1.1" />
+    <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
+    <PackageVersion Include="RabbitMQ.Client" Version="7.1.2" />
+    <PackageVersion Include="Serilog" Version="4.3.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="SqlConnection" Version="1.0.4" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.9.11" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageVersion Include="System.Reactive" Version="6.1.0" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="8.1.2" />
+    <PackageVersion Include="tusdotnet" Version="2.7.2" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+</Project>

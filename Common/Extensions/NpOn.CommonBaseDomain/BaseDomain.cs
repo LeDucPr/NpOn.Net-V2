@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.HandleFlow;
+using Common.Extensions.NpOn.HandleFlow;
 using ProtoBuf;
 
 namespace Common.Extensions.NpOn.CommonBaseDomain;

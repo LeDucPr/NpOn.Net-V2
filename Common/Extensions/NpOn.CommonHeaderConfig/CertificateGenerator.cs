@@ -21,15 +21,35 @@ public class CertificateGenerator : ICertificateGenerator
     public CertificateGenerator(ILogger<CertificateGenerator> logger, string? storagePath = null)
     {
         _logger = logger;
-        _certificateStoragePath = !string.IsNullOrEmpty(storagePath) && !storagePath.StartsWith("/")
-            ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, storagePath)
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NpOn",
-                "Certificates");
-
-        if (!Directory.Exists(_certificateStoragePath))
+        if (!string.IsNullOrWhiteSpace(storagePath))
         {
-            Directory.CreateDirectory(_certificateStoragePath);
-            _logger.LogInformation("Created certificate storage directory: {Path}", _certificateStoragePath);
+            _certificateStoragePath = Path.IsPathRooted(storagePath)
+                ? storagePath
+                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, storagePath);
+        }
+        else
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var baseDir = !string.IsNullOrWhiteSpace(appData) ? appData : Path.GetTempPath();
+            _certificateStoragePath = Path.Combine(baseDir, "NpOn", "Certificates");
+        }
+
+        try
+        {
+            if (!Directory.Exists(_certificateStoragePath))
+            {
+                Directory.CreateDirectory(_certificateStoragePath);
+                _logger.LogInformation("Created certificate storage directory: {Path}", _certificateStoragePath);
+            }
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            _certificateStoragePath = Path.Combine(Path.GetTempPath(), "NpOn", "Certificates");
+            if (!Directory.Exists(_certificateStoragePath))
+            {
+                Directory.CreateDirectory(_certificateStoragePath);
+                _logger.LogInformation("Created certificate fallback storage directory: {Path}", _certificateStoragePath);
+            }
         }
     }
 

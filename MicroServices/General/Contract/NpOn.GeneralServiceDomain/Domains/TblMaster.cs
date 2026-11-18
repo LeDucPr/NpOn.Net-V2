@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
+using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.HandleFlow.Attributes;
 using ProtoBuf;

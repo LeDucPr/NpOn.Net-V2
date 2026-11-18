@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Data;
+using System.Text.Json;
 using Common.Extensions.NpOn.CommonMode;
 using Npgsql;
 using NpgsqlTypes;
@@ -14,6 +15,11 @@ public static class PostgresUtils
 
     // Thread-safe NpgsqlDbType to DbType cache
     private static readonly ConcurrentDictionary<NpgsqlDbType, DbType> NpgsqlDbTypeToDbTypeCache = new();
+
+    private static readonly JsonSerializerOptions DefaultJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     static PostgresUtils()
     {
@@ -37,6 +43,15 @@ public static class PostgresUtils
         TypeToNpgsqlDbTypeCache[typeof(TimeSpan)] = NpgsqlDbType.Interval;
         TypeToNpgsqlDbTypeCache[typeof(DateTime)] = NpgsqlDbType.TimestampTz;
         TypeToNpgsqlDbTypeCache[typeof(DateTimeOffset)] = NpgsqlDbType.TimestampTz;
+        TypeToNpgsqlDbTypeCache[typeof(DateOnly)] = NpgsqlDbType.Date;
+        TypeToNpgsqlDbTypeCache[typeof(TimeOnly)] = NpgsqlDbType.Time;
+        TypeToNpgsqlDbTypeCache[typeof(string[])] = NpgsqlDbType.Array | NpgsqlDbType.Text;
+        TypeToNpgsqlDbTypeCache[typeof(int[])] = NpgsqlDbType.Array | NpgsqlDbType.Integer;
+        TypeToNpgsqlDbTypeCache[typeof(long[])] = NpgsqlDbType.Array | NpgsqlDbType.Bigint;
+        TypeToNpgsqlDbTypeCache[typeof(Guid[])] = NpgsqlDbType.Array | NpgsqlDbType.Uuid;
+        TypeToNpgsqlDbTypeCache[typeof(bool[])] = NpgsqlDbType.Array | NpgsqlDbType.Boolean;
+        TypeToNpgsqlDbTypeCache[typeof(double[])] = NpgsqlDbType.Array | NpgsqlDbType.Double;
+        TypeToNpgsqlDbTypeCache[typeof(decimal[])] = NpgsqlDbType.Array | NpgsqlDbType.Numeric;
     }
 
     public static object? NormalizePostgresValue(this object? value)
@@ -49,51 +64,66 @@ public static class PostgresUtils
         if (raw == null || raw == DBNull.Value)
             return (DBNull.Value, NpgsqlDbType.Unknown);
 
-        // DateTime handling logic specific to Postgres 6.0+ (requires UTC for Timestamptz)
         if (raw is DateTime dt)
         {
             if (dt.Kind == DateTimeKind.Unspecified)
-            {
                 return (DateTime.SpecifyKind(dt, DateTimeKind.Utc), NpgsqlDbType.TimestampTz);
-            }
-
             if (dt.Kind == DateTimeKind.Local)
-            {
                 return (dt.ToUniversalTime(), NpgsqlDbType.TimestampTz);
-            }
-
             return (dt, NpgsqlDbType.TimestampTz);
         }
 
+        if (raw is DateTimeOffset dto)
+            return (dto, NpgsqlDbType.TimestampTz);
+
+        if (raw is DateOnly dOnly)
+            return (dOnly, NpgsqlDbType.Date);
+
+        if (raw is TimeOnly tOnly)
+            return (tOnly, NpgsqlDbType.Time);
+
         var type = raw.GetType();
 
-        // Fast lookup for cached / primitive types without allocating NpgsqlParameter
-        if (!TypeToNpgsqlDbTypeCache.TryGetValue(type, out var npgsqlDbType))
+        // Arrays handling
+        if (type.IsArray)
         {
-            // Compute once and cache for future threads
-            var tempParam = new NpgsqlParameter { Value = raw };
-            npgsqlDbType = tempParam.NpgsqlDbType;
-            TypeToNpgsqlDbTypeCache.TryAdd(type, npgsqlDbType);
+            if (TypeToNpgsqlDbTypeCache.TryGetValue(type, out var arrayDbType))
+                return (raw, arrayDbType);
+
+            var elemType = type.GetElementType()!;
+            if (elemType == typeof(byte))
+                return (raw, NpgsqlDbType.Bytea);
+
+            return (raw, NpgsqlDbType.Array);
         }
 
-        // Check if it's not a traditional type (Inferred as Text/Unknown/Object) and not a string
-        if (raw is not string
-            && !type.IsEnum
-            && type is { IsPrimitive: false, IsValueType: false }
-            && (npgsqlDbType == NpgsqlDbType.Unknown || npgsqlDbType == NpgsqlDbType.Text))
+        // Fast lookup for cached / primitive types
+        if (TypeToNpgsqlDbTypeCache.TryGetValue(type, out var npgsqlDbType))
+        {
+            return (raw, npgsqlDbType);
+        }
+
+        // Check if Enum
+        if (type.IsEnum)
+        {
+            return (Convert.ChangeType(raw, Enum.GetUnderlyingType(type)), NpgsqlDbType.Integer);
+        }
+
+        // Objects (Classes, Records, Complex Types) -> Jsonb
+        if (raw is not string && type.IsClass)
         {
             try
             {
-                var jsonString = JsonMode.ToJson(raw);
+                var jsonString = JsonSerializer.Serialize(raw, DefaultJsonOptions);
                 return (jsonString, NpgsqlDbType.Jsonb);
             }
             catch
             {
-                return (raw, npgsqlDbType);
+                return (raw, NpgsqlDbType.Unknown);
             }
         }
 
-        return (raw, npgsqlDbType);
+        return (raw, NpgsqlDbType.Unknown);
     }
 
     public static object? ConvertStringToNpgsqlType(object? value, NpgsqlDbType npgsqlDbType)
@@ -109,7 +139,7 @@ public static class PostgresUtils
         if (value is not string && (npgsqlDbType == NpgsqlDbType.Json || npgsqlDbType == NpgsqlDbType.Jsonb ||
                                     npgsqlDbType == NpgsqlDbType.Text))
         {
-            return value.ToString();
+            return JsonSerializer.Serialize(value, DefaultJsonOptions);
         }
 
         if (value is not string stringValue)
@@ -133,6 +163,8 @@ public static class PostgresUtils
             DbType.Boolean => typeof(bool),
             DbType.DateTime => typeof(DateTime),
             DbType.DateTimeOffset => typeof(DateTimeOffset),
+            DbType.Date => typeof(DateOnly),
+            DbType.Time => typeof(TimeOnly),
             DbType.Decimal => typeof(decimal),
             DbType.Double => typeof(double),
             DbType.Single => typeof(float),
@@ -151,5 +183,14 @@ public static class PostgresUtils
         {
             return value;
         }
+    }
+
+    /// <summary>
+    /// Universal conversion of database values (from DataReader or ObjectBlock) to ANY .NET target type.
+    /// Delegates to NpOnTypeConverter for cross-driver standardization.
+    /// </summary>
+    public static object? ConvertDbValue(object? dbVal, Type targetType)
+    {
+        return Common.Extensions.NpOn.ICommonDb.DbResults.Extensions.NpOnTypeConverter.ConvertDbValue(dbVal, targetType);
     }
 }

@@ -15,8 +15,8 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
     private readonly ILogger? _logger;
 
     // Retry configuration when acquiring a connection from the pool (i.e. we don't have one yet).
-    private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromMilliseconds(500);
-    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMilliseconds(4000);
+    private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromMilliseconds(50);
+    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMilliseconds(1000);
     private const double RetryBackoffMultiplier = 1.5;
 
     // Retry configuration for a connection that dies WHILE a command is executing. This is a
@@ -108,8 +108,10 @@ public abstract class BaseDbFactoryWrapper : IDbFactoryWrapper
             }
             catch (Exception ex)
             {
-                // Case (B) from the summary above: the connection genuinely died mid-execution.
-                bool isSystemLevelFailure = ex is System.Data.Common.DbException && !connection.Driver.IsValidSession;
+                // Case (B) from the summary above: the connection genuinely died mid-execution or experienced a transient DB failure.
+                bool isSystemLevelFailure = (ex is System.Data.Common.DbException dbEx && (!connection.Driver.IsValidSession || dbEx.IsTransient))
+                    || ex is TimeoutException
+                    || (ex is InvalidOperationException && !connection.Driver.IsValidSession);
                 bool canRetry = isSystemLevelFailure && attempt < MaxExecutionRetryAttempts;
 
                 if (!canRetry)

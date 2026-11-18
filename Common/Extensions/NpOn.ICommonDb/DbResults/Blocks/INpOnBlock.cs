@@ -25,7 +25,10 @@ public sealed class Int64Block : INpOnBlock
         _rowCount = rowCount;
         Buffer = ArrayPool<long>.Shared.Rent(rowCount);
         if (hasNulls)
+        {
             NullMask = ArrayPool<bool>.Shared.Rent(rowCount);
+            Array.Clear(NullMask, 0, NullMask.Length);
+        }
     }
 
     public bool IsNull(int rowIndex) => NullMask != null && NullMask[rowIndex];
@@ -37,7 +40,7 @@ public sealed class Int64Block : INpOnBlock
         _disposed = true;
         ArrayPool<long>.Shared.Return(Buffer);
         if (NullMask != null)
-            ArrayPool<bool>.Shared.Return(NullMask);
+            ArrayPool<bool>.Shared.Return(NullMask, clearArray: true);
     }
 }
 
@@ -56,7 +59,10 @@ public sealed class Int32Block : INpOnBlock
         _rowCount = rowCount;
         Buffer = ArrayPool<int>.Shared.Rent(rowCount);
         if (hasNulls)
+        {
             NullMask = ArrayPool<bool>.Shared.Rent(rowCount);
+            Array.Clear(NullMask, 0, NullMask.Length);
+        }
     }
 
     public bool IsNull(int rowIndex) => NullMask != null && NullMask[rowIndex];
@@ -68,7 +74,7 @@ public sealed class Int32Block : INpOnBlock
         _disposed = true;
         ArrayPool<int>.Shared.Return(Buffer);
         if (NullMask != null)
-            ArrayPool<bool>.Shared.Return(NullMask);
+            ArrayPool<bool>.Shared.Return(NullMask, clearArray: true);
     }
 }
 
@@ -87,7 +93,10 @@ public sealed class DoubleBlock : INpOnBlock
         _rowCount = rowCount;
         Buffer = ArrayPool<double>.Shared.Rent(rowCount);
         if (hasNulls)
+        {
             NullMask = ArrayPool<bool>.Shared.Rent(rowCount);
+            Array.Clear(NullMask, 0, NullMask.Length);
+        }
     }
 
     public bool IsNull(int rowIndex) => NullMask != null && NullMask[rowIndex];
@@ -99,7 +108,7 @@ public sealed class DoubleBlock : INpOnBlock
         _disposed = true;
         ArrayPool<double>.Shared.Return(Buffer);
         if (NullMask != null)
-            ArrayPool<bool>.Shared.Return(NullMask);
+            ArrayPool<bool>.Shared.Return(NullMask, clearArray: true);
     }
 }
 
@@ -118,7 +127,10 @@ public sealed class GuidBlock : INpOnBlock
         _rowCount = rowCount;
         Buffer = ArrayPool<Guid>.Shared.Rent(rowCount);
         if (hasNulls)
+        {
             NullMask = ArrayPool<bool>.Shared.Rent(rowCount);
+            Array.Clear(NullMask, 0, NullMask.Length);
+        }
     }
 
     public bool IsNull(int rowIndex) => NullMask != null && NullMask[rowIndex];
@@ -130,7 +142,7 @@ public sealed class GuidBlock : INpOnBlock
         _disposed = true;
         ArrayPool<Guid>.Shared.Return(Buffer);
         if (NullMask != null)
-            ArrayPool<bool>.Shared.Return(NullMask);
+            ArrayPool<bool>.Shared.Return(NullMask, clearArray: true);
     }
 }
 
@@ -149,7 +161,10 @@ public sealed class DateTimeBlock : INpOnBlock
         _rowCount = rowCount;
         Buffer = ArrayPool<DateTime>.Shared.Rent(rowCount);
         if (hasNulls)
+        {
             NullMask = ArrayPool<bool>.Shared.Rent(rowCount);
+            Array.Clear(NullMask, 0, NullMask.Length);
+        }
     }
 
     public bool IsNull(int rowIndex) => NullMask != null && NullMask[rowIndex];
@@ -161,7 +176,7 @@ public sealed class DateTimeBlock : INpOnBlock
         _disposed = true;
         ArrayPool<DateTime>.Shared.Return(Buffer);
         if (NullMask != null)
-            ArrayPool<bool>.Shared.Return(NullMask);
+            ArrayPool<bool>.Shared.Return(NullMask, clearArray: true);
     }
 }
 
@@ -180,7 +195,10 @@ public sealed class BooleanBlock : INpOnBlock
         _rowCount = rowCount;
         Buffer = ArrayPool<bool>.Shared.Rent(rowCount);
         if (hasNulls)
+        {
             NullMask = ArrayPool<bool>.Shared.Rent(rowCount);
+            Array.Clear(NullMask, 0, NullMask.Length);
+        }
     }
 
     public bool IsNull(int rowIndex) => NullMask != null && NullMask[rowIndex];
@@ -192,7 +210,7 @@ public sealed class BooleanBlock : INpOnBlock
         _disposed = true;
         ArrayPool<bool>.Shared.Return(Buffer);
         if (NullMask != null)
-            ArrayPool<bool>.Shared.Return(NullMask);
+            ArrayPool<bool>.Shared.Return(NullMask, clearArray: true);
     }
 }
 

@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
+using Common.Extensions.NpOn.CommonBaseDomain.Attributes;
 using Common.Extensions.NpOn.HandleFlow.Attributes;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;

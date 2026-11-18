@@ -1,4 +1,4 @@
-﻿using Common.Extensions.NpOn.CommonBaseDomain;
+using Common.Extensions.NpOn.CommonBaseDomain;
 using MicroServices.General.Contract.NpOn.GeneralServiceDomain.Domains;
 using ProtoBuf;
 

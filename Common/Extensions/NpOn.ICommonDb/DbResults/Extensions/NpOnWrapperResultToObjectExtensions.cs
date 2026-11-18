@@ -30,9 +30,11 @@ public static partial class NpOnWrapperResultExtensions
         try
         {
             var temp = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(objectType);
+            var createDefaultFieldMapperMethod = objectType.GetMethod("CreateDefaultFieldMapper", BindingFlags.Public | BindingFlags.Instance);
+            createDefaultFieldMapperMethod?.Invoke(temp, null);
+
             if (temp is NpOnBaseGrpcObject grpcObj)
             {
-                grpcObj.CreateDefaultFieldMapper();
                 if (grpcObj.FieldMap is { Count: > 0 } map)
                     return map;
             }
@@ -250,6 +252,9 @@ public static partial class NpOnWrapperResultExtensions
             {
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Callvirt, typeof(INpOnBlock).GetMethod(nameof(INpOnBlock.GetObject))!);
+                il.Emit(OpCodes.Ldtoken, propType);
+                il.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!);
+                il.Emit(OpCodes.Call, typeof(NpOnTypeConverter).GetMethod(nameof(NpOnTypeConverter.ConvertDbValue))!);
                 if (propType.IsValueType)
                     il.Emit(OpCodes.Unbox_Any, propType);
                 else
@@ -358,8 +363,11 @@ public static partial class NpOnWrapperResultExtensions
                 il.Emit(OpCodes.Ldloc, valueLocal);
                 il.Emit(OpCodes.Ldtoken, targetType);
                 il.Emit(OpCodes.Call, getTypeFromHandleMethod);
-                il.Emit(OpCodes.Call, changeTypeMethod);
-                il.Emit(OpCodes.Unbox_Any, propInfo.PropertyType);
+                il.Emit(OpCodes.Call, typeof(NpOnTypeConverter).GetMethod(nameof(NpOnTypeConverter.ConvertDbValue))!);
+                if (propInfo.PropertyType.IsValueType)
+                    il.Emit(OpCodes.Unbox_Any, propInfo.PropertyType);
+                else
+                    il.Emit(OpCodes.Castclass, propInfo.PropertyType);
             }
 
             il.Emit(OpCodes.Callvirt, propInfo.GetSetMethod()!);
@@ -463,8 +471,11 @@ public static partial class NpOnWrapperResultExtensions
                 il.Emit(OpCodes.Ldloc, valueLocal);
                 il.Emit(OpCodes.Ldtoken, targetType);
                 il.Emit(OpCodes.Call, getTypeFromHandleMethod);
-                il.Emit(OpCodes.Call, changeTypeMethod);
-                il.Emit(OpCodes.Unbox_Any, propInfo.PropertyType);
+                il.Emit(OpCodes.Call, typeof(NpOnTypeConverter).GetMethod(nameof(NpOnTypeConverter.ConvertDbValue))!);
+                if (propInfo.PropertyType.IsValueType)
+                    il.Emit(OpCodes.Unbox_Any, propInfo.PropertyType);
+                else
+                    il.Emit(OpCodes.Castclass, propInfo.PropertyType);
             }
 
             il.Emit(OpCodes.Callvirt, propInfo.GetSetMethod()!);
@@ -571,8 +582,11 @@ public static partial class NpOnWrapperResultExtensions
                 il.Emit(OpCodes.Ldloc, valueLocal);
                 il.Emit(OpCodes.Ldtoken, targetType);
                 il.Emit(OpCodes.Call, getTypeFromHandleMethod);
-                il.Emit(OpCodes.Call, changeTypeMethod);
-                il.Emit(OpCodes.Unbox_Any, propInfo.PropertyType);
+                il.Emit(OpCodes.Call, typeof(NpOnTypeConverter).GetMethod(nameof(NpOnTypeConverter.ConvertDbValue))!);
+                if (propInfo.PropertyType.IsValueType)
+                    il.Emit(OpCodes.Unbox_Any, propInfo.PropertyType);
+                else
+                    il.Emit(OpCodes.Castclass, propInfo.PropertyType);
             }
 
             il.Emit(OpCodes.Callvirt, propInfo.GetSetMethod()!);

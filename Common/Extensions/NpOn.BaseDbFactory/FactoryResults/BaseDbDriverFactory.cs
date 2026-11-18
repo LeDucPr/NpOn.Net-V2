@@ -236,7 +236,7 @@ public abstract class BaseDbDriverFactory : IDbDriverFactory
         connection.Driver.ResetSessionTimeout();
         connection.Driver.IsBusy = false;
 
-        int maxIdle = Math.Max(50, _connectionNumber ?? 10);
+        int maxIdle = Math.Min(100, Math.Max(20, _connectionNumber ?? 10));
         if (connection.Driver.IsValidSession && _idleConnections.Count < maxIdle)
         {
             _idleConnections.Push(connection);

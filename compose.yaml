@@ -1,9 +1,11 @@
-﻿services:
+services:
 
   #####region SSO Controller
   sso:
     container_name: sso
     image: npon-v2-aiot-backend-sso:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - ASPNETCORE_URLS=http://0.0.0.0:14023
       - AccountServiceUrl=http://accountservice:40004
@@ -24,11 +26,16 @@
   accountservice:
     container_name: accountservice
     image: npon-v2-aiot-backend-accountservice:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - ASPNETCORE_URLS=http://+:40004
       - GeneralServiceUrl=http://generalservice:40000
+      - IsUsePostgres=true
+      - PostgresConnectionString=Host=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=account;
       - ConnectionString=Host=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=account;
-      - ConnectionNumber=1000
+      - PostgresConnectionNumber=100
+      - ConnectionNumber=100
       - RedisConnectString=host.docker.internal:6379,user=default,password=NpOn.Net-V2_Dragonfly
       - RedisConnectionNumber=1000
       - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
@@ -50,14 +57,19 @@
     image: npon-v2-aiot-backend-generalservice:latest
     ports:
       - "40000:40000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - ASPNETCORE_URLS=http://+:40000
       - AccountServiceUrl=http://accountservice:40004
-      - ConnectionString=Server=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=general;
-      - ConnectionNumber=2000
+      - IsUsePostgres=true
+      - PostgresConnectionString=Host=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=general;
+      - ConnectionString=Host=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=general;
+      - PostgresConnectionNumber=100
+      - ConnectionNumber=100
       - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
       - RabbitMqExchangeName=NpOn.MedicalService
-      - IsUseCachingExecutionGeneralService=false
+      - IsUseCachingExecutionGeneralService=true
     networks:
       - npon-v2-backend-net
     volumes:

@@ -56,6 +56,14 @@ NpOn.sln.DotSettings.user
 !agents.md
 !.agents/
 !.agents/**
+
+## Ignore timestamped & history benchmark / report runs (keep only clean latest & summary)
+.agents/benchmarks/*_*_*.md
+.agents/reports/harness_*_*.md
+!.agents/benchmarks/benchmark_100runs_summary.md
+!.agents/benchmarks/dapper_vs_udal_latest.md
+!.agents/reports/harness_latest.md
+
 !CLAUDE.md
 !.claude/
 !.claude/**

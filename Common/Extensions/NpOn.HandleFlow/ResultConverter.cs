@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 

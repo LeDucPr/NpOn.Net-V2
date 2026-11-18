@@ -59,5 +59,61 @@ public class AuthenticationFlowTests
         Assert.Equal(EAuthentication.WebApp, query.AuthType);
         Assert.Equal("WEB_TEST_CLIENT", query.ClientId);
     }
+
+    [Fact]
+    public async Task Postgres_AccountQuery_ShouldSucceed100TimesWithoutFailure()
+    {
+        string connStr = "Host=localhost;Port=5432;Database=account;Username=postgres;Password=password;";
+        var factory = new Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory.PostgresFactoryWrapper(connStr);
+        string sql = "SELECT * FROM acc_srv_account WHERE ((LOWER(username) = LOWER(@username)) OR (phone_number = @username)) AND password = @password";
+
+        for (int i = 0; i < 100; i++)
+        {
+            var prms = new List<Common.Extensions.NpOn.ICommonDb.DbCommands.INpOnDbCommandParam>
+            {
+                new Common.Extensions.NpOn.CommonDb.DbCommands.NpOnDbCommandParam("username", "KhaBanh"),
+                new Common.Extensions.NpOn.CommonDb.DbCommands.NpOnDbCommandParam("password", "jyGimGTAj2niJMgxijU7x7iR1RA=")
+            };
+
+            var result = await factory.ExecuteAsync(sql, prms);
+            Assert.NotNull(result);
+            Assert.True(result.Status);
+
+            var account = Common.Extensions.NpOn.ICommonDb.DbResults.Extensions.NpOnWrapperResultExtensions.ToFirstOrDefault<MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels.AccountRModel>(result);
+            Assert.NotNull(account);
+            Assert.Equal("KhaBanh", account.UserName);
+            Assert.Equal(EAccountStatus.Active, account.Status);
+            Assert.NotEqual(Guid.Empty, account.Id);
+        }
+    }
+
+    [Fact]
+    public async Task Postgres_AccountQuery_Concurrent50Tasks_ShouldAllSucceed()
+    {
+        string connStr = "Host=localhost;Port=5432;Database=account;Username=postgres;Password=password;";
+        var factory = new Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory.PostgresFactoryWrapper(connStr, connectionNumber: 100);
+        string sql = "SELECT * FROM acc_srv_account WHERE ((LOWER(username) = LOWER(@username)) OR (phone_number = @username)) AND password = @password";
+
+        var tasks = Enumerable.Range(0, 50).Select(async _ =>
+        {
+            var prms = new List<Common.Extensions.NpOn.ICommonDb.DbCommands.INpOnDbCommandParam>
+            {
+                new Common.Extensions.NpOn.CommonDb.DbCommands.NpOnDbCommandParam("username", "KhaBanh"),
+                new Common.Extensions.NpOn.CommonDb.DbCommands.NpOnDbCommandParam("password", "jyGimGTAj2niJMgxijU7x7iR1RA=")
+            };
+
+            var result = await factory.ExecuteAsync(sql, prms);
+            Assert.NotNull(result);
+            Assert.True(result.Status);
+
+            var account = Common.Extensions.NpOn.ICommonDb.DbResults.Extensions.NpOnWrapperResultExtensions.ToFirstOrDefault<MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels.AccountRModel>(result);
+            Assert.NotNull(account);
+            Assert.Equal("KhaBanh", account.UserName);
+            Assert.Equal(EAccountStatus.Active, account.Status);
+            Assert.NotEqual(Guid.Empty, account.Id);
+        });
+
+        await Task.WhenAll(tasks);
+    }
 }
 

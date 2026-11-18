@@ -13,7 +13,7 @@
         <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj"/>
         <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
         <ProjectReference Include="..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj"/>
-        <PackageReference Include="NpgsqlYugabyteDB" Version="9.0.2.1" />
+        <PackageReference Include="NpgsqlYugabyteDB"/>
     </ItemGroup>
 
 </Project>

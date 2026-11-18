@@ -47,7 +47,17 @@ public class PostgresDriver : NpOnDbDriver
             return; // Already connected.
         }
 
-        Connection ??= new NpgsqlConnection(Option.ConnectionString);
+        if (Connection != null)
+        {
+            try
+            {
+                await Connection.DisposeAsync();
+            }
+            catch { }
+            Connection = null;
+        }
+
+        Connection = new NpgsqlConnection(Option.ConnectionString);
         await Connection.OpenAsync(cancellationToken);
         Version = _cachedVersion ??= Connection.PostgreSqlVersion.ToString();
         Name = _cachedName ??= (Connection.Host ?? $"PostgresSql {Connection.PostgreSqlVersion.Major}");
@@ -123,7 +133,11 @@ public class PostgresDriver : NpOnDbDriver
     {
         if (!IsValidSession || Connection == null)
         {
-            return CreateFailResult(EDbError.Connection);
+            await ConnectAsync(CancellationToken.None).ConfigureAwait(false);
+            if (!IsValidSession || Connection == null)
+            {
+                throw new InvalidOperationException("Postgres connection is not valid or closed.");
+            }
         }
 
         var commandBuilder = CommandCustomBuilder(command);
@@ -209,10 +223,12 @@ public class PostgresDriver : NpOnDbDriver
                     if (prm is NpOnDbCommandParam<NpgsqlDbType> typedParam)
                         targetDbType = typedParam.ParamType;
 
-                    var adoNetValue = PostgresUtils.ConvertStringToNpgsqlType(prm.ParamValue, targetDbType);
-                    var pgParam = new NpgsqlParameter(prm.ParamName, adoNetValue ?? DBNull.Value);
+                    var (normVal, inferredDbType) = PostgresUtils.NormalizeForNpgsql(prm.ParamValue);
+                    var pgParam = new NpgsqlParameter(prm.ParamName, normVal ?? DBNull.Value);
                     if (targetDbType != NpgsqlDbType.Unknown)
                         pgParam.NpgsqlDbType = targetDbType;
+                    else if (inferredDbType != NpgsqlDbType.Unknown)
+                        pgParam.NpgsqlDbType = inferredDbType;
 
                     pgCommand.Parameters.Add(pgParam);
                 }
@@ -253,12 +269,15 @@ public class PostgresDriver : NpOnDbDriver
         }
         catch (NpgsqlException ex) when (ex.IsTransient)
         {
-            throw; // System.Data.Common.DbException
+            throw; // System.Data.Common.DbException - trigger retry
         }
-        catch (Exception)
+        catch (InvalidOperationException) when (!IsValidSession)
         {
-            throw new ObjectDisposedException("");
-            // return CreateFailResult(ex);
+            throw; // Connection died or closed - trigger retry
+        }
+        catch (Exception ex)
+        {
+            return CreateFailResult(ex);
         }
         finally
         {
@@ -387,7 +406,11 @@ public class PostgresDriver : NpOnDbDriver
             for (int i = 0; i < commandBuilder.Parameters.Count; i++)
             {
                 var p = commandBuilder.Parameters[i];
-                npgsqlCommand.Parameters.Add(new NpgsqlParameter(p.ParamName, p.ParamValue ?? DBNull.Value));
+                var (normVal, inferredDbType) = PostgresUtils.NormalizeForNpgsql(p.ParamValue);
+                var pgParam = new NpgsqlParameter(p.ParamName, normVal ?? DBNull.Value);
+                if (inferredDbType != NpgsqlDbType.Unknown)
+                    pgParam.NpgsqlDbType = inferredDbType;
+                npgsqlCommand.Parameters.Add(pgParam);
             }
         }
 
@@ -593,10 +616,24 @@ public class PostgresDriver : NpOnDbDriver
             {
                 il.Emit(OpCodes.Callvirt, typeof(NpgsqlDataReader).GetMethod(nameof(NpgsqlDataReader.GetDecimal), [typeof(int)])!);
             }
+            else if (underlyingType == typeof(float))
+            {
+                il.Emit(OpCodes.Callvirt, typeof(NpgsqlDataReader).GetMethod(nameof(NpgsqlDataReader.GetFloat), [typeof(int)])!);
+            }
+            else if (underlyingType == typeof(byte))
+            {
+                il.Emit(OpCodes.Callvirt, typeof(NpgsqlDataReader).GetMethod(nameof(NpgsqlDataReader.GetByte), [typeof(int)])!);
+            }
             else
             {
                 il.Emit(OpCodes.Callvirt, typeof(NpgsqlDataReader).GetMethod(nameof(NpgsqlDataReader.GetValue), [typeof(int)])!);
-                il.Emit(OpCodes.Unbox_Any, underlyingType);
+                il.Emit(OpCodes.Ldtoken, underlyingType);
+                il.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!);
+                il.Emit(OpCodes.Call, typeof(PostgresUtils).GetMethod(nameof(PostgresUtils.ConvertDbValue), [typeof(object), typeof(Type)])!);
+                if (underlyingType.IsValueType)
+                    il.Emit(OpCodes.Unbox_Any, underlyingType);
+                else
+                    il.Emit(OpCodes.Castclass, underlyingType);
             }
 
             if (isNullable)

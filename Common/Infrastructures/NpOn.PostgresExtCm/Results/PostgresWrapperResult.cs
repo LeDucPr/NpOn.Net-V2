@@ -349,6 +349,15 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IF
                 il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldelem_Ref);
                 il.Emit(OpCodes.Castclass, typeof(Int64Block));
+                il.Emit(OpCodes.Ldfld, typeof(Int64Block).GetField(nameof(Int64Block.NullMask))!);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Stelem_I1);
+
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, c);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Castclass, typeof(Int64Block));
                 il.Emit(OpCodes.Ldfld, typeof(Int64Block).GetField(nameof(Int64Block.Buffer))!);
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Ldarg_0);
@@ -358,6 +367,15 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IF
             }
             else if (clrType == typeof(int))
             {
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, c);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Castclass, typeof(Int32Block));
+                il.Emit(OpCodes.Ldfld, typeof(Int32Block).GetField(nameof(Int32Block.NullMask))!);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Stelem_I1);
+
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldelem_Ref);
@@ -375,6 +393,15 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IF
                 il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldelem_Ref);
                 il.Emit(OpCodes.Castclass, typeof(GuidBlock));
+                il.Emit(OpCodes.Ldfld, typeof(GuidBlock).GetField(nameof(GuidBlock.NullMask))!);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Stelem_I1);
+
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, c);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Castclass, typeof(GuidBlock));
                 il.Emit(OpCodes.Ldfld, typeof(GuidBlock).GetField(nameof(GuidBlock.Buffer))!);
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Ldarg_0);
@@ -384,6 +411,15 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IF
             }
             else if (clrType == typeof(DateTime))
             {
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, c);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Castclass, typeof(DateTimeBlock));
+                il.Emit(OpCodes.Ldfld, typeof(DateTimeBlock).GetField(nameof(DateTimeBlock.NullMask))!);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Stelem_I1);
+
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldelem_Ref);
@@ -401,6 +437,15 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IF
                 il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldelem_Ref);
                 il.Emit(OpCodes.Castclass, typeof(BooleanBlock));
+                il.Emit(OpCodes.Ldfld, typeof(BooleanBlock).GetField(nameof(BooleanBlock.NullMask))!);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Stelem_I1);
+
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, c);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Castclass, typeof(BooleanBlock));
                 il.Emit(OpCodes.Ldfld, typeof(BooleanBlock).GetField(nameof(BooleanBlock.Buffer))!);
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Ldarg_0);
@@ -410,6 +455,15 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper, IF
             }
             else if (clrType == typeof(double))
             {
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, c);
+                il.Emit(OpCodes.Ldelem_Ref);
+                il.Emit(OpCodes.Castclass, typeof(DoubleBlock));
+                il.Emit(OpCodes.Ldfld, typeof(DoubleBlock).GetField(nameof(DoubleBlock.NullMask))!);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Stelem_I1);
+
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldc_I4, c);
                 il.Emit(OpCodes.Ldelem_Ref);
