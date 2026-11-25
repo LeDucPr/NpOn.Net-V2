@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <RepoRootDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)'))</RepoRootDir>
+    <CommonLibsDir>$(RepoRootDir)artifacts\libs\</CommonLibsDir>
+    <!-- Use pre-built Common DLLs if artifacts/libs contains compiled binaries -->
+    <UseCommonDlls Condition="'$(UseCommonDlls)' == '' and Exists('$(CommonLibsDir)NpOn.CommonMode.dll')">true</UseCommonDlls>
+    <UseCommonDlls Condition="'$(UseCommonDlls)' == ''">false</UseCommonDlls>
+  </PropertyGroup>
+</Project>
+

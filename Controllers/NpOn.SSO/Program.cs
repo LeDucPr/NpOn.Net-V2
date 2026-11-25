@@ -10,6 +10,7 @@ using Common.Extensions.NpOn.HeaderConfig;
 using Controllers.NpOn.SSO.Controllers;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using NpOn.CommonGrpcCall;
 
 namespace Controllers.NpOn.SSO;
@@ -51,16 +52,33 @@ public sealed class Program : HttpCommonProgram
         {
             int basePort = EApplicationConfiguration.HostPort.GetAppSettingConfig().AsDefaultInt();
             HttpProtocols[] combineProtocols = [(HttpProtocols)protocols, HttpProtocols.Http1];
-            services.Configure<KestrelServerOptions>(options =>
-            {
-                options.ListenAnyIP(basePort, // json (rest api)
-                    listenOptions =>
-                    {
-                        listenOptions.Protocols = combineProtocols.CombineFlags();
-                    });
-                options.ListenAnyIP(grpcHostPort,
-                    listenOptions => { listenOptions.Protocols = (HttpProtocols)protocols; });
-            });
+            var authMode = InterServiceAuthConfigHelper.ResolveAuthMode();
+            services.AddOptions<KestrelServerOptions>()
+                .Configure<IServiceProvider>((options, sp) =>
+                {
+                    var certService = authMode == EInterServiceAuthMode.Mtls
+                        ? sp.GetService<IInterServiceCertificateService>()
+                        : null;
+
+                    options.ListenAnyIP(basePort, // json (rest api) + optional internal grpc
+                        listenOptions =>
+                        {
+                            listenOptions.Protocols = combineProtocols.CombineFlags();
+                            if (authMode == EInterServiceAuthMode.Mtls && certService != null)
+                            {
+                                listenOptions.ApplyInterServiceMtls(certService, ClientCertificateMode.AllowCertificate);
+                            }
+                        });
+                    options.ListenAnyIP(grpcHostPort,
+                        listenOptions =>
+                        {
+                            listenOptions.Protocols = (HttpProtocols)protocols;
+                            if (authMode == EInterServiceAuthMode.Mtls && certService != null)
+                            {
+                                listenOptions.ApplyInterServiceMtls(certService, ClientCertificateMode.RequireCertificate);
+                            }
+                        });
+                });
         }
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())

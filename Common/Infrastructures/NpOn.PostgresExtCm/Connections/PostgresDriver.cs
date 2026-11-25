@@ -224,6 +224,11 @@ public class PostgresDriver : NpOnDbDriver
                         targetDbType = typedParam.ParamType;
 
                     var (normVal, inferredDbType) = PostgresUtils.NormalizeForNpgsql(prm.ParamValue);
+                    if (targetDbType != NpgsqlDbType.Unknown)
+                    {
+                        normVal = PostgresUtils.ConvertStringToNpgsqlType(normVal, targetDbType);
+                    }
+
                     var pgParam = new NpgsqlParameter(prm.ParamName, normVal ?? DBNull.Value);
                     if (targetDbType != NpgsqlDbType.Unknown)
                         pgParam.NpgsqlDbType = targetDbType;
@@ -406,10 +411,20 @@ public class PostgresDriver : NpOnDbDriver
             for (int i = 0; i < commandBuilder.Parameters.Count; i++)
             {
                 var p = commandBuilder.Parameters[i];
+                var targetDbType = NpgsqlDbType.Unknown;
+                if (p is NpOnDbCommandParam<NpgsqlDbType> typedParam)
+                    targetDbType = typedParam.ParamType;
+
                 var (normVal, inferredDbType) = PostgresUtils.NormalizeForNpgsql(p.ParamValue);
+                if (targetDbType != NpgsqlDbType.Unknown)
+                    normVal = PostgresUtils.ConvertStringToNpgsqlType(normVal, targetDbType);
+
                 var pgParam = new NpgsqlParameter(p.ParamName, normVal ?? DBNull.Value);
-                if (inferredDbType != NpgsqlDbType.Unknown)
+                if (targetDbType != NpgsqlDbType.Unknown)
+                    pgParam.NpgsqlDbType = targetDbType;
+                else if (inferredDbType != NpgsqlDbType.Unknown)
                     pgParam.NpgsqlDbType = inferredDbType;
+
                 npgsqlCommand.Parameters.Add(pgParam);
             }
         }

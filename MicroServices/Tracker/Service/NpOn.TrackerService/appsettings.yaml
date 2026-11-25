@@ -10,7 +10,13 @@ Kestrel:
 AppName: TrackerService
 
 # Inter-service authentication
+InterServiceAuthMode: "Jwt" # "Jwt" | "Mtls" | "ServiceMesh"
+InterServiceAllowedIdentities: "" # Comma-separated allowed CN/SAN/SPIFFE/service names (empty = allow any trusted)
+InterServiceServiceMeshTrustDomain: "cluster.local"
+InterServiceTrustedProxyIps: "127.0.0.1,::1"
+InterServiceServerSanHosts: "trackerservice,localhost,127.0.0.1"
 InterServiceUseMTLS: false
+InterServiceAutoGenerateCertificates: true
 InterServiceClientCertPath: "/certs/tracker-client.pfx"
 InterServiceClientCertPassword: "NpOn_V2_Cert_Password"
 InterServiceServerCertPath: "/certs/tracker-server.pfx"

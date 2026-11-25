@@ -12,4 +12,5 @@ public static class DefaultHeaderConstant
     // inter-service authentication
     public const string GrpcInterServiceAuthToken = "x-inter-service-token";
     public const string GrpcInterServiceServiceName = "x-service-name";
+    public const string GrpcForwardedClientCert = "x-forwarded-client-cert";
 }

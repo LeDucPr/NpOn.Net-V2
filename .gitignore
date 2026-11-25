@@ -3,6 +3,8 @@
 ## Build artifacts
 [Bb]in/
 [Oo]bj/
+artifacts/
+artifacts/libs/
 
 ## Dependency directories
 packages/

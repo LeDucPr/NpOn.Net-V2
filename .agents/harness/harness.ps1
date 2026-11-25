@@ -81,8 +81,14 @@ if ($archViolations.Count -eq 0) {
 
 # 1.2 Biên dịch Solution
 if (-not $SkipBuild) {
-    Write-Badge "INFO" "Dang bien dich NpOnV2.sln (Configuration: $Configuration)..."
-    $buildOutput = dotnet build NpOnV2.sln -c $Configuration --nologo 2>&1
+    # 1.1b Kiem tra va dong goi thu vien Common sang artifacts/libs neu co thay doi
+    $commonBuildScript = Join-Path $RootPath "build-common.ps1"
+    if (Test-Path $commonBuildScript) {
+        & $commonBuildScript -Configuration $Configuration
+    }
+
+    Write-Badge "INFO" "Dang bien dich NpOnV2.sln (Configuration: $Configuration, Accelerate: UseCommonDlls)..."
+    $buildOutput = dotnet build NpOnV2.sln -c $Configuration -p:UseCommonDlls=true --nologo 2>&1
     $buildExitCode = $LASTEXITCODE
 
     $errorLines = $buildOutput | Where-Object { $_ -match ": error [A-Z0-9]+" }

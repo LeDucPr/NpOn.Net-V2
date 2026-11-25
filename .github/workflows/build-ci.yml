@@ -33,8 +33,11 @@ jobs:
       - name: Restore Solution Dependencies
         run: dotnet restore NpOnV2.sln
 
+      - name: Build & Package Common Libraries (Accelerated Binary Store)
+        run: pwsh ./build-common.ps1 -Configuration Release
+
       - name: Compile Entire Solution (Release)
-        run: dotnet build NpOnV2.sln -c Release --no-restore
+        run: dotnet build NpOnV2.sln -c Release -p:UseCommonDlls=true
 
       - name: Run Automated Verification Tests
         run: dotnet test Test/NpOn.Core.Tests/NpOn.Core.Tests.csproj -c Release --no-build --verbosity normal
@@ -82,6 +85,9 @@ jobs:
       - name: Restore Solution
         run: dotnet restore NpOnV2.sln
 
+      - name: Build & Package Common Libraries (Accelerated Binary Store)
+        run: pwsh ./build-common.ps1 -Configuration Release
+
       # ------------------------------------------------------------------------
       # 1. Build & Push AccountService
       # ------------------------------------------------------------------------
@@ -89,6 +95,7 @@ jobs:
         run: |
           dotnet publish MicroServices/Account/Service/NpOn.AccountService/NpOn.AccountService.csproj \
             -t:PublishContainer -c Release \
+            -p:UseCommonDlls=true \
             -p:ContainerRegistry=ghcr.io \
             -p:ContainerRepository=${{ steps.repo_owner.outputs.lowercase }}/account-service \
             -p:ContainerImageTag="" \
@@ -101,6 +108,7 @@ jobs:
         run: |
           dotnet publish MicroServices/General/Service/NpOn.GeneralService/NpOn.GeneralService.csproj \
             -t:PublishContainer -c Release \
+            -p:UseCommonDlls=true \
             -p:ContainerRegistry=ghcr.io \
             -p:ContainerRepository=${{ steps.repo_owner.outputs.lowercase }}/general-service \
             -p:ContainerImageTag="" \
@@ -113,6 +121,7 @@ jobs:
         run: |
           dotnet publish Controllers/NpOn.SSO/NpOn.SSO.csproj \
             -t:PublishContainer -c Release \
+            -p:UseCommonDlls=true \
             -p:ContainerRegistry=ghcr.io \
             -p:ContainerRepository=${{ steps.repo_owner.outputs.lowercase }}/sso-controller \
             -p:ContainerImageTag="" \

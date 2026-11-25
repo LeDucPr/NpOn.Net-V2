@@ -5,6 +5,7 @@ using Common.Extensions.NpOn.CommonEnums;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.IdentityModel.Logging;
 using NpOn.CommonGrpcCall;
 
@@ -23,10 +24,6 @@ public abstract class CommonProgram
     protected async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
-        builder.Configuration.InitConfigs(
-            typeof(EApplicationConfiguration),
-            typeof(EUrlConfiguration)
-        );
         await builder.Services.AddCollectionServices(async (services) =>
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -34,11 +31,11 @@ public abstract class CommonProgram
 #pragma warning restore CS0618 // Type or member is obsolete
             await ConfigureServices(services);
 
-            // Add certificate rotation background service if mTLS is enabled
-            var useMtls = EApplicationConfiguration.InterServiceUseMTLS.GetAppSettingConfig().AsDefaultBool();
+            // Add certificate rotation background service if mTLS mode is enabled
+            var authMode = InterServiceAuthConfigHelper.ResolveAuthMode();
             var autoGenerate = EApplicationConfiguration.InterServiceAutoGenerateCertificates.GetAppSettingConfig()
                 .AsDefaultBool(true);
-            if (useMtls && autoGenerate)
+            if (authMode == EInterServiceAuthMode.Mtls && autoGenerate)
             {
                 var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
                 services.AddHostedService(sp => new CertificateRotationBackgroundService(
@@ -95,10 +92,13 @@ public abstract class CommonProgram
 
     private void RegisterInterServiceAuthServices(IServiceCollection services)
     {
-        // Register certificate service for mTLS
-        var useMtls = EApplicationConfiguration.InterServiceUseMTLS.GetAppSettingConfig().AsDefaultBool();
-        if (useMtls)
+        var authMode = InterServiceAuthConfigHelper.ResolveAuthMode();
+
+        if (authMode == EInterServiceAuthMode.Mtls)
         {
+            var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
+            var storagePath = EApplicationConfiguration.InterServiceCertificateStoragePath.GetAppSettingConfig()
+                .AsDefaultString("/certs");
             var clientCertPath = EApplicationConfiguration.InterServiceClientCertPath.GetAppSettingConfig()
                 .AsDefaultString();
             var clientCertPassword = EApplicationConfiguration.InterServiceClientCertPassword.GetAppSettingConfig()
@@ -107,24 +107,28 @@ public abstract class CommonProgram
                 .AsDefaultString();
             var serverCertPassword = EApplicationConfiguration.InterServiceServerCertPassword.GetAppSettingConfig()
                 .AsDefaultString();
-            var caCertPath = EApplicationConfiguration.InterServiceCACertPath.GetAppSettingConfig().AsDefaultString();
+            var caCertPath = EApplicationConfiguration.InterServiceCACertPath.GetAppSettingConfig()
+                .AsDefaultString("/certs/ca.crt");
+            var allowedIdentities = InterServiceAuthConfigHelper.GetAllowedIdentities();
+            var sanHosts = InterServiceAuthConfigHelper.GetServerSanHosts();
 
             services.AddSingleton<IInterServiceCertificateService>(new InterServiceCertificateService(
                 clientCertPath,
                 clientCertPassword,
                 serverCertPath,
                 serverCertPassword,
-                caCertPath));
+                caCertPath,
+                allowedIdentities: allowedIdentities));
 
-            // Register certificate generator for auto-generation
             var autoGenerate = EApplicationConfiguration.InterServiceAutoGenerateCertificates.GetAppSettingConfig()
-                .AsDefaultBool();
+                .AsDefaultBool(true);
             if (autoGenerate)
             {
-                var storagePath = EApplicationConfiguration.InterServiceCertificateStoragePath.GetAppSettingConfig()
-                    .AsDefaultString("/certs");
                 var validityDays = EApplicationConfiguration.InterServiceCertificateValidityDays.GetAppSettingConfig()
                     .AsDefaultInt(90);
+                var effectivePassword = !string.IsNullOrWhiteSpace(serverCertPassword)
+                    ? serverCertPassword
+                    : clientCertPassword;
 
                 services.AddSingleton<ICertificateGenerator>(sp => new CertificateGenerator(
                     sp.GetRequiredService<ILogger<CertificateGenerator>>(),
@@ -135,11 +139,25 @@ public abstract class CommonProgram
                     sp.GetRequiredService<IInterServiceCertificateService>(),
                     sp.GetRequiredService<ILogger<CertificateRotationService>>(),
                     caCertPath,
-                    validityDays));
+                    validityDays,
+                    clientCertPath: clientCertPath,
+                    serverCertPath: serverCertPath,
+                    certPassword: effectivePassword,
+                    additionalDnsNames: sanHosts));
             }
+
+            var clientCertMode = UseControllers
+                ? ClientCertificateMode.AllowCertificate
+                : ClientCertificateMode.RequireCertificate;
+            services.ApplyInterServiceMtls(clientCertMode, serviceName);
+        }
+        else if (authMode == EInterServiceAuthMode.ServiceMesh)
+        {
+            // Option 3B: Envoy sidecar handles mTLS/SPIFFE externally and forwards plaintext HTTP/2 (h2c) + XFCC
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         }
 
-        // Register JWT token service as fallback
+        // Register JWT token service (active in Jwt mode; retained in DI for backward-compatible GrpcHeaderConfig resolution)
         var interServiceSecret =
             EApplicationConfiguration.InterServiceSecretKey.GetAppSettingConfig().AsDefaultString();
         var tokenLifetimeMinutes = EApplicationConfiguration.InterServiceTokenLifetimeMinutes.GetAppSettingConfig()
@@ -147,9 +165,9 @@ public abstract class CommonProgram
         var keyRotationMinutes = EApplicationConfiguration.InterServiceKeyRotationMinutes.GetAppSettingConfig()
             .AsDefaultInt();
         services.AddSingleton<IInterServiceTokenService>(new InterServiceTokenService(
-            interServiceSecret,
-            TimeSpan.FromMinutes(tokenLifetimeMinutes),
-            TimeSpan.FromMinutes(keyRotationMinutes)));
+            string.IsNullOrWhiteSpace(interServiceSecret) ? "NpOn-InterService-Secret-Key-2024-Change-In-Production" : interServiceSecret,
+            tokenLifetimeMinutes > 0 ? TimeSpan.FromMinutes(tokenLifetimeMinutes) : TimeSpan.FromHours(1),
+            keyRotationMinutes > 0 ? TimeSpan.FromMinutes(keyRotationMinutes) : TimeSpan.FromHours(6)));
     }
 
     /// <summary>
@@ -180,15 +198,28 @@ public abstract class CommonProgram
             app.UseCors(corsPolicy);
         }
 
-        app.UseHttpsRedirection();
+        var authMode = InterServiceAuthConfigHelper.ResolveAuthMode();
+        if (authMode == EInterServiceAuthMode.Mtls)
+        {
+            app.UseHttpsRedirection();
+        }
+
         app.UseAuthentication();
         app.UseAuthorization();
 
         // Inter-service authentication middleware for gRPC
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
         {
-            var useMtls = EApplicationConfiguration.InterServiceUseMTLS.GetAppSettingConfig().AsDefaultBool();
-            app.UseGrpcServerAuth(requireAuth: true, useMtls: useMtls);
+            var requireAuth = EApplicationConfiguration.InterServiceRequireAuth.GetAppSettingConfig().AsDefaultBool(true);
+            var trustDomain = InterServiceAuthConfigHelper.GetServiceMeshTrustDomain();
+            var trustedProxyIps = InterServiceAuthConfigHelper.GetTrustedProxyIps();
+            var allowedIdentities = InterServiceAuthConfigHelper.GetAllowedIdentities();
+            app.UseGrpcServerAuth(
+                requireAuth: requireAuth,
+                authMode: authMode,
+                serviceMeshTrustDomain: trustDomain,
+                trustedProxyIps: trustedProxyIps,
+                allowedIdentities: allowedIdentities);
         }
 
         if (UseControllers)
@@ -197,7 +228,7 @@ public abstract class CommonProgram
         }
 
         string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
-        app.MapGet("/", () => appName);
+        app.MapGet("/", () => appName).AllowAnonymous();
     }
 
     /// <summary>
@@ -221,14 +252,33 @@ public abstract class CommonProgram
             // .AddYamlFile($"appsettings.{builder.Environment.EnvironmentName}.yaml", optional: true)
             ;
 
+        builder.Configuration.InitConfigs(
+            typeof(EApplicationConfiguration),
+            typeof(EUrlConfiguration)
+        );
+
+        var authMode = InterServiceAuthConfigHelper.ResolveAuthMode();
         // host-domain-start
         string hostDomain = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostDomain).AsDefaultString();
         var hostPort = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostPort).AsDefaultInt();
-        if (hostPort > 0)
-            hostDomain = $"{hostDomain}:{hostPort}";
         if (string.IsNullOrWhiteSpace(hostDomain))
             throw new Exception(EWebApplicationError.HostDomain.GetDisplayName());
-        builder.WebHost.UseUrls($"{hostDomain}:{hostPort}");
+
+        hostDomain = hostDomain.Trim().TrimEnd('/');
+        if (authMode == EInterServiceAuthMode.Mtls &&
+            hostDomain.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        {
+            hostDomain = $"https://{hostDomain["http://".Length..]}";
+        }
+        else if (authMode != EInterServiceAuthMode.Mtls &&
+                 hostDomain.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            hostDomain = $"http://{hostDomain["https://".Length..]}";
+        }
+
+        bool hasExplicitPort = Uri.TryCreate(hostDomain, UriKind.Absolute, out var parsedUri) && !parsedUri.IsDefaultPort;
+        string listenUrl = hostPort > 0 && !hasExplicitPort ? $"{hostDomain}:{hostPort}" : hostDomain;
+        builder.WebHost.UseUrls(listenUrl);
         return builder;
     }
 

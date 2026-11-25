@@ -93,7 +93,13 @@ public enum EApplicationConfiguration
     
     
     #region Inter-Service Authentication
+    [Display(Name = "InterServiceAuthMode")] InterServiceAuthMode, // - string (Jwt | Mtls | ServiceMesh)
+    [Display(Name = "InterServiceAllowedIdentities")] InterServiceAllowedIdentities, // - string (comma-separated CN/SAN/SPIFFE IDs)
+    [Display(Name = "InterServiceServiceMeshTrustDomain")] InterServiceServiceMeshTrustDomain, // - string
+    [Display(Name = "InterServiceTrustedProxyIps")] InterServiceTrustedProxyIps, // - string (comma-separated IPs/CIDRs)
+    [Display(Name = "InterServiceServerSanHosts")] InterServiceServerSanHosts, // - string (comma-separated DNS/IP SANs)
     [Display(Name = "InterServiceSecretKey")] InterServiceSecretKey, // - string
+    [Display(Name = "InterServiceRequireAuth")] InterServiceRequireAuth, // - bool
     [Display(Name = "InterServiceTokenLifetimeMinutes")] InterServiceTokenLifetimeMinutes, // - int
     [Display(Name = "InterServiceKeyRotationMinutes")] InterServiceKeyRotationMinutes, // - int
     [Display(Name = "InterServiceClientCertPath")] InterServiceClientCertPath, // - string

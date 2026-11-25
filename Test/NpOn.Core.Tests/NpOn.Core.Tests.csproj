@@ -26,8 +26,10 @@
     <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceReadModel\NpOn.AccountServiceReadModel.csproj" />
     <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceCommand\NpOn.AccountServiceCommand.csproj" />
     <ProjectReference Include="..\..\MicroServices\Account\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj" />
+    <ProjectReference Include="..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
     <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
     <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
+    <ProjectReference Include="..\..\Common\Extensions\NpOn.Saga\NpOn.Saga.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,6 +10,13 @@ services:
       - ASPNETCORE_URLS=http://0.0.0.0:14023
       - AccountServiceUrl=http://accountservice:40004
       - Cors:http://localhost:5500,http://localhost:5501
+      - InterServiceRequireAuth=true
+      - InterServiceAuthMode=Jwt
+      - InterServiceUseMTLS=false
+      - InterServiceSecretKey=NpOn-InterService-Secret-Key-2024-Change-In-Production
+      - InterServiceTokenLifetimeMinutes=60
+      - InterServiceKeyRotationMinutes=360
+      - LoginTokenExpiresTime=480
     ports:
       - "14023:14023"
     networks:
@@ -40,6 +47,13 @@ services:
       - RedisConnectionNumber=1000
       - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
       - RabbitMqExchangeName=NpOn.AccountService
+      - InterServiceRequireAuth=true
+      - InterServiceAuthMode=Jwt
+      - InterServiceUseMTLS=false
+      - InterServiceSecretKey=NpOn-InterService-Secret-Key-2024-Change-In-Production
+      - InterServiceTokenLifetimeMinutes=60
+      - InterServiceKeyRotationMinutes=360
+      - LoginTokenExpiresTime=480
     ports:
       - "40004:40004"
     networks:
@@ -70,6 +84,13 @@ services:
       - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
       - RabbitMqExchangeName=NpOn.MedicalService
       - IsUseCachingExecutionGeneralService=true
+      - InterServiceRequireAuth=true
+      - InterServiceAuthMode=Jwt
+      - InterServiceUseMTLS=false
+      - InterServiceSecretKey=NpOn-InterService-Secret-Key-2024-Change-In-Production
+      - InterServiceTokenLifetimeMinutes=60
+      - InterServiceKeyRotationMinutes=360
+      - LoginTokenExpiresTime=480
     networks:
       - npon-v2-backend-net
     volumes:

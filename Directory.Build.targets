@@ -1,0 +1,22 @@
+<Project>
+  <!-- Accelerated Build: Replace ProjectReferences with direct DLL References from artifacts/libs/ -->
+  <Target Name="SubstituteSharedProjectReferences"
+          BeforeTargets="BeforeResolveReferences;ResolveProjectReferences"
+          Condition="'$(UseCommonDlls)' == 'true' and Exists('$(CommonLibsDir)') and !$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Common'))">
+    <ItemGroup>
+      <!-- Include any ProjectReference whose prebuilt DLL exists in artifacts/libs/ and is not the current project -->
+      <_SharedProjRefs Include="@(ProjectReference)" 
+                       Condition="Exists('$(CommonLibsDir)%(FileName).dll') and !$([System.String]::Copy('%(FullPath)').Equals('$(MSBuildProjectFullPath)'))" />
+      <ProjectReference Remove="@(_SharedProjRefs)" />
+      <Reference Include="@(_SharedProjRefs->'%(FileName)')">
+        <HintPath>$(CommonLibsDir)%(_SharedProjRefs.FileName).dll</HintPath>
+        <MSBuildSourceProjectFile>%(_SharedProjRefs.FullPath)</MSBuildSourceProjectFile>
+        <Private>true</Private>
+      </Reference>
+    </ItemGroup>
+
+    <Message Importance="High"
+             Condition="'@(_SharedProjRefs)' != ''"
+             Text="[NPON FAST BUILD] $(MSBuildProjectName) -> Using @(_SharedProjRefs->Count()) prebuilt Shared DLLs from $(CommonLibsDir)" />
+  </Target>
+</Project>

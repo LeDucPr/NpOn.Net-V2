@@ -1,4 +1,5 @@
 using Common.Extensions.NpOn.CommonEnums;
+using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Grpc.Core;
 
@@ -35,6 +36,16 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
         Dictionary<string, string>? headers = null,
         IInterServiceTokenService? tokenService = null,
         string? serviceName = null)
+        : this(endUseType, headers, tokenService, serviceName, null)
+    {
+    }
+
+    public GrpcHeaderConfig(
+        EGrpcEndUseType endUseType,
+        Dictionary<string, string>? headers,
+        IInterServiceTokenService? tokenService,
+        string? serviceName,
+        bool? enablePerRequestToken)
     {
         var decomposeEndUseTypes = endUseType.GetFlags();
         if (decomposeEndUseTypes.Length > 1)
@@ -55,8 +66,10 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
             _metadataEntries.Add(new Metadata.Entry(GrpcInternalCallerSessionCode,
                 _grpcInternalCallerSessionCodeValue));
             
-            // Add inter-service authentication token if token service is available
-            if (_tokenService != null && !string.IsNullOrEmpty(_serviceName))
+            // Add inter-service authentication token only in JWT mode (skip in mTLS / ServiceMesh modes)
+            bool shouldAttachToken = enablePerRequestToken
+                ?? (InterServiceAuthConfigHelper.ResolveAuthMode() == EInterServiceAuthMode.Jwt);
+            if (shouldAttachToken && _tokenService != null && !string.IsNullOrEmpty(_serviceName))
             {
                 var token = _tokenService.GenerateToken(_serviceName);
                 _metadataEntries.Add(new Metadata.Entry(DefaultHeaderConstant.GrpcInterServiceAuthToken, token));

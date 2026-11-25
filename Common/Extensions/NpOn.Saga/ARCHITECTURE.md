@@ -326,7 +326,7 @@ sequenceDiagram
     participant AuditChannel as Lock-Free Audit Channel
 
     App->>CB: CommandBuilder(domains where T : BaseDomain, ERepositoryAction.Merge)
-    Note over CB: [PHASE 1: Bóc Tách ADN Tại Bộ Nhớ RAM]<br/>- Dùng Dynamic IL Emit FastGetter đọc EntityKey, ExpectedVersion, Payload<br/>- Nén ADN vào Buffer tạm thời (ArrayPool mượn trước)<br/>- Sinh SQL Native kèm RETURNING id, (xmax = 0) AS is_insert, version
+    Note over CB: [PHASE 1: Tách ADN Tại Bộ Nhớ RAM]<br/>- Dùng Dynamic IL Emit FastGetter đọc EntityKey, ExpectedVersion, Payload<br/>- Nén ADN vào Buffer tạm thời (ArrayPool mượn trước)<br/>- Sinh SQL Native kèm RETURNING id, (xmax = 0) AS is_insert, version
     CB->>Driver: NpOnDbCommand + SagaPreExecutionContext (ADN Token)
     Driver->>DB: Thực thi Batch SQL siêu tốc
     DB-->>Driver: Kết quả SIÊU NHẸ: Chỉ gồm (id, is_insert, version) - Vài chục bytes!
@@ -386,7 +386,7 @@ flowchart LR
     style AuditPayload fill:#1e293b,stroke:#f59e0b,stroke-width:1px,color:#fff
 ```
 
-#### 1. Cơ Chế Bóc Tách Khóa Phức Hợp Không Cấp Phát (Zero-Allocation via `Span<char>`):
+#### 1. Cơ Chế Tách Khóa Phức Hợp Không Cấp Phát (Zero-Allocation via `Span<char>`):
 - Dynamic IL Emit duyệt qua toàn bộ `meta.PrimaryKeys` được đánh dấu thuộc tính `[Pk]`.
 - Sử dụng `stackalloc char[128]` trên Callstack (không tốn dù chỉ 1 byte trên Heap) kết hợp `ISpanFormattable`:
   Format nối tiếp các giá trị khóa: `1001#5520#DEV_01`.
@@ -634,7 +634,7 @@ flowchart LR
     style AuditPayload fill:#1e293b,stroke:#f59e0b,stroke-width:1px,color:#fff
 ```
 
-#### 1. Cơ Chế Bóc Tách Khóa Phức Hợp Không Cấp Phát (Zero-Allocation via `Span<char>`):
+#### 1. Cơ Chế Tách Khóa Phức Hợp Không Cấp Phát (Zero-Allocation via `Span<char>`):
 - Dynamic IL Emit duyệt qua toàn bộ `meta.PrimaryKeys` được đánh dấu thuộc tính `[Pk]`.
 - Sử dụng `stackalloc char[128]` trên Callstack (không tốn dù chỉ 1 byte trên Heap) kết hợp `ISpanFormattable`:
   Format nối tiếp các giá trị khóa: `1001#5520#DEV_01`.

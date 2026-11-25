@@ -1,0 +1,69 @@
+<Solution>
+  <Folder Name="/Applications/">
+    <Project Path="Applications/NpOn.CommonApplication/NpOn.CommonApplication.csproj" />
+    <Project Path="Applications/NpOn.CommonHttpApplication/NpOn.CommonHttpApplication.csproj" />
+  </Folder>
+  <Folder Name="/Applications/ApplicationExtensions/">
+    <Project Path="Applications/ApplicationExtensions/NpOn.AddGrpcAppExtUse/NpOn.AddGrpcAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.CassandraAppExtUse/NpOn.CassandraAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.ClickHouseAppExtUse/NpOn.ClickHouseAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.ElasticSearchAppExtUse/NpOn.ElasticSearchAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.KafkaAppExtUse/NpOn.KafkaAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.MssqlAppExtUse/NpOn.MssqlAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.MySqlAppExtUse/NpOn.MySqlAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.Neo4JAppExtUse/NpOn.Neo4JAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.PostgresAppExtUse/NpOn.PostgresAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.RabbitMqAppExtUse/NpOn.RabbitMqAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.RedisAppExtUse/NpOn.RedisAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.TokenValidatorExtUse/NpOn.TokenValidatorExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.YugaByteAppExtUse/NpOn.YugaByteAppExtUse.csproj" />
+    <Project Path="Applications/ApplicationExtensions/NpOn.ZeroMqAppExtUse/NpOn.ZeroMqAppExtUse.csproj" />
+  </Folder>
+  <Folder Name="/Extensions/">
+    <Project Path="Extensions/NpOn.BaseDbFactory/NpOn.BaseDbFactory.csproj" />
+    <Project Path="Extensions/NpOn.CommonBaseDomain/NpOn.CommonBaseDomain.csproj" />
+    <Project Path="Extensions/NpOn.CommonDb/NpOn.CommonDb.csproj" />
+    <Project Path="Extensions/NpOn.CommonEnums/NpOn.CommonEnums.csproj" />
+    <Project Path="Extensions/NpOn.CommonGrpcCall/NpOn.CommonGrpcCall.csproj" />
+    <Project Path="Extensions/NpOn.CommonGrpcContract/NpOn.CommonGrpcContract.csproj" />
+    <Project Path="Extensions/NpOn.CommonHeaderConfig/NpOn.CommonHeaderConfig.csproj" />
+    <Project Path="Extensions/NpOn.CommonInternalCache/NpOn.CommonInternalCache.csproj" />
+    <Project Path="Extensions/NpOn.CommonMode/NpOn.CommonMode.csproj" />
+    <Project Path="Extensions/NpOn.CommonScope/NpOn.CommonScope.csproj" />
+    <Project Path="Extensions/NpOn.HandleFlow/NpOn.HandleFlow.csproj" />
+    <Project Path="Extensions/NpOn.ICommonDb/NpOn.ICommonDb.csproj" />
+    <Project Path="Extensions/NpOn.Saga/NpOn.Saga.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructures/">
+    <Project Path="Infrastructures/NpOn.CassandraExtCm/NpOn.CassandraExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.ClickHouseExtCm/NpOn.ClickHouseExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.ElasticSearchExtCm/NpOn.ElasticSearchExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.KafkaExtCm/NpOn.KafkaExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.MongoDbExtCm/NpOn.MongoDbExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.MssqlExtCm/NpOn.MssqlExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.MySqlExtCm/NpOn.MySqlExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.Neo4JExtCm/NpOn.Neo4JExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.PostgresExtCm/NpOn.PostgresExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.RabbitMqExtMs/NpOn.RabbitMqExtMs.csproj" />
+    <Project Path="Infrastructures/NpOn.RedisExtCm/NpOn.RedisExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.YugaByteExtCm/NpOn.YugaByteExtCm.csproj" />
+    <Project Path="Infrastructures/NpOn.ZeroMqExtCm/NpOn.ZeroMqExtCm.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructures/DbFactories/">
+    <Project Path="Infrastructures/DbFactories/NpOn.CassandraFactory/NpOn.CassandraFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.ClickHouseFactory/NpOn.ClickHouseFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.ElasticSearchFactory/NpOn.ElasticSearchFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.GenericDbFactory/NpOn.GenericDbFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.MssqlFactory/NpOn.MssqlFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.MySqlFactory/NpOn.MySqlFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.Neo4JFactory/NpOn.Neo4JFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.PostgresFactory/NpOn.PostgresFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.RedisFactory/NpOn.RedisFactory.csproj" />
+    <Project Path="Infrastructures/DbFactories/NpOn.YugaByteFactory/NpOn.YugaByteFactory.csproj" />
+  </Folder>
+  <Project Path="../MicroServices/Account/Contract/NpOn.AccountServiceCommand/NpOn.AccountServiceCommand.csproj" />
+  <Project Path="../MicroServices/Account/Contract/NpOn.AccountServiceReadModel/NpOn.AccountServiceReadModel.csproj" />
+  <Project Path="../MicroServices/Account/Definitions/NpOn.AccountEnum/NpOn.AccountEnum.csproj" />
+  <Project Path="../MicroServices/Account/Definitions/NpOn.ShareAccountConstant/NpOn.ShareAccountConstant.csproj" />
+  <Project Path="../MicroServices/Account/Service/NpOn.IAccountService/NpOn.IAccountService.csproj" />
+</Solution>

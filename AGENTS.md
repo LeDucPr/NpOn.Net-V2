@@ -57,6 +57,18 @@ Hệ thống `NpOn.Net-V2` được thiết kế theo mô hình Microservices ph
 - **Bộ nhớ Zero-Allocation & Object Pooling (`IObjectPoolStore`)**:
   * Các đối tượng wrapper trung gian (`NpOnWrapperResult`, `ITabularResultSet`, row/cell containers) được lấy ra từ `ConcurrentBag` trong `ObjectPoolStore` và tái sử dụng, giữ lượng rác phát sinh cho GC ở mức tiệm cận 0.
 
+### 1.4 Cơ Chế Tách Biệt Thư Viện Chung & Bộ Nhớ Đệm Binary Tăng Tốc (`build-common.ps1` & `artifacts/libs`)
+- **Tách riêng biên dịch Common (`Common.slnx`)**: Toàn bộ 52 project hạ tầng, extensions và application wrappers (bao gồm `NpOn.Saga`) được quản lý tập trung và đóng gói sang thư mục độc lập `artifacts/libs/` (được `.gitignore` bảo vệ tuyệt đối không commit).
+- **Cơ chế tự động phát hiện thay đổi (Change Detection & Zero-Rebuild Overhead)**:
+  * `build-common.ps1` tự động quét và tính toán MD5 Content Hash toàn bộ source code `Common/`.
+  * Nếu không phát hiện thay đổi mã nguồn, script bỏ qua 100% quá trình biên dịch trong 0.05 giây và tái sử dụng trực tiếp các file DLL có sẵn.
+  * Khi có bất kỳ thay đổi nào trong `Common/`, hệ thống tự động tái biên dịch và đồng bộ DLL mới nhất vào `artifacts/libs/`.
+- **Tự động chuyển đổi tham chiếu nhị phân (`Directory.Build.targets`)**:
+  * Đối với mọi project ứng dụng (Microservices, Controllers, Tests), MSBuild tự động chuyển đổi các `<ProjectReference>` trỏ vào `Common/` thành `<Reference>` trực tiếp tới file DLL (`artifacts/libs/*.dll`).
+  * Loại bỏ hoàn toàn chi phí re-evaluation của 52 project, giúp thời gian build microservices giảm từ 20s xuống còn 1-2s.
+- **Đồng bộ toàn diện trên GitHub Actions CI (`build-ci.yml`)**:
+  * Luồng CI tự động chạy `build-common.ps1` một lần duy nhất trước khi build các container và test suites, tiết kiệm tối đa thời gian runner.
+
 ---
 
 ## 2. Yêu Cầu Bắt Buộc Đối Với Bộ Khung Harness (`run-harness.ps1`)
@@ -215,6 +227,20 @@ Toàn bộ các kiểu dữ liệu CQL phải được kiểm thử đọc/ghi v
   * **So sánh đồng thời 3 framework**: `Unified UDAL` vs `Dapper 2.1` vs `EF Core 9.0` (`AsNoTracking`).
   * **Khử định kiến cache (Rotated Execution)**: Xoay vòng thứ tự thực thi giữa UDAL, Dapper, và EF Core để kết quả đo đạc hoàn toàn khách quan.
   * **Đo đạc 4 chiều**: Throughput (rec/s), Latency (mean/min/max/P95), GC Gen0/1/2 delta, và kích thước thư viện (DLL Footprint: UDAL ~48 KB vs Dapper ~230 KB vs EF Core ~2.5 MB).
+
+---
+
+## 11. Quy Chuẩn Khởi Tạo Định Danh Toàn Cục & GUID (`IndexerMode`)
+
+- **Mặc định toàn hệ thống là UUID Version 7 (`Guid.CreateVersion7()`)**:
+  * `IndexerMode.CreateGuid()` và `IndexerMode.CreateGuidV7()` sinh UUID v7 (RFC 9562) có thứ tự thời gian (Time-ordered).
+  * Giúp triệt tiêu hiện tượng Page Splits và phân mảnh chỉ mục B-Tree trên các hệ CSDL quan hệ và phân tán (PostgreSQL, ScyllaDB, MSSQL, MySQL).
+- **Phân loại chuyên biệt theo mục đích**:
+  * **Khóa chính & Saga/Audit**: Bắt buộc dùng `IndexerMode.CreateSagaId()` và `IndexerMode.CreateAuditId()` (v7).
+  * **Mã bảo mật & Nonce**: Dùng `IndexerMode.CreateGuidV4()` (v4 ngẫu nhiên) khi cần giấu mốc thời gian tạo bản ghi.
+  * **Cơ sở dữ liệu MSSQL Clustered Index**: Dùng `IndexerMode.CreateCombGuid()` để tương thích thứ tự byte sắp xếp của SQL Server.
+  * **URL Slugs & Compact Headers**: Dùng `IndexerMode.CreateShortGuid()` (chuỗi 22 ký tự URL-safe Base64).
+
 
 
 

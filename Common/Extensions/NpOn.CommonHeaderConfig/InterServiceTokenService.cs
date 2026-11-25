@@ -26,9 +26,15 @@ public class InterServiceTokenService : IInterServiceTokenService
         TimeSpan? tokenLifetime = null,
         TimeSpan? keyRotationPeriod = null)
     {
-        _baseSecretKey = baseSecretKey;
-        _tokenLifetime = tokenLifetime ?? TimeSpan.FromHours(1);
-        _keyRotationPeriod = keyRotationPeriod ?? TimeSpan.FromHours(6);
+        _baseSecretKey = string.IsNullOrWhiteSpace(baseSecretKey)
+            ? "NpOn-InterService-Secret-Key-2024-Change-In-Production"
+            : baseSecretKey;
+        _tokenLifetime = tokenLifetime.HasValue && tokenLifetime.Value > TimeSpan.Zero
+            ? tokenLifetime.Value
+            : TimeSpan.FromHours(1);
+        _keyRotationPeriod = keyRotationPeriod.HasValue && keyRotationPeriod.Value > TimeSpan.Zero
+            ? keyRotationPeriod.Value
+            : TimeSpan.FromHours(6);
         _currentKeyRotationTime = DateTime.UtcNow;
         _currentSigningKey = GenerateTimeBasedKey(_currentKeyRotationTime);
     }
@@ -96,10 +102,14 @@ public class InterServiceTokenService : IInterServiceTokenService
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_currentSigningKey);
 
-            // Also try previous key bucket to handle rotation overlap
-            var previousKeyTime = _currentKeyRotationTime.Add(-_keyRotationPeriod);
+            // Also try previous and next key bucket to handle rotation overlap
+            var previousKeyTime = _currentKeyRotationTime.Subtract(_keyRotationPeriod);
             var previousKey = GenerateTimeBasedKey(previousKeyTime);
             var previousKeyBytes = Encoding.UTF8.GetBytes(previousKey);
+
+            var nextKeyTime = _currentKeyRotationTime.Add(_keyRotationPeriod);
+            var nextKey = GenerateTimeBasedKey(nextKeyTime);
+            var nextKeyBytes = Encoding.UTF8.GetBytes(nextKey);
 
             var validationParameters = new TokenValidationParameters
             {
@@ -107,11 +117,12 @@ public class InterServiceTokenService : IInterServiceTokenService
                 IssuerSigningKeys = new[]
                 {
                     new SymmetricSecurityKey(key),
-                    new SymmetricSecurityKey(previousKeyBytes)
+                    new SymmetricSecurityKey(previousKeyBytes),
+                    new SymmetricSecurityKey(nextKeyBytes)
                 },
                 ValidateIssuer = false,
                 ValidateAudience = false,
-                ClockSkew = TimeSpan.FromMinutes(5) // Allow some clock drift
+                ClockSkew = TimeSpan.FromMinutes(10) // Allow clock drift
             };
 
             principal = tokenHandler.ValidateToken(token, validationParameters, out _);

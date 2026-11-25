@@ -1,4 +1,4 @@
-﻿using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
+using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Controllers.NpOn.SSO.Mappings.Account;
@@ -51,7 +51,7 @@ public class AccountInfoController(
     }
 
     [HttpPost]
-    public async Task<CommonApiResponse<string>> AddOrChangeAccountInfo(AccountInfoAddOrChangeRequest request)
+    public async Task<CommonApiResponse<string>> AddOrChangeAccountInfo([FromBody] AccountInfoAddOrChangeRequest request)
     {
         return await ProcessRequest<string>(async (response) =>
         {
@@ -82,7 +82,7 @@ public class AccountInfoController(
     }
     
     [HttpPost]
-    public async Task<CommonApiResponse<string>> AddOrChangeAccountAddress(AccountAddressesAddOrChangeRequest request)
+    public async Task<CommonApiResponse<string>> AddOrChangeAccountAddress([FromBody] AccountAddressesAddOrChangeRequest request)
     {
         return await ProcessRequest<string>(async (response) =>
         {

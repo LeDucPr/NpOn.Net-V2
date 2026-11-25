@@ -11,6 +11,11 @@ AppName: SSO
 IsUseDataProtectionAutomaticKeyGeneration: true
 
 # Inter-service authentication
+InterServiceAuthMode: "Jwt" # "Jwt" | "Mtls" | "ServiceMesh"
+InterServiceAllowedIdentities: "" # Comma-separated allowed CN/SAN/SPIFFE/service names (empty = allow any trusted)
+InterServiceServiceMeshTrustDomain: "cluster.local"
+InterServiceTrustedProxyIps: "127.0.0.1,::1"
+InterServiceServerSanHosts: "sso,localhost,127.0.0.1"
 InterServiceUseMTLS: true
 InterServiceAutoGenerateCertificates: true
 InterServiceCertificateValidityDays: 90

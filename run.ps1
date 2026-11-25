@@ -25,6 +25,10 @@ $projects = @(
 )
 
 function Build-All {
+    # 0. Build va cache thu vien Common truoc khi publish
+    Write-Host "--- Kiem tra va dong goi thu vien Common sang artifacts/libs ---" -ForegroundColor Cyan
+    & "$PSScriptRoot\build-common.ps1" -Configuration Release
+
     Write-Host "--- Dang build SONG SONG (Multi-core) Microservices ---" -ForegroundColor Cyan
     $total = $projects.Count
     $overall_start = Get-Date
@@ -36,8 +40,8 @@ function Build-All {
             cd $root
             $start = Get-Date
             
-            # Thực hiện build
-            $output = dotnet publish $p -t:PublishContainer -c Release --nologo 2>&1
+            # Thực hiện build với tham chiếu trực tiếp Common DLLs
+            $output = dotnet publish $p -t:PublishContainer -c Release -p:UseCommonDlls=true --nologo 2>&1
             
             $end = Get-Date
             $elapsed = "{0:N2}" -f ($end - $start).TotalSeconds
