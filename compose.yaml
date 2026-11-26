@@ -81,6 +81,9 @@ services:
       - ConnectionString=Host=host.docker.internal;Port=5432;Username=postgres;Password=password;Database=general;
       - PostgresConnectionNumber=100
       - ConnectionNumber=100
+      - IsUseRedisCache=true
+      - RedisConnectString=host.docker.internal:6379,user=default,password=NpOn.Net-V2_Dragonfly
+      - RedisConnectionNumber=100
       - RabbitMqConnection=amqp://rabbitmq:password@host.docker.internal:5672/
       - RabbitMqExchangeName=NpOn.MedicalService
       - IsUseCachingExecutionGeneralService=true

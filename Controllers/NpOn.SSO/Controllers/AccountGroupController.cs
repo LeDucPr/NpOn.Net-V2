@@ -27,7 +27,7 @@ public class AccountGroupController(
                 return;
             }
 
-            var protoReq = new AccountGroupAddOrChangeRequestProto
+            var protoReq = new AccountGroupAddOrChangeCommand
             {
                 Leader = request.Leader.ToString(),
             };
@@ -62,13 +62,13 @@ public class AccountGroupController(
                 return;
             }
 
-            var protoReq = new AccountGroupCopyRequestProto
+            var protoReq = new AccountGroupCopyCommand
             {
                 GroupIdNeedCopy = request.GroupIdNeedCopy.ToString(),
             };
             foreach (var x in request.Components)
             {
-                var comp = new AccountGroupCopyComponentProto
+                var comp = new AccountGroupCopyComponentCommand
                 {
                     Leader = x.Leader.ToString(),
                 };
@@ -104,7 +104,7 @@ public class AccountGroupController(
                 return;
             }
 
-            var protoReq = new AccountGroupDeleteRequestProto
+            var protoReq = new AccountGroupDeleteCommand
             {
                 GroupId = request.GroupId.ToString(),
                 Leader = request.Leader.ToString(),

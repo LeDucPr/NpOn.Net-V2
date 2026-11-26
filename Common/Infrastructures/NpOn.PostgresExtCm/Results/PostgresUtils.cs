@@ -130,6 +130,11 @@ public static class PostgresUtils
     {
         if (value == null || value == DBNull.Value) return DBNull.Value;
 
+        if ((npgsqlDbType & NpgsqlDbType.Array) != 0)
+        {
+            return ConvertToNpgsqlTypedArray(value, npgsqlDbType & ~NpgsqlDbType.Array);
+        }
+
         // Intercept and handle Enum immediately, regardless of npgsqlDbType 
         if (value.GetType().IsEnum)
         {
@@ -147,6 +152,26 @@ public static class PostgresUtils
         if (npgsqlDbType == NpgsqlDbType.Unknown)
             return value;
 
+        Type targetType = GetTargetClrType(npgsqlDbType);
+
+        try
+        {
+            var converter = TypeDescriptor.GetConverter(targetType);
+            return converter.CanConvertFrom(typeof(string))
+                ? converter.ConvertFromString(stringValue)
+                : Convert.ChangeType(stringValue, targetType);
+        }
+        catch
+        {
+            return value;
+        }
+    }
+
+    private static Type GetTargetClrType(NpgsqlDbType npgsqlDbType)
+    {
+        if (npgsqlDbType == NpgsqlDbType.Unknown)
+            return typeof(string);
+
         // Lookup DbType from static cache without allocating NpgsqlParameter
         if (!NpgsqlDbTypeToDbTypeCache.TryGetValue(npgsqlDbType, out var adoNetType))
         {
@@ -155,9 +180,10 @@ public static class PostgresUtils
             NpgsqlDbTypeToDbTypeCache.TryAdd(npgsqlDbType, adoNetType);
         }
 
-        Type targetType = adoNetType switch
+        return adoNetType switch
         {
             DbType.Guid => typeof(Guid),
+            DbType.Int16 => typeof(short),
             DbType.Int32 => typeof(int),
             DbType.Int64 => typeof(long),
             DbType.Boolean => typeof(bool),
@@ -171,18 +197,57 @@ public static class PostgresUtils
             DbType.Byte => typeof(byte),
             _ => typeof(string)
         };
+    }
 
-        try
+    private static Array ConvertToNpgsqlTypedArray(object value, NpgsqlDbType elementDbType)
+    {
+        Type elementClrType = GetTargetClrType(elementDbType);
+
+        if (value.GetType().IsArray && value.GetType().GetElementType() == elementClrType)
         {
-            var converter = TypeDescriptor.GetConverter(targetType);
-            return converter.CanConvertFrom(typeof(string))
-                ? converter.ConvertFromString(stringValue)
-                : Convert.ChangeType(stringValue, targetType);
+            return (Array)value;
         }
-        catch
+
+        if (value is string rawStr)
         {
-            return value;
+            if (string.IsNullOrWhiteSpace(rawStr))
+                return Array.CreateInstance(elementClrType, 0);
+
+            string[] parts = rawStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            Array typedArray = Array.CreateInstance(elementClrType, parts.Length);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                object? converted = ConvertStringToNpgsqlType(parts[i], elementDbType);
+                typedArray.SetValue(converted is DBNull ? null : converted, i);
+            }
+
+            return typedArray;
         }
+
+        if (value is System.Collections.IEnumerable enumerable && value is not byte[])
+        {
+            var convertedItems = new List<object?>();
+            foreach (var item in enumerable)
+            {
+                if (item == null || item is DBNull) continue;
+                object? converted = ConvertStringToNpgsqlType(item, elementDbType);
+                if (converted is not DBNull)
+                    convertedItems.Add(converted);
+            }
+
+            Array typedArray = Array.CreateInstance(elementClrType, convertedItems.Count);
+            for (int i = 0; i < convertedItems.Count; i++)
+            {
+                typedArray.SetValue(convertedItems[i], i);
+            }
+
+            return typedArray;
+        }
+
+        object? singleConverted = ConvertStringToNpgsqlType(value, elementDbType);
+        Array singleArray = Array.CreateInstance(elementClrType, 1);
+        singleArray.SetValue(singleConverted is DBNull ? null : singleConverted, 0);
+        return singleArray;
     }
 
     /// <summary>

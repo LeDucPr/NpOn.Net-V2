@@ -1,5 +1,6 @@
 ﻿using Common.Extensions.NpOn.BaseDbFactory.Broadcasts;
 using Common.Extensions.NpOn.BaseDbFactory.Generics;
+using Common.Extensions.NpOn.CommonDb.Connections;
 using Common.Extensions.NpOn.CommonEnums.DatabaseEnums;
 using Common.Extensions.NpOn.ICommonDb.Connections;
 using Common.Extensions.NpOn.ICommonDb.DbCommands;
@@ -14,6 +15,9 @@ namespace Common.Infrastructures.DbFactories.NpOn.RedisFactory;
 
 public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 {
+    private static readonly TimeSpan OutageCooldown = TimeSpan.FromSeconds(2);
+    private long _circuitOpenUntilUtcTicks;
+
     public RedisFactoryWrapper(
         string openConnectString, int connectionNumber = 1, bool isUseCaching = true)
     {
@@ -37,6 +41,65 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
             this.AddToDbFactoryWrapperCache();
     }
 
+    /// <summary>
+    /// Fast-fail Redis executor: bypasses BaseDbFactoryWrapper's 30-second acquisition backoff
+    /// so cache/broadcast calls degrade in milliseconds when Dragonfly/Redis is unreachable
+    /// and automatically probe recovery once the short cooldown expires.
+    /// </summary>
+    private async Task<INpOnWrapperResult?> ExecuteRedisFastFailAsync(RedisDbCommand command)
+    {
+        if (DateTime.UtcNow.Ticks < Interlocked.Read(ref _circuitOpenUntilUtcTicks))
+        {
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+        }
+
+        var factory = Factory;
+        if (factory == null)
+        {
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+        }
+
+        NpOnDbConnection? connection = null;
+        try
+        {
+            connection = await factory.GetConnectionAsync().ConfigureAwait(false);
+            if (connection == null || !connection.Driver.IsValidSession)
+            {
+                OpenCircuit();
+                return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+            }
+
+            INpOnWrapperResult result = await connection.Driver.Execute(command).ConfigureAwait(false);
+            if (!result.Status && !connection.Driver.IsValidSession)
+            {
+                OpenCircuit();
+            }
+            else
+            {
+                Interlocked.Exchange(ref _circuitOpenUntilUtcTicks, 0);
+            }
+
+            return result;
+        }
+        catch (Exception ex) when (ex is RedisConnectionException or TimeoutException or ObjectDisposedException)
+        {
+            OpenCircuit();
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+        }
+        finally
+        {
+            if (connection != null)
+            {
+                factory.ReleaseConnection(connection);
+            }
+        }
+    }
+
+    private void OpenCircuit()
+    {
+        Interlocked.Exchange(ref _circuitOpenUntilUtcTicks, DateTime.UtcNow.Add(OutageCooldown).Ticks);
+    }
+
     // public Redis
 
     #region Single Operations
@@ -46,19 +109,19 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
     public Task<INpOnWrapperResult?> GetAsBaseResult(string key)
     {
         var command = new RedisDbCommand(key, ERedisCommand.Get);
-        return ExecuteAsync(command);
+        return ExecuteRedisFastFailAsync(command);
     }
 
     public Task<INpOnWrapperResult?> SetAsBaseResult(string key, string value, TimeSpan? expiry = null)
     {
         var command = new RedisDbCommand(key, ERedisCommand.Set, value, expiry ?? TimeSpan.FromMinutes(5));
-        return ExecuteAsync(command);
+        return ExecuteRedisFastFailAsync(command);
     }
 
     public Task<INpOnWrapperResult?> DeleteAsBaseResult(string key)
     {
         var command = new RedisDbCommand(key, ERedisCommand.Delete);
-        return ExecuteAsync(command);
+        return ExecuteRedisFastFailAsync(command);
     }
 
     #endregion Generic Type
@@ -93,31 +156,28 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 
     #region Generic Type
 
-    public async Task<INpOnWrapperResult?> GetManyAsBaseResult(params string[] keys)
+    public Task<INpOnWrapperResult?> GetManyAsBaseResult(params string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.GetMany, redisKeys);
-        var result = await ExecuteAsync(command);
-        return result;
+        return ExecuteRedisFastFailAsync(command);
     }
 
-    public async Task<INpOnWrapperResult?> SetManyAsBaseResult(
+    public Task<INpOnWrapperResult?> SetManyAsBaseResult(
         Dictionary<string, string> keyValues, TimeSpan? expiry = null)
     {
         var pairs = keyValues
             .Select(kvp => new KeyValuePair<RedisKey, RedisValue>(kvp.Key, kvp.Value))
             .ToArray();
         var command = new RedisDbCommand(pairs, expiry ?? TimeSpan.FromMinutes(5));
-        var result = await ExecuteAsync(command);
-        return result;
+        return ExecuteRedisFastFailAsync(command);
     }
 
-    public async Task<INpOnWrapperResult?> DeleteManyAsBaseResult(params string[] keys)
+    public Task<INpOnWrapperResult?> DeleteManyAsBaseResult(params string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.DeleteMany, redisKeys);
-        var result = await ExecuteAsync(command);
-        return result;
+        return ExecuteRedisFastFailAsync(command);
     }
 
     #endregion Generic Type
@@ -128,7 +188,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.GetMany, redisKeys);
-        var result = await ExecuteAsync(command);
+        var result = await ExecuteRedisFastFailAsync(command);
         return result as RedisValueWrapper;
     }
 
@@ -139,7 +199,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
             .Select(kvp => new KeyValuePair<RedisKey, RedisValue>(kvp.Key, kvp.Value))
             .ToArray();
         var command = new RedisDbCommand(pairs, expiry ?? TimeSpan.FromMinutes(5));
-        var result = await ExecuteAsync(command);
+        var result = await ExecuteRedisFastFailAsync(command);
         return result as RedisValueWrapper;
     }
 
@@ -147,7 +207,7 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
     {
         var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
         var command = new RedisDbCommand(ERedisCommand.DeleteMany, redisKeys);
-        var result = await ExecuteAsync(command);
+        var result = await ExecuteRedisFastFailAsync(command);
         return result as RedisValueWrapper;
     }
 
@@ -160,42 +220,38 @@ public class RedisFactoryWrapper : BaseDbFactoryWrapper, IRedisFactoryWrapper
 
     public async Task<RedisValueWrapper?> CustomizeString(string commandText)
     {
-        var result = await ExecuteAsync(new RedisDbCommand(commandText));
+        var result = await ExecuteRedisFastFailAsync(new RedisDbCommand(commandText));
         return result as RedisValueWrapper;
     }
 
     public async Task<RedisValueWrapper?> CustomizeCommand(INpOnDbCommand command)
     {
         RedisDbCommand redisCommand = command as RedisDbCommand ?? new RedisDbCommand(command.CommandText);
-        var result = await ExecuteAsync(redisCommand);
+        var result = await ExecuteRedisFastFailAsync(redisCommand);
         return result as RedisValueWrapper;
     }
 
-    public async Task<INpOnWrapperResult?> CustomizeStringAsBaseResult(string commandText)
+    public Task<INpOnWrapperResult?> CustomizeStringAsBaseResult(string commandText)
     {
-        var result = await ExecuteAsync(new RedisDbCommand(commandText));
-        return result;
+        return ExecuteRedisFastFailAsync(new RedisDbCommand(commandText));
     }
 
-    public async Task<INpOnWrapperResult?> CustomizeCommandAsBaseResult(INpOnDbCommand command)
+    public Task<INpOnWrapperResult?> CustomizeCommandAsBaseResult(INpOnDbCommand command)
     {
         RedisDbCommand redisCommand = command as RedisDbCommand ?? new RedisDbCommand(command.CommandText);
-        var result = await ExecuteAsync(redisCommand);
-        return result;
+        return ExecuteRedisFastFailAsync(redisCommand);
     }
 
-    public async Task<INpOnWrapperResult?> Publish(string channel)
+    public Task<INpOnWrapperResult?> Publish(string channel)
     {
         RedisDbCommand redisCommand = new RedisDbCommand(channel, message: null);
-        var result = await ExecuteAsync(redisCommand);
-        return result;
+        return ExecuteRedisFastFailAsync(redisCommand);
     }
 
-    public async Task<INpOnWrapperResult?> Subscribe(BaseBroadcastMessage message)
+    public Task<INpOnWrapperResult?> Subscribe(BaseBroadcastMessage message)
     {
         RedisDbCommand redisCommand = new RedisDbCommand(message);
-        var result = await ExecuteAsync(redisCommand);
-        return result;
+        return ExecuteRedisFastFailAsync(redisCommand);
     }
 
     #endregion Customize

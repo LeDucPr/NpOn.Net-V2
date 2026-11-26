@@ -143,4 +143,6 @@ public enum EApplicationConfiguration
     [Display(Name = "IsMediaDeleteEnabled")] IsMediaDeleteEnabled, // - bool (default false)
     [Display(Name = "MediaCdnUrl")] MediaCdnUrl, // - string (e.g. https://cdn.example.com)
     #endregion Media Upload
+
+    [Display(Name = "RefreshTokenExpiredTime")] RefreshTokenExpiredTime, // int -- refresh/cache TTL in minutes
 }

@@ -18,3 +18,24 @@ public class AccountPermissionExceptionRModel : BaseAccountRModelFromGrpcTable
         FieldMap.Add(nameof(AccessPermission), "access_permission");
     }
 }
+
+/// <summary>
+/// Explicit cached permission state per account stored in Redis.
+/// An empty Exceptions list is cached intentionally to distinguish a valid
+/// zero-exception account from a Redis cache miss (null).
+/// </summary>
+[ProtoContract]
+public sealed class AccountPermissionExceptionCacheState
+{
+    [ProtoMember(1)] public long CatalogVersion { get; set; }
+    [ProtoMember(2)] public long BasePermissionMask { get; set; }
+    [ProtoMember(3)] public bool IsAccountActive { get; set; }
+    [ProtoMember(4)] public List<AccountPermissionExceptionCacheItem> Exceptions { get; set; } = [];
+}
+
+[ProtoContract]
+public sealed class AccountPermissionExceptionCacheItem
+{
+    [ProtoMember(1)] public string ControllerCode { get; set; } = string.Empty;
+    [ProtoMember(2)] public EPermissionAccessController AccessPermission { get; set; }
+}

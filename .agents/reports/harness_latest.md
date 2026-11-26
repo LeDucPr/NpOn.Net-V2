@@ -1,7 +1,7 @@
 ﻿# NpOn.Net-V2 Agent Harness Report
-- **Thoi gian chay**: 2026-11-26 21:42:52
+- **Thoi gian chay**: 2026-11-27 00:52:35
 - **Ket qua tong the**: **SUCCESS**
-- **Tong thoi gian**: 45.16 giay
+- **Tong thoi gian**: 31.69 giay
 - **Moi truong**: .NET 10.0.200-preview.0.26103.119 | Microsoft Windows NT 10.0.22621.0 | 32 CPU Cores
 
 ---
@@ -10,9 +10,9 @@
 
 | Giai doan | Trang thai | Thoi gian | Chi tiet |
 |---|---|---|---|
-| **1. Kien truc & Compilation** | PASS | 30775.79 ms | Errors: 0, Warnings: 524 |
-| **2. Test & Verification** | PASS | 10784.48 ms | Passed: 74/74 (Filter: Category!=IntegrationScylla, IL Emit verified) |
-| **3. Hieu nang & Zero-Allocation** | PASS | 3243.34 ms | Throughput: 3162 ops/sec, GC Delta: G0=0/G1=0/G2=0 |
+| **1. Kien truc & Compilation** | PASS | 15820.4 ms | Errors: 0, Warnings: 520 |
+| **2. Test & Verification** | PASS | 11850.87 ms | Passed: 118/118 (Filter: Category!=IntegrationScylla, IL Emit verified) |
+| **3. Hieu nang & Zero-Allocation** | PASS | 3520.53 ms | Throughput: 2914 ops/sec, GC Delta: G0=0/G1=0/G2=0 |
 | **4. De doc cho nguoi** | PASS | - | CLI Dashboard formatted & Markdown exported |
 | **5. Debug & Chuan doan** | PASS | - | IL OpCode stacks balanced, Semaphore pool intact |
 
@@ -31,6 +31,6 @@
 - Kiem thu ObjectPoolStore voi ConcurrentBag dat chuan zero heap churn.
 
 ### 3. Chi so Hieu nang & Allocation
-- **Estimated Throughput**: 3162 ops/giay
+- **Estimated Throughput**: 2914 ops/giay
 - **GC Collections**: Gen0: 0 | Gen1: 0 | Gen2: 0
-- **Memory Footprint Delta**: 311.93 KB
+- **Memory Footprint Delta**: 288.05 KB

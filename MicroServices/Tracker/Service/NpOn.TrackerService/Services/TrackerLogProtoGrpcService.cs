@@ -2,15 +2,15 @@ using Grpc.Core;
 using MicroServices.Tracker.Contract.NpOn.TrackerServiceCommand.Commands;
 using MicroServices.Tracker.Definitions.NpOn.TrackerEnum;
 using MicroServices.Tracker.Service.NpOn.ITrackerService;
-using NpOn.Protos.Tracker.V1;
+using ProtoTracker = NpOn.Protos.Tracker.V1;
 
 namespace MicroServices.Tracker.Service.NpOn.TrackerService.Services;
 
 public sealed class TrackerLogProtoGrpcService(ITrackerLogService trackerLogService)
-    : TrackerLogProtoService.TrackerLogProtoServiceBase
+    : ProtoTracker.TrackerLogProtoService.TrackerLogProtoServiceBase
 {
-    public override async Task<TrackerCommonReplyProto> PushLogs(
-        PushTrackerLogsRequestProto request,
+    public override async Task<ProtoTracker.TrackerCommonResponseProto> PushLogs(
+        ProtoTracker.TrackerLogsPushCommand request,
         ServerCallContext context)
     {
         var commands = request.Commands.Select(x => new TrackerLogAddCommand
@@ -26,7 +26,7 @@ public sealed class TrackerLogProtoGrpcService(ITrackerLogService trackerLogServ
         }).ToArray();
 
         var result = await trackerLogService.PushLogs(commands);
-        var reply = new TrackerCommonReplyProto
+        var reply = new ProtoTracker.TrackerCommonResponseProto
         {
             Status = result.Status,
             Version = result.Version,

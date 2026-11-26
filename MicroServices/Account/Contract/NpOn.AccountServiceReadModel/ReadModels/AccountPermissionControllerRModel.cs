@@ -12,6 +12,7 @@ public class AccountPermissionControllerRModel : BaseAccountRModelFromGrpcTable
     [ProtoMember(3)] public required string Code { get; set; }
     [ProtoMember(4)] public EPermission Permission { get; set; }
     [ProtoMember(5)] public string Description { get; set; }
+    [ProtoMember(6)] public EPermission? RequiredPermission { get; set; }
 
     protected override void FieldMapper()
     {
@@ -21,6 +22,7 @@ public class AccountPermissionControllerRModel : BaseAccountRModelFromGrpcTable
         FieldMap.Add(nameof(Code), "code");
         FieldMap.Add(nameof(Permission), "permission");
         FieldMap.Add(nameof(Description), "description");
+        FieldMap.Add(nameof(RequiredPermission), "required_permission");
     }
 
     public EPermission[] GetEnablePermissions => Permission.GetFlags(); 

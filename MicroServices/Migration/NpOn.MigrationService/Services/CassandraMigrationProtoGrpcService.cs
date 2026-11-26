@@ -6,12 +6,12 @@ namespace MicroServices.Migration.Service.NpOn.MigrationService.Services;
 public sealed class CassandraMigrationProtoGrpcService(CassandraMigration cassandraMigration)
     : CassandraMigrationProtoService.CassandraMigrationProtoServiceBase
 {
-    public override async Task<MigrationCommonReplyProto> TransferTable(
-        MigrationTransferTableRequestProto request,
+    public override async Task<MigrationCommonResponseProto> TransferTable(
+        MigrationTransferTableCommand request,
         ServerCallContext context)
     {
         var result = await cassandraMigration.TransferTable();
-        var reply = new MigrationCommonReplyProto
+        var reply = new MigrationCommonResponseProto
         {
             Status = result.Status,
             Version = result.Version,

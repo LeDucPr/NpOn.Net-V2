@@ -31,6 +31,7 @@ public sealed record AccountPermissionController : BaseAccountDomain
     [ProtoMember(5)] [Field("permission")] public EPermission Permission { get; set; }
     [ProtoMember(6)] [Field("created_at")] public DateTime CreatedAt { get; set; }
     [ProtoMember(7)] [Field("updated_at")] public DateTime UpdatedAt { get; set; }
+    [ProtoMember(8)] [Field("required_permission")] public EPermission? RequiredPermission { get; set; }
 
     public AccountPermissionController()
     {
@@ -42,6 +43,7 @@ public sealed record AccountPermissionController : BaseAccountDomain
         VersionId = command.VersionId;
         Code = command.Code;
         Permission = command.Permission;
+        RequiredPermission = command.RequiredPermission;
         Description = command.Description;
         CreatedAt = DateTime.Now;
         UpdatedAt = DateTime.Now;

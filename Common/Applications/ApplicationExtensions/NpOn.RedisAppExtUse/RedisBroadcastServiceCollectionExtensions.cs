@@ -10,7 +10,7 @@ public static class RedisBroadcastServiceCollectionExtensions
 {
     public static IServiceCollection AddRedisBroadcast(this IServiceCollection services,
         string? connectionString = null,
-        params Type[]? handlerTypes) // Thêm tham số nhận danh sách Type ở đây
+        params Type[]? handlerTypes)
     {
         if (handlerTypes != null)
         {
@@ -25,19 +25,17 @@ public static class RedisBroadcastServiceCollectionExtensions
         {
             connectionString ??= EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
             INpOnConnectOption connectOption = new RedisConnectOption().SetConnectionString(connectionString);
-            RedisBroadcastFactoryWrapper? factoryWrapper = new RedisBroadcastFactoryWrapper(connectOption);
+            var factoryWrapper = new RedisBroadcastFactoryWrapper(connectOption);
 
             var handlers = provider.GetServices<BaseRedisBroadcastHandler>().ToArray();
-            if (!handlers.Any())
-                return factoryWrapper;
-
             foreach (var handler in handlers)
                 factoryWrapper += handler;
 
-            if (!factoryWrapper!.BuildFactory(out string? errorString))
+            // Always build factory even when HandlerCount == 0 so publisher-only nodes initialize PublishAsync.
+            if (factoryWrapper != null && !factoryWrapper.BuildFactory(out string? errorString) && !string.IsNullOrEmpty(errorString))
                 Console.WriteLine(errorString);
 
-            return factoryWrapper;
+            return factoryWrapper!;
         });
 
         return services;

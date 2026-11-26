@@ -90,7 +90,7 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
     public TValue AddOrUpdate(TKey key, TValue value, TimeSpan? expiresIn = null)
     {
         var wrapper = new WrapperCache<TValue>(value, expiresIn);
-        var lazy = new Lazy<Task<WrapperCache<TValue>>>(() => Task.FromResult(wrapper));
+        var lazy = new Lazy<Task<WrapperCache<TValue>>>(Task.FromResult(wrapper));
         _dict.AddOrUpdate(key, lazy, (_, _) => lazy);
         return value;
     }
@@ -101,16 +101,13 @@ public class WrapperCacheStore<TKey, TValue> : IWrapperCacheStore<TKey, TValue> 
         Func<TKey, TValue, TValue> updateFactory,
         TimeSpan? expiresIn = null)
     {
-        var newLazy = new Lazy<Task<WrapperCache<TValue>>>(() =>
+        var newLazy = new Lazy<Task<WrapperCache<TValue>>>(
             Task.FromResult(new WrapperCache<TValue>(addFactory(key), expiresIn)));
 
         var resultLazy = _dict.AddOrUpdate(key, newLazy, (k, existingLazy) =>
         {
-            // This update logic is complex in a stampede-proof scenario.
-            // For simplicity, we'll just replace the old task with a new one.
-            // A more robust implementation might await the old task first.
             var updatedValue = updateFactory(k, existingLazy.Value.GetAwaiter().GetResult().Value);
-            return new Lazy<Task<WrapperCache<TValue>>>(() =>
+            return new Lazy<Task<WrapperCache<TValue>>>(
                 Task.FromResult(new WrapperCache<TValue>(updatedValue, expiresIn)));
         });
 

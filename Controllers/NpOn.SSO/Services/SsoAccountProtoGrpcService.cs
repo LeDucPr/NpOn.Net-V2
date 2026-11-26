@@ -17,13 +17,13 @@ public sealed class SsoAccountProtoGrpcService(
     ContextService contextService)
     : SsoAccountProtoService.SsoAccountProtoServiceBase
 {
-    public override async Task<SsoLoginReplyProto> Login(
-        SsoLoginRequestProto request,
+    public override async Task<SsoAccountLoginResponseProto> Login(
+        AccountLoginRequest request,
         ServerCallContext context)
     {
         bool isUseMultiDevice = !string.IsNullOrWhiteSpace(request.DeviceInfo) &&
                                 (EAuthentication)request.AuthType == EAuthentication.WebApp;
-        var protoQuery = new AccountLoginRequestProto
+        var protoQuery = new AccountLoginQuery
         {
             ClientId = contextService.ClientId,
             Password = CreateHashPassword(request.Password),
@@ -40,7 +40,7 @@ public sealed class SsoAccountProtoGrpcService(
         if (request.HasAppId) protoQuery.AuthenApplicationId = request.AppId;
 
         var res = await authenticationProtoClient.LoginAsync(protoQuery);
-        var reply = new SsoLoginReplyProto
+        var reply = new SsoAccountLoginResponseProto
         {
             Status = res.Status,
             Version = res.Version,
@@ -50,7 +50,7 @@ public sealed class SsoAccountProtoGrpcService(
         reply.ErrorMessages.AddRange(res.ErrorMessages);
         if (res.Data != null)
         {
-            var m = new SsoLoginModelProto
+            var m = new AccountLoginOutputModel
             {
                 AccountId = res.Data.AccountId,
                 AuthType = res.Data.AuthType,

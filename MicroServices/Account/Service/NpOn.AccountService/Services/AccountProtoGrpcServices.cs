@@ -4,55 +4,55 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Service.NpOn.AccountService.Mappers;
 using MicroServices.Account.Service.NpOn.IAccountService;
-using NpOn.Protos.Account.V1;
+using ProtoAccount = NpOn.Protos.Account.V1;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Services;
 
 public sealed class AuthenticationProtoGrpcService(IAuthenticationService authenticationService)
-    : AuthenticationProtoService.AuthenticationProtoServiceBase
+    : ProtoAccount.AuthenticationProtoService.AuthenticationProtoServiceBase
 {
-    public override async Task<AccountLoginReplyProto> Signup(
-        AccountSignupRequestProto request,
+    public override async Task<ProtoAccount.AccountLoginResponseProto> Signup(
+        ProtoAccount.AccountSignupCommand request,
         ServerCallContext context)
     {
         var result = await authenticationService.Signup(AccountProtoMapper.ToSignupCommand(request));
         return AccountProtoMapper.ToLoginReply(result);
     }
 
-    public override async Task<BoolReplyProto> ChangeAccountStatus(
-        AccountSetStatusRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> ChangeAccountStatus(
+        ProtoAccount.AccountSetStatusCommand request,
         ServerCallContext context)
     {
         var result = await authenticationService.ChangeAccountStatus(AccountProtoMapper.ToSetStatusCommand(request));
         return AccountProtoMapper.ToBoolReply(result);
     }
 
-    public override async Task<BoolReplyProto> ChangeAccountPassword(
-        AccountChangePasswordRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> ChangeAccountPassword(
+        ProtoAccount.AccountChangePasswordCommand request,
         ServerCallContext context)
     {
         var result = await authenticationService.ChangeAccountPassword(AccountProtoMapper.ToChangePasswordCommand(request));
         return AccountProtoMapper.ToBoolReply(result);
     }
 
-    public override async Task<AccountLoginReplyProto> Login(
-        AccountLoginRequestProto request,
+    public override async Task<ProtoAccount.AccountLoginResponseProto> Login(
+        ProtoAccount.AccountLoginQuery request,
         ServerCallContext context)
     {
         var result = await authenticationService.Login(AccountProtoMapper.ToLoginQuery(request));
         return AccountProtoMapper.ToLoginReply(result);
     }
 
-    public override async Task<AccountLoginReplyProto> RefreshToken(
-        AccountRefreshTokenRequestProto request,
+    public override async Task<ProtoAccount.AccountLoginResponseProto> RefreshToken(
+        ProtoAccount.AccountRefreshTokenQuery request,
         ServerCallContext context)
     {
         var result = await authenticationService.RefreshToken(AccountProtoMapper.ToRefreshTokenQuery(request));
         return AccountProtoMapper.ToLoginReply(result);
     }
 
-    public override async Task<AccountLoginReplyProto> GetLogonTokenBySessionId(
-        AccountSessionRequestProto request,
+    public override async Task<ProtoAccount.AccountLoginResponseProto> GetLogonTokenBySessionId(
+        ProtoAccount.AccountGetLogonInfoBySessionIdQuery request,
         ServerCallContext context)
     {
         var result = await authenticationService.GetLogonTokenBySessionId(new AccountGetLogonInfoBySessionIdQuery
@@ -63,8 +63,8 @@ public sealed class AuthenticationProtoGrpcService(IAuthenticationService authen
         return AccountProtoMapper.ToLoginReply(result);
     }
 
-    public override async Task<BoolReplyProto> IsValidLogonPermissionExceptionControllers(
-        AccountPermissionExceptionCheckRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> IsValidLogonPermissionExceptionControllers(
+        ProtoAccount.AccountPermissionExceptionCachingCheckValidQuery request,
         ServerCallContext context)
     {
         var result = await authenticationService.IsValidLogonPermissionExceptionControllers(
@@ -77,8 +77,8 @@ public sealed class AuthenticationProtoGrpcService(IAuthenticationService authen
         return AccountProtoMapper.ToBoolReply(result);
     }
 
-    public override async Task<StringReplyProto> LogOut(
-        AccountSessionRequestProto request,
+    public override async Task<ProtoAccount.CommonStringResponseProto> LogOut(
+        ProtoAccount.AccountLogoutQuery request,
         ServerCallContext context)
     {
         var result = await authenticationService.LogOut(new AccountLogoutQuery
@@ -91,10 +91,10 @@ public sealed class AuthenticationProtoGrpcService(IAuthenticationService authen
 }
 
 public sealed class AccountInfoProtoGrpcService(IAccountInfoService accountInfoService)
-    : AccountInfoProtoService.AccountInfoProtoServiceBase
+    : ProtoAccount.AccountInfoProtoService.AccountInfoProtoServiceBase
 {
-    public override async Task<AccountInfoListReplyProto> AccountInfoGetByAccountIds(
-        AccountIdsRequestProto request,
+    public override async Task<ProtoAccount.AccountInfoListResponseProto> AccountInfoGetByAccountIds(
+        ProtoAccount.AccountInfoGetByAccountIdsQuery request,
         ServerCallContext context)
     {
         var ids = request.AccountIds
@@ -108,8 +108,8 @@ public sealed class AccountInfoProtoGrpcService(IAccountInfoService accountInfoS
         return AccountProtoMapper.ToInfoListReply(result);
     }
 
-    public override async Task<AccountInfoSingleReplyProto> AccountInfoGetByAccountId(
-        AccountIdRequestProto request,
+    public override async Task<ProtoAccount.AccountInfoResponseProto> AccountInfoGetByAccountId(
+        ProtoAccount.AccountInfoGetByAccountIdQuery request,
         ServerCallContext context)
     {
         var result = await accountInfoService.AccountInfoGetByAccountId(new AccountInfoGetByAccountIdQuery
@@ -119,8 +119,8 @@ public sealed class AccountInfoProtoGrpcService(IAccountInfoService accountInfoS
         return AccountProtoMapper.ToInfoSingleReply(result);
     }
 
-    public override async Task<CommonStatusReplyProto> AccountInfoAddOrChange(
-        AccountInfoAddOrChangeRequestProto request,
+    public override async Task<ProtoAccount.CommonResponseProto> AccountInfoAddOrChange(
+        ProtoAccount.AccountInfoAddOrChangeCommand request,
         ServerCallContext context)
     {
         var result = await accountInfoService.AccountInfoAddOrChange(
@@ -128,8 +128,8 @@ public sealed class AccountInfoProtoGrpcService(IAccountInfoService accountInfoS
         return AccountProtoMapper.ToStatusReply(result);
     }
 
-    public override async Task<CommonStatusReplyProto> AccountAddressesAddOrChange(
-        AccountAddressesAddOrChangeRequestProto request,
+    public override async Task<ProtoAccount.CommonResponseProto> AccountAddressesAddOrChange(
+        ProtoAccount.AccountAddressesAddOrChangeCommand request,
         ServerCallContext context)
     {
         var commands = request.Items.Select(AccountProtoMapper.ToAddressCommand).ToArray();
@@ -139,10 +139,10 @@ public sealed class AccountInfoProtoGrpcService(IAccountInfoService accountInfoS
 }
 
 public sealed class AccountGroupProtoGrpcService(IAccountGroupService accountGroupService)
-    : AccountGroupProtoService.AccountGroupProtoServiceBase
+    : ProtoAccount.AccountGroupProtoService.AccountGroupProtoServiceBase
 {
-    public override async Task<CommonStatusReplyProto> GroupAddOrChange(
-        AccountGroupAddOrChangeRequestProto request,
+    public override async Task<ProtoAccount.CommonResponseProto> GroupAddOrChange(
+        ProtoAccount.AccountGroupAddOrChangeCommand request,
         ServerCallContext context)
     {
         var result = await accountGroupService.GroupAddOrChange(
@@ -150,24 +150,24 @@ public sealed class AccountGroupProtoGrpcService(IAccountGroupService accountGro
         return AccountProtoMapper.ToStatusReply(result);
     }
 
-    public override async Task<CommonStatusReplyProto> GroupCopy(
-        AccountGroupCopyRequestProto request,
+    public override async Task<ProtoAccount.CommonResponseProto> GroupCopy(
+        ProtoAccount.AccountGroupCopyCommand request,
         ServerCallContext context)
     {
         var result = await accountGroupService.GroupCopy(AccountProtoMapper.ToGroupCopyCommand(request));
         return AccountProtoMapper.ToStatusReply(result);
     }
 
-    public override async Task<CommonStatusReplyProto> Search(
-        AccountGroupSearchRequestProto request,
+    public override async Task<ProtoAccount.CommonResponseProto> Search(
+        ProtoAccount.AccountGroupSearchQuery request,
         ServerCallContext context)
     {
         var result = await accountGroupService.Search(AccountProtoMapper.ToGroupSearchQuery(request));
         return AccountProtoMapper.ToStatusReply(result);
     }
 
-    public override async Task<CommonStatusReplyProto> GroupOrMemberDelete(
-        AccountGroupDeleteRequestProto request,
+    public override async Task<ProtoAccount.CommonResponseProto> GroupOrMemberDelete(
+        ProtoAccount.AccountGroupDeleteCommand request,
         ServerCallContext context)
     {
         var result = await accountGroupService.GroupOrMemberDelete(
@@ -177,10 +177,10 @@ public sealed class AccountGroupProtoGrpcService(IAccountGroupService accountGro
 }
 
 public sealed class AccountPermissionProtoGrpcService(IAccountPermissionService accountPermissionService)
-    : AccountPermissionProtoService.AccountPermissionProtoServiceBase
+    : ProtoAccount.AccountPermissionProtoService.AccountPermissionProtoServiceBase
 {
-    public override async Task<AccountPermissionExceptionListReplyProto> AccountPermissionExceptionQuickGetByAccountId(
-        AccountIdRequestProto request,
+    public override async Task<ProtoAccount.AccountPermissionExceptionListResponseProto> AccountPermissionExceptionQuickGetByAccountId(
+        ProtoAccount.AccountPermissionExceptionGetByAccountIdQuery request,
         ServerCallContext context)
     {
         var result = await accountPermissionService.AccountPermissionExceptionQuickGetByAccountId(
@@ -191,8 +191,8 @@ public sealed class AccountPermissionProtoGrpcService(IAccountPermissionService 
         return AccountProtoMapper.ToPermissionExceptionReply(result);
     }
 
-    public override async Task<BoolReplyProto> SyncPermissionWithController(
-        SyncPermissionControllersRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> SyncPermissionWithController(
+        ProtoAccount.AccountPermissionControllersSyncCommand request,
         ServerCallContext context)
     {
         var commands = request.Items.Select(x => new AccountPermissionControllerAddOrChangeCommand
@@ -201,15 +201,16 @@ public sealed class AccountPermissionProtoGrpcService(IAccountPermissionService 
             VersionId = Guid.TryParse(x.VersionId, out var v) ? v : Guid.Empty,
             ControllerName = x.ControllerName,
             Permission = (EPermission)x.Permission,
-            Description = x.HasDescription ? x.Description : null
+            Description = x.HasDescription ? x.Description : null,
+            RequiredPermission = x.HasRequiredPermission ? (EPermission)x.RequiredPermission : null
         }).ToArray();
 
         var result = await accountPermissionService.SyncPermissionWithController(commands);
         return AccountProtoMapper.ToBoolReply(result);
     }
 
-    public override async Task<BoolReplyProto> ClearOldControllersVersion(
-        ClearOldControllersVersionRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> ClearOldControllersVersion(
+        ProtoAccount.AccountPermissionControllerDeleteByHostCodeAndVersionIdCommand request,
         ServerCallContext context)
     {
         var result = await accountPermissionService.ClearOldControllersVersion(
@@ -221,8 +222,8 @@ public sealed class AccountPermissionProtoGrpcService(IAccountPermissionService 
         return AccountProtoMapper.ToBoolReply(result);
     }
 
-    public override async Task<BoolReplyProto> AddOrChangeAccountPermissionException(
-        AddOrChangeAccountPermissionExceptionsRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> AddOrChangeAccountPermissionException(
+        ProtoAccount.AccountPermissionExceptionsAddOrChangeCommand request,
         ServerCallContext context)
     {
         var commands = request.Items.Select(x => new AccountPermissionExceptionAddOrChangeCommand
@@ -236,8 +237,8 @@ public sealed class AccountPermissionProtoGrpcService(IAccountPermissionService 
         return AccountProtoMapper.ToBoolReply(result);
     }
 
-    public override async Task<BoolReplyProto> AddOrChangeManyAccountPermissionException(
-        AddOrChangeManyAccountPermissionExceptionRequestProto request,
+    public override async Task<ProtoAccount.CommonBoolResponseProto> AddOrChangeManyAccountPermissionException(
+        ProtoAccount.AccountPermissionExceptionAddOrChangeManyCommand request,
         ServerCallContext context)
     {
         var command = new AccountPermissionExceptionAddOrChangeManyCommand

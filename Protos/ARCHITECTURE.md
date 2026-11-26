@@ -158,9 +158,8 @@ sequenceDiagram
     SSO-->>C: 200 OK (JWT Token)
 
     C->>SSO: POST /api/AccountInfo/GetAccountInfo (Authorization: Bearer ...)
-    SSO->>TV: TokenValidationMiddleware -> AuthenService
-    TV->>ACC: AuthenticationProtoService.GetLogonTokenBySessionId (NpOn.Account.Proto)
-    ACC-->>TV: AccountLoginItemProto (TokenStatus = Active)
+    SSO->>TV: TokenValidationMiddleware -> ContextService.ValidateToken (Stateless JWT)
+    Note over TV: Xác thực chữ ký + expiry JWT cục bộ (0 Redis, 0 gRPC sang AccountService)
     SSO->>ACC: AccountInfoProtoService.AccountInfoGetByAccountId (NpOn.Account.Proto)
     ACC->>GEN: FldMasterProtoService.GetExecCommand (NpOn.General.Proto)
     GEN-->>ACC: CommandSpec

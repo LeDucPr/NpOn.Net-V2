@@ -44,11 +44,11 @@ public static class ApplicationConfigMode
         {
             var key = (Enum)field.GetValue(null)!;
         
-            if (Configs.ContainsKey(key)) continue;
+            if (Configs.TryGetValue(key, out var existing) && !string.IsNullOrEmpty(existing)) continue;
             var displayAttr = field.GetCustomAttribute<DisplayAttribute>();
             string keyConfig = displayAttr?.GetName() ?? field.Name;
             var value = configuration[keyConfig]; // "Parent:Child:Constant"
-            Configs.Add(key, value ?? string.Empty);
+            Configs[key] = value ?? string.Empty;
         }
     }
 

@@ -9,7 +9,7 @@ public class AuthenService(
 {
     /// <param name="key">sessionId</param>
     /// <returns></returns>
-    public AccountLoginItemProto? GetLoginInfoSync(string key)
+    public AccountLoginRModel? GetLoginInfoSync(string key)
     {
         if (string.IsNullOrEmpty(key))
             return null;
@@ -17,10 +17,10 @@ public class AuthenService(
         return loginInfo;
     }
 
-    public async Task<AccountLoginItemProto?> GetLogonInfoBySessionId(string sessionId)
+    public async Task<AccountLoginRModel?> GetLogonInfoBySessionId(string sessionId)
     {
         var logonResponse = await authenticationProtoClient.GetLogonTokenBySessionIdAsync(
-            new AccountSessionRequestProto
+            new AccountGetLogonInfoBySessionIdQuery
             {
                 SessionId = sessionId.AsDefaultString(),
             });
@@ -34,7 +34,7 @@ public class AuthenService(
     {
         var logonPermissionExceptionControllers =
             await authenticationProtoClient.IsValidLogonPermissionExceptionControllersAsync(
-                new AccountPermissionExceptionCheckRequestProto
+                new AccountPermissionExceptionCachingCheckValidQuery
                 {
                     AccountId = accountId.AsDefaultString(),
                     ControllerCode = controllerCode,

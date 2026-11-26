@@ -30,7 +30,7 @@ public class AccountInfoController(
             }
 
             var accountInfoResponse = await accountInfoProtoClient.AccountInfoGetByAccountIdAsync(
-                new AccountIdRequestProto
+                new AccountInfoGetByAccountIdQuery
                 {
                     AccountId = accountId,
                 });
@@ -100,7 +100,7 @@ public class AccountInfoController(
                 return;
             }
 
-            var protoReq = new AccountAddressesAddOrChangeRequestProto();
+            var protoReq = new AccountAddressesAddOrChangeCommand();
             protoReq.Items.Add(request.ToProtoCommand(accountId));
             var accountInfoResponse = await accountInfoProtoClient.AccountAddressesAddOrChangeAsync(protoReq);
             if (!accountInfoResponse.Status)

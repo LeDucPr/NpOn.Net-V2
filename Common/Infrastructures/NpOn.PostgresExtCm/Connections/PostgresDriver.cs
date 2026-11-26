@@ -272,7 +272,7 @@ public class PostgresDriver : NpOnDbDriver
 
             return new PostgresResultSetWrapper(reader);
         }
-        catch (NpgsqlException ex) when (ex.IsTransient)
+        catch (NpgsqlException ex) when (ex.IsTransient || !IsValidSession)
         {
             throw; // System.Data.Common.DbException - trigger retry
         }

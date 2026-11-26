@@ -13,8 +13,10 @@ using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.Account.Service.NpOn.AccountService.KafkaConsumers;
 using MicroServices.Account.Service.NpOn.AccountService.RabbitMqConsumers;
+using MicroServices.Account.Service.NpOn.AccountService.RedisBroadcast;
 using MicroServices.Account.Service.NpOn.AccountService.Services;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
@@ -74,7 +76,8 @@ public sealed class Program : HttpCommonProgram
         services
             .AddPostgres(poolStore: store)
             .AddRedis()
-            .AddRedisBroadcast();
+            .AddSingleton<GeneralQuerySyncBroadcastTrigger>()
+            .AddRedisBroadcast(connectionString: null, typeof(GeneralQuerySyncBroadcastHandler));
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
@@ -86,9 +89,9 @@ public sealed class Program : HttpCommonProgram
         if (isUseRabbitMq)
         {
             services.AddRabbitMq(); // rabbitMq
-            services.AddTransient<AccountSaveLoginRabbitMqConsumer>()
+            services.AddSingleton<AccountSaveLoginRabbitMqConsumer>()
                 .AddHostedService<ConsumerHostedService<AccountSaveLoginRabbitMqConsumer>>();
-            services.AddTransient<AccountSaveLogoutRabbitMqConsumer>()
+            services.AddSingleton<AccountSaveLogoutRabbitMqConsumer>()
                 .AddHostedService<ConsumerHostedService<AccountSaveLogoutRabbitMqConsumer>>();
         }
 
@@ -129,6 +132,9 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
+        // Eagerly resolve RedisBroadcastFactoryWrapper so Pub/Sub subscriptions activate immediately on boot.
+        _ = app.Services.GetService<IRedisBroadcastFactoryWrapper>();
+
         // Add Map Grpc Service (Schema-First .proto + Code-First coexistence)
         app.MapGrpcService<AccountInfoProtoGrpcService>();
         app.MapGrpcService<AuthenticationProtoGrpcService>();

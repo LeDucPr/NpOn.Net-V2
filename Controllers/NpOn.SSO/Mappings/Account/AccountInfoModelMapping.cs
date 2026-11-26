@@ -9,7 +9,7 @@ public static class AccountInfoModelMapping
     private static Guid? ParseNullableGuid(bool hasValue, string? value) =>
         hasValue && Guid.TryParse(value, out var g) ? g : null;
 
-    public static AccountInfoDetailOutputModel ToModel(this AccountInfoItemProto accountInfoRModel)
+    public static AccountInfoDetailOutputModel ToModel(this AccountInfoRModel accountInfoRModel)
     {
         return new AccountInfoDetailOutputModel()
         {

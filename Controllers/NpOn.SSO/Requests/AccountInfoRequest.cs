@@ -40,11 +40,11 @@ public class AccountAddressesAddOrChangeRequest
 
 public static class AccountInfoAddOrChangeRequestExtensions
 {
-    public static AccountInfoAddOrChangeRequestProto ToProtoCommand(
+    public static AccountInfoAddOrChangeCommand ToProtoCommand(
         this AccountInfoAddOrChangeRequest request,
         string accountIdString)
     {
-        var cmd = new AccountInfoAddOrChangeRequestProto
+        var cmd = new AccountInfoAddOrChangeCommand
         {
             AccountId = accountIdString
         };
@@ -70,11 +70,11 @@ public static class AccountInfoAddOrChangeRequestExtensions
         return cmd;
     }
 
-    public static AccountAddressAddOrChangeItemProto ToProtoCommand(
+    public static AccountAddressAddOrChangeCommand ToProtoCommand(
         this AccountAddressesAddOrChangeRequest request,
         Guid accountId)
     {
-        var cmd = new AccountAddressAddOrChangeItemProto
+        var cmd = new AccountAddressAddOrChangeCommand
         {
             AccountId = accountId.ToString(),
             AddressType = (int)request.AddressType

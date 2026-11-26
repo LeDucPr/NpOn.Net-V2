@@ -6,13 +6,13 @@ package npon.migration.v1;
 
 // Schema-First gRPC contract for MigrationService
 service CassandraMigrationProtoService {
-  rpc TransferTable (MigrationTransferTableRequestProto) returns (MigrationCommonReplyProto);
+  rpc TransferTable (MigrationTransferTableCommand) returns (MigrationCommonResponseProto);
 }
 
-message MigrationTransferTableRequestProto {
+message MigrationTransferTableCommand {
 }
 
-message MigrationCommonReplyProto {
+message MigrationCommonResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;

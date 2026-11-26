@@ -42,10 +42,6 @@ public class AuthenticationService(
             ? EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : 480;
 
-    // khi đặt trong event -> cần thời gian handler
-    // (quá trình này có thể gây lỗi các request cần phản hồi ngay lập tức khi chưa kịp add token vào cacheDb)
-    private readonly bool _isReadTokenImmediate = true;
-
     #region Signup And Accept
 
     public async Task<CommonResponse<AccountLoginRModel>> Signup(AccountSignupCommand command)
@@ -141,19 +137,13 @@ public class AuthenticationService(
                     .Register(baseRepository)
                     .Register(baseRepository.CommandBuilder([accountChangeStatus], ERepositoryAction.Update)));
 
-
-            if (command.AccountStatus != EAccountStatus.Active)
+            var isDeleteCachePermissionCache =
+                await redisRepository.DeleteCachingPermissionExceptionsByAccountId(accountIdAsString);
+            if (!isDeleteCachePermissionCache)
             {
-                var isDeleteCachingTokenStorage =
-                    await redisRepository.DeleteCachingTokenStorageAndTokensByAccountId(accountIdAsString);
-                var isDeleteCachePermissionCache =
-                    await redisRepository.DeleteCachingPermissionExceptionsByAccountId(accountIdAsString);
-                if (!isDeleteCachingTokenStorage || !isDeleteCachePermissionCache)
-                {
-                    response.SetFail($"Account Change Status Cache {command.AccountStatus.AsDefaultString()} fail");
-                    response.Data = false;
-                    return;
-                }
+                response.SetFail($"Account Change Status Cache {command.AccountStatus.AsDefaultString()} fail");
+                response.Data = false;
+                return;
             }
 
             // await pipelineScope.Next(
@@ -249,9 +239,6 @@ public class AuthenticationService(
             {
             }
 
-            if (_isReadTokenImmediate)
-                await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
-
             // kafkaProducer.AddEvent(new KafkaEvent<AccountSaveLoginEvent>()
             // {
             //     MessageContent = accountLoginRModel.ToLoginEvent()
@@ -307,8 +294,6 @@ public class AuthenticationService(
             AccountLoginRModel accountLoginRModel = CreateToken(
                 accountObject, query.AuthType /*, ELoginType.Default*/);
 
-            if (_isReadTokenImmediate)
-                await redisRepository.AddCachingToken(accountLoginRModel.SessionId, accountLoginRModel);
             rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
             {
                 MessageContent = accountLoginRModel.ToLoginEvent()
@@ -322,45 +307,19 @@ public class AuthenticationService(
     public async Task<CommonResponse<AccountLoginRModel>> GetLogonTokenBySessionId(
         AccountGetLogonInfoBySessionIdQuery query)
     {
-        return await CommonProcess<AccountLoginRModel>(
-            async (response) =>
+        return await CommonProcess<AccountLoginRModel>(async (response) =>
+        {
+            AccountLoginRModel? accountLoginInfoRModel =
+                await authenticationStorageAdapter.AccountLoginInfoGetBySessionId(query.SessionId);
+            if (accountLoginInfoRModel == null)
             {
-                bool isUseCachingDb = EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool();
-                if (!isUseCachingDb)
-                {
-                    response.SetSuccess(); // avoid breaking case
-                    return (response, EControlFlow.Continue);
-                }
-
-                AccountLoginRModel? accountLoginRModel =
-                    await redisRepository.GetAccountLogonBySessionIdWithPrefixCode(query.SessionId);
-                if (accountLoginRModel != null)
-                {
-                    response.Data = accountLoginRModel;
-                    response.SetSuccess();
-                    return (response, EControlFlow.Break); // cache OK => break;
-                }
-
-                response.SetSuccess(); // avoid breaking case
-                if (!isUseCachingDb)
-                    return (response, EControlFlow.Continue); // cache fail / unuse cache => continue;
-                return (response, EControlFlow.Break);
-            },
-            async (response) =>
-            {
-                AccountLoginRModel? accountLoginInfoRModel =
-                    await authenticationStorageAdapter.AccountLoginInfoGetBySessionId(query.SessionId);
-                if (accountLoginInfoRModel == null)
-                {
-                    response.SetFail("AccountLoginInfo not found");
-                    return (response, EControlFlow.Break);
-                }
-
-                response.Data = accountLoginInfoRModel;
-                response.SetSuccess();
-                return (response, EControlFlow.Break);
+                response.SetFail("AccountLoginInfo not found");
+                return;
             }
-        );
+
+            response.Data = accountLoginInfoRModel;
+            response.SetSuccess();
+        });
     }
 
     public async Task<CommonResponse<bool>> IsValidLogonPermissionExceptionControllers(
@@ -368,15 +327,47 @@ public class AuthenticationService(
     {
         return await CommonProcess<bool>(async (response) =>
         {
-            bool isValid = false;
-            var existedCachingControllers =
-                await redisRepository.GetCachingPermissionException(query.AccountId);
-            string? findControllerCode = existedCachingControllers?.FirstOrDefault();
-            if (findControllerCode == null && query.IsHasBasePermission)
-                isValid = true;
-            else if (findControllerCode != null && !query.IsHasBasePermission)
-                isValid = true;
-            response.Data = isValid;
+            long currentCatalogVersion = await redisRepository.GetPermissionCatalogVersion();
+            AccountPermissionExceptionCacheState? state =
+                await redisRepository.GetAccountPermissionState(query.AccountId);
+
+            // Cache miss / expiry / post-deploy catalog bump -> read-through self-heal from DB
+            if (state == null || state.CatalogVersion != currentCatalogVersion)
+            {
+                var healed = await accountPermissionService.HealAndRefreshPermissionState(query.AccountId);
+                state = healed.Status ? healed.Data : null;
+            }
+
+            if (state == null || !state.IsAccountActive)
+            {
+                response.Data = false;
+                response.SetSuccess();
+                return;
+            }
+
+            AccountPermissionExceptionCacheItem? matchedException = state.Exceptions.FirstOrDefault(x =>
+                string.Equals(x.ControllerCode, query.ControllerCode, StringComparison.Ordinal));
+            if (matchedException != null)
+            {
+                response.Data = matchedException.AccessPermission == EPermissionAccessController.Enable;
+                response.SetSuccess();
+                return;
+            }
+
+            // No explicit exception -> check against live Account BasePermissionMask & current synced controller flags
+            var controllerResp = await accountPermissionService.GetPermissionControllerByCode(query.ControllerCode);
+            if (controllerResp.Status && controllerResp.Data != null)
+            {
+                response.Data = AccountPermissionService.HasEffectiveBasePermission(
+                    state.BasePermissionMask,
+                    controllerResp.Data.Permission,
+                    controllerResp.Data.RequiredPermission);
+                response.SetSuccess();
+                return;
+            }
+
+            // Fail closed when controller metadata is missing or lookup failed — never trust potentially stale JWT claims.
+            response.Data = false;
             response.SetSuccess();
         });
     }
@@ -385,26 +376,20 @@ public class AuthenticationService(
     {
         return await CommonProcess<string>(async (response) =>
         {
-            var logonTokenResponse = await GetLogonTokenBySessionId(new AccountGetLogonInfoBySessionIdQuery()
+            AccountLoginRModel? accountLoginInfoRModel =
+                await authenticationStorageAdapter.AccountLoginInfoGetBySessionId(query.SessionId);
+            if (accountLoginInfoRModel == null)
             {
-                SessionId = query.SessionId,
-            });
-            if (!logonTokenResponse.Status || logonTokenResponse.Data == null)
-            {
-                AccountLoginRModel? accountLoginInfoRModel =
-                    await authenticationStorageAdapter.AccountLoginInfoGetBySessionId(query.SessionId);
-                if (accountLoginInfoRModel == null)
-                {
-                    response.SetFail("Invalid Token");
-                    return;
-                }
+                response.SetFail("Invalid Token");
+                return;
+            }
 
+            if (accountLoginInfoRModel.TokenStatus == ETokenStatus.Active)
+            {
                 rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLogoutEvent>()
                 {
                     MessageContent = accountLoginInfoRModel.ToLogoutEvent(),
                 });
-                response.SetFail("Invalid Token");
-                return;
             }
 
             response.Data = "Logout successful";
@@ -425,19 +410,9 @@ public class AuthenticationService(
             }
 
             string accountId = @event.AccountId.AsDefaultString();
-            string sessionId = @event.SessionId;
 
-            if (!_isReadTokenImmediate)
-                await redisRepository.AddCachingToken(sessionId, accountLoginRModel);
-            await redisRepository.AddToCachingTokenStorageByAccountId(accountId, sessionId);
-            // permission exception cache
-            var permissionExceptionResponse =
-                await accountPermissionService.AccountPermissionExceptionQuickGetByAccountId(
-                    new AccountPermissionExceptionGetByAccountIdQuery()
-                    {
-                        AccountId = accountId,
-                    });
-            await redisRepository.AddCachingPermissionException(accountId, permissionExceptionResponse.Data);
+            // Self-heal obsolete exceptions on login and warm Redis permission cache state
+            await accountPermissionService.HealAndRefreshPermissionState(accountId);
 
             response.SetSuccess();
         });
@@ -456,11 +431,6 @@ public class AuthenticationService(
                 response.SetFail($"AccountLoginInfo save logout fail");
                 return;
             }
-
-            // delete token key from caching db
-            await redisRepository.DeleteCachingToken(@event.SessionId);
-            await redisRepository.DeleteCachingTokenStorageAndTokensByAccountId(
-                accountLogin.AccountId.AsDefaultString(), [accountLogin.SessionId]);
 
             response.SetSuccess();
         });

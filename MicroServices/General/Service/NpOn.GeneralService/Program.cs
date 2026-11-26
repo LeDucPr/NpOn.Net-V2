@@ -1,5 +1,6 @@
 using Common.Applications.ApplicationsExtensions.NpOn.AddGrpcAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.PostgresAppExtUse;
+using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using Common.Applications.NpOn.CommonApplication.Extensions;
 using Common.Applications.NpOn.CommonHttpApplication;
 using Common.Extensions.NpOn.CommonEnums;
@@ -9,11 +10,10 @@ using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
 using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
 using MicroServices.General.Service.NpOn.GeneralService.Services;
 using MicroServices.General.Service.NpOn.IGeneralService;
-// using Microsoft.AspNetCore.Server.Kestrel.Core;
 using NpOn.CommonGrpcCall;
 
 namespace MicroServices.General.Service.NpOn.GeneralService;
@@ -28,14 +28,12 @@ public sealed class Program : HttpCommonProgram
 
     public static async Task Main(string[] args)
     {
-        // Allow HTTP/2 over insecure (http) connection for Client
         Program program = new Program(args);
         await program.RunAsync();
     }
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        // call load balancing services 
         if (EApplicationConfiguration.IsUseGrpcStandardMode.GetAppSettingConfig().AsDefaultBool())
         {
             var serviceName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
@@ -58,10 +56,16 @@ public sealed class Program : HttpCommonProgram
         services.AddSingleton(store);
         services.AddPostgres(poolStore: store);
 
-        services.AddSingleton<IWrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>>>(_ =>
-            new WrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>>()
-        );
+        if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
+        {
+            services
+                .AddRedis()
+                .AddRedisBroadcast();
+        }
 
+        services.AddSingleton<IWrapperCacheStore<string, List<TblFldRModel>>>(_ =>
+            new WrapperCacheStore<string, List<TblFldRModel>>()
+        );
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {
@@ -73,11 +77,11 @@ public sealed class Program : HttpCommonProgram
         return Task.CompletedTask;
     }
 
-    // protected override void ConfigureBasePipeline(WebApplication app)
-    // { app.MapGet("/", () => "NpOn.GeneralService"); base.ConfigureBasePipeline(app); }
-
     protected override Task ConfigurePipeline(WebApplication app)
     {
+        // Eagerly resolve RedisBroadcastFactoryWrapper so publisher multiplexer connects at startup.
+        _ = app.Services.GetService<IRedisBroadcastFactoryWrapper>();
+
         app.MapGrpcService<FldMasterService>();
         app.MapGrpcService<FldMasterProtoGrpcService>();
         return Task.CompletedTask;

@@ -9,6 +9,7 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceCommand;
 [ProtoContract]
 [ProtoInclude(100, typeof(TblFldExecutionCommand))]
 [ProtoInclude(200, typeof(DomainActionCommand))]
+[ProtoInclude(300, typeof(BulkSyncQueriesCommand))]
 public abstract class BaseGeneralCommand : CommonAbsQuery
 {
     [ProtoMember(1)] public override bool Status { get; set; }

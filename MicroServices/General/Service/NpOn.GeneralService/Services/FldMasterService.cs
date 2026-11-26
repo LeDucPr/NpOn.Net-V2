@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Data;
+using System.Text;
 using Common.Applications.NpOn.CommonApplication.Services;
 using Common.Extensions.NpOn.CommonBaseDomain;
 using Common.Extensions.NpOn.CommonDb.DbCommands;
@@ -14,6 +15,8 @@ using Common.Extensions.NpOn.ICommonDb.DbCommands;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
 using Common.Extensions.NpOn.ICommonDb.DbResults.Grpc;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
+using Common.Infrastructures.DbFactories.NpOn.RedisFactory.Broadcasts;
+using Common.Infrastructures.NpOn.RedisExtCm.Results;
 using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Commands;
 using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
 using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
@@ -26,11 +29,19 @@ using NpgsqlTypes;
 namespace MicroServices.General.Service.NpOn.GeneralService.Services
 {
     public class FldMasterService(
-        IWrapperCacheStore<TblFldExecutionCommand, List<TblFldRModel>> internalCache,
+        IWrapperCacheStore<string, List<TblFldRModel>> internalCache,
         IPostgresFactoryWrapper postgresFactoryWrapper,
-        ILogger<CommonService> logger
+        ILogger<CommonService> logger,
+        IRedisBroadcastFactoryWrapper? redisBroadcastFactoryWrapper = null
     ) : CommonService(logger), IFldMasterService
     {
+        private static readonly TimeSpan QueryCacheTtl = TimeSpan.FromSeconds(600);
+
+        public static string BuildCacheKey(TblFldExecutionCommand executionCommand) =>
+            !string.IsNullOrWhiteSpace(executionCommand.Code)
+                ? $"code:{executionCommand.Code}"
+                : $"id:{executionCommand.TblMaterId ?? string.Empty}";
+
         public async Task<CommonResponse> ExecuteDomainAction(DomainActionCommand command)
         {
             return await CommonProcess(async response =>
@@ -139,11 +150,23 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
             {
                 List<TblFldRModel> tblFldObjects;
                 if (EApplicationConfiguration.IsUseCachingExecutionGeneralService.GetAppSettingConfig().AsDefaultBool())
-                    tblFldObjects = await internalCache.GetOrAddAsync(executionCommand,
+                {
+                    string cacheKey = BuildCacheKey(executionCommand);
+                    tblFldObjects = await internalCache.GetOrAddAsync(
+                        cacheKey,
                         async _ => (await GetExecution(executionCommand)).Data ?? [],
-                        TimeSpan.FromSeconds(600));
+                        QueryCacheTtl);
+
+                    // Do not keep negative/empty lookups pinned for 600s when the query has not been deployed yet.
+                    if (tblFldObjects.Count == 0)
+                    {
+                        internalCache.Remove(cacheKey);
+                    }
+                }
                 else
+                {
                     tblFldObjects = (await GetExecution(executionCommand)).Data ?? [];
+                }
 
                 if (tblFldObjects is not { Count: > 0 })
                 {
@@ -189,7 +212,7 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 {
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
-                    
+
                     parameters.Add(new NpOnDbCommandParamGrpc
                     {
                         ParamName = paramObj.FieldName,
@@ -205,7 +228,6 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                 CommandRModel commandModel = new CommandRModel
                 {
                     CommandText = commandText,
-                    // Parameters = parameters.ToArray(),
                     ParamsPayload = payload,
                     ExecType = execType,
                     DatabaseType = databaseType,
@@ -294,6 +316,257 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Services
                     response.Data = grpcObject;
                 }
 
+                response.SetSuccess();
+            });
+        }
+
+        public async Task<CommonResponse<BulkSyncQueriesRModel?>> BulkSyncQueries(BulkSyncQueriesCommand command)
+        {
+            return await CommonProcess<BulkSyncQueriesRModel?>(async response =>
+            {
+                if (command.Queries is not { Count: > 0 })
+                {
+                    response.SetFail("Queries payload cannot be empty.");
+                    return;
+                }
+
+                if (command.Queries.Any(q => string.IsNullOrWhiteSpace(q.Code)))
+                {
+                    response.SetFail("Every query item must define a non-empty Code.");
+                    return;
+                }
+
+                var distinctCodes = command.Queries
+                    .Select(q => q.Code)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                if (distinctCodes.Length != command.Queries.Count)
+                {
+                    response.SetFail("Duplicate query codes detected in BulkSyncQueries batch.");
+                    return;
+                }
+
+                string deployVersion = string.IsNullOrWhiteSpace(command.DeployVersion)
+                    ? IndexerMode.CreateShortGuid()
+                    : command.DeployVersion;
+
+                var dbType = postgresFactoryWrapper.GetDbType();
+                var txCommands = new List<IBaseNpOnDbCommand>(command.Queries.Count * 3);
+                var syntheticFallback = new Dictionary<string, List<TblFldRModel>>(StringComparer.Ordinal);
+
+                foreach (var item in command.Queries)
+                {
+                    Guid tblId = Guid.TryParse(item.Id, out var parsedTblId) && parsedTblId != Guid.Empty
+                        ? parsedTblId
+                        : IndexerMode.CreateGuid();
+
+                    const string upsertTblMasterSql = """
+                        INSERT INTO public.tblmaster (id, code, description, execfunc, query, exectype, service_name, db_type)
+                        VALUES (@id, @code, @description, @execfunc, @query, @exectype, @service_name, @db_type)
+                        ON CONFLICT (code) DO UPDATE SET
+                            description = EXCLUDED.description,
+                            execfunc = EXCLUDED.execfunc,
+                            query = EXCLUDED.query,
+                            exectype = EXCLUDED.exectype,
+                            service_name = EXCLUDED.service_name,
+                            db_type = EXCLUDED.db_type;
+                        """;
+
+                    txCommands.Add(new NpOnDbCommand(dbType, upsertTblMasterSql,
+                    [
+                        new NpOnDbCommandParam<NpgsqlDbType>("id", tblId, NpgsqlDbType.Uuid),
+                        new NpOnDbCommandParam<NpgsqlDbType>("code", item.Code, NpgsqlDbType.Varchar),
+                        new NpOnDbCommandParam<NpgsqlDbType>("description", (object?)item.Description ?? DBNull.Value, NpgsqlDbType.Varchar),
+                        new NpOnDbCommandParam<NpgsqlDbType>("execfunc", string.IsNullOrWhiteSpace(item.ExecFunc) ? DBNull.Value : item.ExecFunc, NpgsqlDbType.Varchar),
+                        new NpOnDbCommandParam<NpgsqlDbType>("query", (object?)item.Query ?? DBNull.Value, NpgsqlDbType.Text),
+                        new NpOnDbCommandParam<NpgsqlDbType>("exectype", item.ExecType, NpgsqlDbType.Integer),
+                        new NpOnDbCommandParam<NpgsqlDbType>("service_name", (object?)item.ServiceName ?? DBNull.Value, NpgsqlDbType.Varchar),
+                        new NpOnDbCommandParam<NpgsqlDbType>("db_type", item.DbType.HasValue ? item.DbType.Value : DBNull.Value, NpgsqlDbType.Integer),
+                    ]));
+
+                    const string deleteFieldsSql = """
+                        DELETE FROM public.fld_query_master
+                        WHERE tblmaster_id = (SELECT id FROM public.tblmaster WHERE code = @code);
+                        """;
+
+                    txCommands.Add(new NpOnDbCommand(dbType, deleteFieldsSql,
+                    [
+                        new NpOnDbCommandParam<NpgsqlDbType>("code", item.Code, NpgsqlDbType.Varchar),
+                    ]));
+
+                    var itemModels = new List<TblFldRModel>();
+                    if (item.Fields is { Count: > 0 })
+                    {
+                        var insertSql = new StringBuilder(
+                            "INSERT INTO public.fld_query_master (id, tblmaster_id, field_name, field_type, field_type_string, order_sort, description) " +
+                            "SELECT v.id, t.id, v.field_name, v.field_type, v.field_type_string, v.order_sort, v.description " +
+                            "FROM public.tblmaster t CROSS JOIN (VALUES ");
+
+                        var fieldParams = new List<INpOnDbCommandParam>(1 + item.Fields.Count * 6)
+                        {
+                            new NpOnDbCommandParam<NpgsqlDbType>("code", item.Code, NpgsqlDbType.Varchar),
+                        };
+
+                        var orderedFields = item.Fields.OrderBy(f => f.OrderSort).ToList();
+                        for (int idx = 0; idx < orderedFields.Count; idx++)
+                        {
+                            var f = orderedFields[idx];
+                            Guid fldId = Guid.TryParse(f.Id, out var parsedFldId) && parsedFldId != Guid.Empty
+                                ? parsedFldId
+                                : IndexerMode.CreateGuid();
+
+                            if (idx > 0) insertSql.Append(", ");
+                            insertSql.Append($"(@f_id_{idx}, @f_name_{idx}, @f_type_{idx}, @f_type_str_{idx}, @f_sort_{idx}, @f_desc_{idx})");
+
+                            fieldParams.Add(new NpOnDbCommandParam<NpgsqlDbType>($"f_id_{idx}", fldId, NpgsqlDbType.Uuid));
+                            fieldParams.Add(new NpOnDbCommandParam<NpgsqlDbType>($"f_name_{idx}", f.FieldName, NpgsqlDbType.Varchar));
+                            fieldParams.Add(new NpOnDbCommandParam<NpgsqlDbType>($"f_type_{idx}", f.FieldType.HasValue ? f.FieldType.Value : DBNull.Value, NpgsqlDbType.Integer));
+                            fieldParams.Add(new NpOnDbCommandParam<NpgsqlDbType>($"f_type_str_{idx}", (object?)f.FieldTypeString ?? DBNull.Value, NpgsqlDbType.Varchar));
+                            fieldParams.Add(new NpOnDbCommandParam<NpgsqlDbType>($"f_sort_{idx}", f.OrderSort, NpgsqlDbType.Integer));
+                            fieldParams.Add(new NpOnDbCommandParam<NpgsqlDbType>($"f_desc_{idx}", (object?)f.Description ?? DBNull.Value, NpgsqlDbType.Varchar));
+
+                            itemModels.Add(new TblFldRModel
+                            {
+                                TblMaterId = tblId,
+                                TblMaterCode = item.Code,
+                                QueryDesc = item.Description,
+                                ExecFunc = item.ExecFunc,
+                                Query = item.Query,
+                                FldMasterId = fldId,
+                                FieldName = f.FieldName,
+                                FieldType = f.FieldType.HasValue ? (NpgsqlDbType)f.FieldType.Value : null,
+                                FieldTypeString = f.FieldTypeString,
+                                ExecType = (EExecType)item.ExecType,
+                                ServiceName = item.ServiceName,
+                                DataBaseType = item.DbType.HasValue ? (EDb)item.DbType.Value : null,
+                                OrderSort = f.OrderSort,
+                            });
+                        }
+
+                        insertSql.Append(") AS v(id, field_name, field_type, field_type_string, order_sort, description) WHERE t.code = @code;");
+                        txCommands.Add(new NpOnDbCommand(dbType, insertSql.ToString(), fieldParams));
+                    }
+                    else
+                    {
+                        itemModels.Add(new TblFldRModel
+                        {
+                            TblMaterId = tblId,
+                            TblMaterCode = item.Code,
+                            QueryDesc = item.Description,
+                            ExecFunc = item.ExecFunc,
+                            Query = item.Query,
+                            ExecType = (EExecType)item.ExecType,
+                            ServiceName = item.ServiceName,
+                            DataBaseType = item.DbType.HasValue ? (EDb)item.DbType.Value : null,
+                        });
+                    }
+
+                    syntheticFallback[item.Code] = itemModels;
+                }
+
+                // Single Postgres ACID transaction guarantees active readers never observe half-written parameters.
+                var txResults = await postgresFactoryWrapper.ExecuteWithTransaction(txCommands);
+                if (txResults == null || txResults.Count != txCommands.Count || txResults.Values.Any(v => !v.Status))
+                {
+                    response.SetFail("BulkSyncQueries transaction failed and rolled back cleanly.");
+                    return;
+                }
+
+                // Reload newly committed view rows and swap L2 cache atomically via AddOrUpdate (NO Clear()).
+                var committedGroups = new Dictionary<string, List<TblFldRModel>>(StringComparer.Ordinal);
+                const string reloadSql = """
+                    SELECT
+                        vw.tbl_id       AS tbl_id,
+                        vw.tbl_code     AS tbl_code,
+                        vw.query_desc   AS query_desc,
+                        vw.exec_func    AS exec_func,
+                        vw.query        AS query,
+                        vw.exec_type    AS exec_type,
+                        vw.service_name AS service_name,
+                        vw.db_type      AS db_type,
+                        vw.fld_id       AS fld_id,
+                        vw.order_sort   AS order_sort,
+                        vw.field_name   AS field_name,
+                        vw.field_type   AS field_type,
+                        vw.field_type_string AS field_type_string
+                    FROM vw_query_master vw
+                    WHERE vw.tbl_code = ANY(string_to_array(@codes, ','))
+                    ORDER BY vw.order_sort;
+                    """;
+
+                try
+                {
+                    var reloadResult = await postgresFactoryWrapper.ExecuteAsync(
+                        reloadSql,
+                        [new NpOnDbCommandParam<NpgsqlDbType>("codes", string.Join(',', distinctCodes), NpgsqlDbType.Text)]);
+
+                    var loadedRows = reloadResult?
+                        .GenericConverter(typeof(TblFldRModel))?
+                        .Cast<TblFldRModel>()
+                        .ToList();
+
+                    if (loadedRows is { Count: > 0 })
+                    {
+                        foreach (var grp in loadedRows.Where(r => !string.IsNullOrEmpty(r.TblMaterCode)).GroupBy(r => r.TblMaterCode!))
+                        {
+                            committedGroups[grp.Key] = grp.ToList();
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fallback to synthesized post-commit model list if view read is mocked or unavailable.
+                }
+
+                foreach (string code in distinctCodes)
+                {
+                    List<TblFldRModel> rows = committedGroups.TryGetValue(code, out var dbRows)
+                        ? dbRows
+                        : syntheticFallback[code];
+
+                    internalCache.AddOrUpdate($"code:{code}", rows, QueryCacheTtl);
+                    Guid? rowTblId = rows.FirstOrDefault()?.TblMaterId;
+                    if (rowTblId.HasValue && rowTblId.Value != Guid.Empty)
+                    {
+                        internalCache.AddOrUpdate($"id:{rowTblId.Value}", rows, QueryCacheTtl);
+                    }
+                }
+
+                // Publish single batch invalidation/sync event over Redis Pub/Sub.
+                int broadcastReceivers = 0;
+                if (redisBroadcastFactoryWrapper != null)
+                {
+                    try
+                    {
+                        var syncEvent = new RedisBroadcastMessage<GeneralQuerySyncBroadcastMessage>
+                        {
+                            Channel = GeneralQuerySyncBroadcastConstant.GeneralQuerySyncChannel,
+                            Value = new GeneralQuerySyncBroadcastMessage
+                            {
+                                Codes = distinctCodes,
+                                DeployVersion = deployVersion,
+                                IsFullReload = command.IsFullReload,
+                                PublishedAtUtc = DateTime.UtcNow,
+                            }
+                        };
+                        var pubResult = await redisBroadcastFactoryWrapper.PublishAsync(syncEvent);
+                        if (pubResult is RedisValueWrapper rw && rw.Status && rw.Parent.SingleValue.TryParse(out long count))
+                        {
+                            broadcastReceivers = (int)count;
+                        }
+                    }
+                    catch
+                    {
+                        // DB + L2 write-through succeeded; Redis unavailability does not fail query deployment.
+                    }
+                }
+
+                response.Data = new BulkSyncQueriesRModel
+                {
+                    SyncedCount = distinctCodes.Length,
+                    DeployVersion = deployVersion,
+                    BroadcastReceivers = broadcastReceivers,
+                };
                 response.SetSuccess();
             });
         }

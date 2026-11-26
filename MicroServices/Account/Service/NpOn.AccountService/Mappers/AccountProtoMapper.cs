@@ -3,8 +3,8 @@ using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
 using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
 using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
-using NpOn.Protos.Account.V1;
 using Riok.Mapperly.Abstractions;
+using ProtoAccount = NpOn.Protos.Account.V1;
 
 namespace MicroServices.Account.Service.NpOn.AccountService.Mappers;
 
@@ -28,9 +28,9 @@ public static partial class AccountProtoMapper
 
     // --- Common Envelopes ---
 
-    public static CommonStatusReplyProto ToStatusReply(CommonResponse source)
+    public static ProtoAccount.CommonResponseProto ToStatusReply(CommonResponse source)
     {
-        var reply = new CommonStatusReplyProto
+        var reply = new ProtoAccount.CommonResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -42,9 +42,9 @@ public static partial class AccountProtoMapper
         return reply;
     }
 
-    public static BoolReplyProto ToBoolReply(CommonResponse<bool> source)
+    public static ProtoAccount.CommonBoolResponseProto ToBoolReply(CommonResponse<bool> source)
     {
-        var reply = new BoolReplyProto
+        var reply = new ProtoAccount.CommonBoolResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -57,9 +57,9 @@ public static partial class AccountProtoMapper
         return reply;
     }
 
-    public static StringReplyProto ToStringReply(CommonResponse<string> source)
+    public static ProtoAccount.CommonStringResponseProto ToStringReply(CommonResponse<string> source)
     {
-        var reply = new StringReplyProto
+        var reply = new ProtoAccount.CommonStringResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -74,7 +74,7 @@ public static partial class AccountProtoMapper
 
     // --- Authentication ---
 
-    public static AccountSignupCommand ToSignupCommand(AccountSignupRequestProto r) => new()
+    public static AccountSignupCommand ToSignupCommand(ProtoAccount.AccountSignupCommand r) => new()
     {
         Email = r.Email,
         PhoneNumber = r.PhoneNumber,
@@ -91,21 +91,21 @@ public static partial class AccountProtoMapper
         ProcessUId = r.HasProcessUid ? r.ProcessUid : null
     };
 
-    public static AccountSetStatusCommand ToSetStatusCommand(AccountSetStatusRequestProto r) => new()
+    public static AccountSetStatusCommand ToSetStatusCommand(ProtoAccount.AccountSetStatusCommand r) => new()
     {
         AccountId = ParseGuidOrEmpty(r.AccountId),
         AccountStatus = (EAccountStatus)r.AccountStatus,
         ProcessUId = r.HasProcessUid ? r.ProcessUid : null
     };
 
-    public static AccountChangePasswordCommand ToChangePasswordCommand(AccountChangePasswordRequestProto r) => new()
+    public static AccountChangePasswordCommand ToChangePasswordCommand(ProtoAccount.AccountChangePasswordCommand r) => new()
     {
         AccountId = ParseGuidOrEmpty(r.AccountId),
         NewPassword = r.NewPassword,
         ProcessUId = r.HasProcessUid ? r.ProcessUid : null
     };
 
-    public static AccountLoginQuery ToLoginQuery(AccountLoginRequestProto r) => new()
+    public static AccountLoginQuery ToLoginQuery(ProtoAccount.AccountLoginQuery r) => new()
     {
         Email = r.HasEmail ? r.Email : null,
         PhoneNumber = r.HasPhoneNumber ? r.PhoneNumber : null,
@@ -121,7 +121,7 @@ public static partial class AccountProtoMapper
         ProcessUId = r.HasProcessUid ? r.ProcessUid : null
     };
 
-    public static AccountRefreshTokenQuery ToRefreshTokenQuery(AccountRefreshTokenRequestProto r) => new()
+    public static AccountRefreshTokenQuery ToRefreshTokenQuery(ProtoAccount.AccountRefreshTokenQuery r) => new()
     {
         RefreshToken = r.RefreshToken,
         DeviceInfo = r.HasDeviceInfo ? r.DeviceInfo : null,
@@ -131,9 +131,9 @@ public static partial class AccountProtoMapper
         ProcessUId = r.HasProcessUid ? r.ProcessUid : null
     };
 
-    public static AccountLoginReplyProto ToLoginReply(CommonResponse<AccountLoginRModel> source)
+    public static ProtoAccount.AccountLoginResponseProto ToLoginReply(CommonResponse<AccountLoginRModel> source)
     {
-        var reply = new AccountLoginReplyProto
+        var reply = new ProtoAccount.AccountLoginResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -146,9 +146,9 @@ public static partial class AccountProtoMapper
         return reply;
     }
 
-    public static AccountLoginItemProto ToLoginItem(AccountLoginRModel src)
+    public static ProtoAccount.AccountLoginRModel ToLoginItem(AccountLoginRModel src)
     {
-        var item = new AccountLoginItemProto
+        var item = new ProtoAccount.AccountLoginRModel
         {
             AccountId = src.AccountId.ToString(),
             UserName = src.UserName,
@@ -175,7 +175,7 @@ public static partial class AccountProtoMapper
 
     // --- Account Info & Addresses ---
 
-    public static AccountInfoAddOrChangeCommand ToInfoAddOrChangeCommand(AccountInfoAddOrChangeRequestProto r) => new()
+    public static AccountInfoAddOrChangeCommand ToInfoAddOrChangeCommand(ProtoAccount.AccountInfoAddOrChangeCommand r) => new()
     {
         AccountId = r.AccountId,
         FullName = r.HasFullName ? r.FullName : null,
@@ -198,7 +198,7 @@ public static partial class AccountProtoMapper
         AddressLine = r.HasAddressLine ? r.AddressLine : null
     };
 
-    public static AccountAddressAddOrChangeCommand ToAddressCommand(AccountAddressAddOrChangeItemProto r) => new()
+    public static AccountAddressAddOrChangeCommand ToAddressCommand(ProtoAccount.AccountAddressAddOrChangeCommand r) => new()
     {
         AccountId = ParseGuidOrEmpty(r.AccountId),
         CountryId = ParseNullableGuid(r.HasCountryId, r.CountryId),
@@ -209,9 +209,9 @@ public static partial class AccountProtoMapper
         AddressType = (EAddressType)r.AddressType
     };
 
-    public static AccountInfoSingleReplyProto ToInfoSingleReply(CommonResponse<AccountInfoRModel?> source)
+    public static ProtoAccount.AccountInfoResponseProto ToInfoSingleReply(CommonResponse<AccountInfoRModel?> source)
     {
-        var reply = new AccountInfoSingleReplyProto
+        var reply = new ProtoAccount.AccountInfoResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -224,9 +224,9 @@ public static partial class AccountProtoMapper
         return reply;
     }
 
-    public static AccountInfoListReplyProto ToInfoListReply(CommonResponse<AccountInfoRModel[]?> source)
+    public static ProtoAccount.AccountInfoListResponseProto ToInfoListReply(CommonResponse<AccountInfoRModel[]?> source)
     {
-        var reply = new AccountInfoListReplyProto
+        var reply = new ProtoAccount.AccountInfoListResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -242,9 +242,9 @@ public static partial class AccountProtoMapper
         return reply;
     }
 
-    public static AccountInfoItemProto ToInfoItem(AccountInfoRModel src)
+    public static ProtoAccount.AccountInfoRModel ToInfoItem(AccountInfoRModel src)
     {
-        var item = new AccountInfoItemProto
+        var item = new ProtoAccount.AccountInfoRModel
         {
             AccountId = src.AccountId.ToString(),
             Status = src.Status,
@@ -277,9 +277,9 @@ public static partial class AccountProtoMapper
         return item;
     }
 
-    private static AccountAddressItemProto ToAddressItem(AccountAddressRModel src)
+    private static ProtoAccount.AccountAddressRModel ToAddressItem(AccountAddressRModel src)
     {
-        var item = new AccountAddressItemProto
+        var item = new ProtoAccount.AccountAddressRModel
         {
             Id = src.Id.ToString(),
             AccountId = src.AccountId.ToString(),
@@ -297,7 +297,7 @@ public static partial class AccountProtoMapper
 
     // --- Account Group ---
 
-    public static AccountGroupAddOrChangeCommand ToGroupAddOrChangeCommand(AccountGroupAddOrChangeRequestProto r) => new()
+    public static AccountGroupAddOrChangeCommand ToGroupAddOrChangeCommand(ProtoAccount.AccountGroupAddOrChangeCommand r) => new()
     {
         GroupId = ParseNullableGuid(r.HasGroupId, r.GroupId),
         Leader = ParseGuidOrEmpty(r.Leader),
@@ -306,7 +306,7 @@ public static partial class AccountProtoMapper
         GroupTypes = r.GroupTypes.Select(x => (EAccountGroupType)x).ToArray()
     };
 
-    public static AccountGroupCopyCommand ToGroupCopyCommand(AccountGroupCopyRequestProto r) => new()
+    public static AccountGroupCopyCommand ToGroupCopyCommand(ProtoAccount.AccountGroupCopyCommand r) => new()
     {
         GroupIdNeedCopy = ParseGuidOrEmpty(r.GroupIdNeedCopy),
         Components = r.Components.Select(c => new AccountGroupCopyComponentCommand
@@ -319,7 +319,7 @@ public static partial class AccountProtoMapper
         }).ToArray()
     };
 
-    public static AccountGroupSearchQuery ToGroupSearchQuery(AccountGroupSearchRequestProto r) => new()
+    public static AccountGroupSearchQuery ToGroupSearchQuery(ProtoAccount.AccountGroupSearchQuery r) => new()
     {
         Keyword = r.HasKeyword ? r.Keyword : null,
         Leader = r.HasLeader ? r.Leader : null,
@@ -327,7 +327,7 @@ public static partial class AccountProtoMapper
         PageIndex = r.PageIndex
     };
 
-    public static AccountGroupDeleteCommand ToGroupDeleteCommand(AccountGroupDeleteRequestProto r) => new()
+    public static AccountGroupDeleteCommand ToGroupDeleteCommand(ProtoAccount.AccountGroupDeleteCommand r) => new()
     {
         GroupId = ParseGuidOrEmpty(r.GroupId),
         Leader = ParseGuidOrEmpty(r.Leader),
@@ -337,10 +337,10 @@ public static partial class AccountProtoMapper
 
     // --- Account Permission ---
 
-    public static AccountPermissionExceptionListReplyProto ToPermissionExceptionReply(
+    public static ProtoAccount.AccountPermissionExceptionListResponseProto ToPermissionExceptionReply(
         CommonResponse<AccountPermissionExceptionRModel[]?> source)
     {
-        var reply = new AccountPermissionExceptionListReplyProto
+        var reply = new ProtoAccount.AccountPermissionExceptionListResponseProto
         {
             Status = source.Status,
             Version = source.Version,
@@ -359,8 +359,8 @@ public static partial class AccountProtoMapper
         return reply;
     }
 
-    [MapProperty(nameof(AccountPermissionExceptionRModel.AccessPermission), nameof(AccountPermissionExceptionItemProto.AccessPermission))]
-    public static partial AccountPermissionExceptionItemProto ToPermissionExceptionItem(
+    [MapProperty(nameof(AccountPermissionExceptionRModel.AccessPermission), nameof(ProtoAccount.AccountPermissionExceptionRModel.AccessPermission))]
+    public static partial ProtoAccount.AccountPermissionExceptionRModel ToPermissionExceptionItem(
         AccountPermissionExceptionRModel source);
 
     private static string MapGuid(Guid g) => g.ToString();

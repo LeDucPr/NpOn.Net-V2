@@ -40,7 +40,7 @@ public class AccountController(
                 return;
             }
 
-            var protoReq = new AccountSignupRequestProto
+            var protoReq = new AccountSignupCommand
             {
                 AuthType = (int)request.AuthType,
                 ClientId = _contextService.ClientId,
@@ -83,7 +83,7 @@ public class AccountController(
         return await ProcessRequest<string>(async (response) =>
         {
             var signupResponse = await authenticationProtoClient.ChangeAccountStatusAsync(
-                new AccountSetStatusRequestProto
+                new AccountSetStatusCommand
                 {
                     AccountId = request.AccountId.ToString(),
                     AccountStatus = (int)request.AccountStatus,
@@ -121,13 +121,13 @@ public class AccountController(
             if (string.IsNullOrEmpty(newPassword))
                 newPassword = GeneratePassword();
             var signupResponse = await authenticationProtoClient.ChangeAccountPasswordAsync(
-                new AccountChangePasswordRequestProto
+                new AccountChangePasswordCommand
                 {
                     AccountId = request.AccountId.ToString(),
                     NewPassword = CreateHashPassword(newPassword).AsEmptyString(),
                 });
 
-            if (!signupResponse.Status || signupResponse.Data)
+            if (!signupResponse.Status || !signupResponse.Data)
             {
                 response.SetFail("Change Account Password fail");
                 return;
@@ -155,7 +155,7 @@ public class AccountController(
 
             bool isUseMultiDevice = !string.IsNullOrWhiteSpace(request.DeviceInfo) &&
                                     request.AuthType == EAuthentication.WebApp;
-            var protoQuery = new AccountLoginRequestProto
+            var protoQuery = new AccountLoginQuery
             {
                 ClientId = _contextService.ClientId,
                 Password = CreateHashPassword(request.Password),
@@ -205,7 +205,7 @@ public class AccountController(
                 return;
             }
 
-            var protoQuery = new AccountRefreshTokenRequestProto
+            var protoQuery = new AccountRefreshTokenQuery
             {
                 RefreshToken = request.RefreshToken,
                 AuthType = (int)request.AuthType,
@@ -243,7 +243,7 @@ public class AccountController(
     {
         return await ProcessRequest<string>(async (response) =>
         {
-            var protoQuery = new AccountSessionRequestProto
+            var protoQuery = new AccountLogoutQuery
             {
                 SessionId = _contextService.GetSessionKey().AsDefaultString(),
             };
@@ -279,10 +279,10 @@ public class AccountController(
                 return;
             }
 
-            var protoReq = new AddOrChangeAccountPermissionExceptionsRequestProto();
+            var protoReq = new AccountPermissionExceptionsAddOrChangeCommand();
             foreach (var controller in request.Controllers)
             {
-                protoReq.Items.Add(new AccountPermissionExceptionChangeItemProto
+                protoReq.Items.Add(new AccountPermissionExceptionAddOrChangeCommand
                 {
                     AccountId = request.AccountId.ToString(),
                     ControllerCode = controller.ControllerCode,
@@ -321,7 +321,7 @@ public class AccountController(
                 return;
             }
 
-            var protoReq = new AddOrChangeManyAccountPermissionExceptionRequestProto();
+            var protoReq = new AccountPermissionExceptionAddOrChangeManyCommand();
             if (request.AccountIds is { Length: > 0 })
                 protoReq.AccountIds.AddRange(request.AccountIds.Select(x => x.ToString()));
             if (request.GroupIds is { Length: > 0 })
@@ -330,7 +330,7 @@ public class AccountController(
             {
                 foreach (var c in request.Controllers)
                 {
-                    protoReq.ControllerComponents.Add(new PermissionExceptionManyControllerCodeProto
+                    protoReq.ControllerComponents.Add(new AccountPermissionExceptionAddOrChangeManyControllerCodeCommand
                     {
                         ControllerCode = c.ControllerCode,
                         AccessPermission = (int)c.AccessPermission,

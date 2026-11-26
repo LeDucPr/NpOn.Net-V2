@@ -12,6 +12,7 @@ public class AccountPermissionControllerAddOrChangeCommand : BaseAccountCommand
     public string Code => ControllerName;
     [ProtoMember(4)] public EPermission Permission { get; set; } // flags
     [ProtoMember(5)] public string? Description { get; set; }
+    [ProtoMember(6)] public EPermission? RequiredPermission { get; set; }
 }
 
 [ProtoContract]

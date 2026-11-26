@@ -1,19 +1,18 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Net.Http.Headers;
-using NpOn.Protos.Account.V1;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Middlewares;
 
 public class TokenValidationMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, ContextService contextService, AuthenService authenService)
+    public async Task InvokeAsync(HttpContext context, ContextService contextService)
     {
         var endpoint = context.GetEndpoint();
         if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
@@ -57,24 +56,17 @@ public class TokenValidationMiddleware(RequestDelegate next)
                 }
 
                 DateTime? tokenCreatedDate = createdDateClaim.FromIso8601ToDateTime(); // expired (time)
-                if (tokenCreatedDate < DateTime.UtcNow)
+                if (!tokenCreatedDate.HasValue || tokenCreatedDate.Value.ToUniversalTime() < DateTime.UtcNow)
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.WriteAsync("Invalid or expired token.");
                     return; // stop pipeline
                 }
 
-                // check enabled token
+                // Stateless verification: session and account claims come directly from the cryptographically signed JWT
                 string? tokenSessionId = context.User.FindFirst(ContextServiceCode.SessionCode)?.Value;
-                if (string.IsNullOrWhiteSpace(tokenSessionId))
-                {
-                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    await context.Response.WriteAsync("Invalid or expired token.");
-                    return; // stop pipeline
-                }
-
-                AccountLoginItemProto? accountInfo = await authenService.GetLogonInfoBySessionId(tokenSessionId);
-                if (accountInfo == null || (ETokenStatus)accountInfo.TokenStatus == ETokenStatus.Inactive)
+                string? accountIdClaim = context.User.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
+                if (string.IsNullOrWhiteSpace(tokenSessionId) || string.IsNullOrWhiteSpace(accountIdClaim))
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.WriteAsync("Invalid or expired token.");

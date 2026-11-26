@@ -1,8 +1,12 @@
 using Common.Extensions.NpOn.CommonGrpcContract;
+using Common.Extensions.NpOn.ICommonDb.DbCommands;
+using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Commands;
 using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
 using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
-using NpOn.Protos.General.V1;
+using MySqlConnector;
+using NpgsqlTypes;
 using Riok.Mapperly.Abstractions;
+using ProtoGeneral = NpOn.Protos.General.V1;
 
 namespace MicroServices.General.Service.NpOn.GeneralService.Mappers;
 
@@ -12,7 +16,10 @@ namespace MicroServices.General.Service.NpOn.GeneralService.Mappers;
 [Mapper(RequiredMappingStrategy = RequiredMappingStrategy.None)]
 public static partial class FldMasterProtoMapper
 {
-    public static TblFldExecutionCommand ToExecutionCommand(GetExecCommandRequest request)
+    private static long ToUnixMs(DateTime dt) =>
+        new DateTimeOffset(DateTime.SpecifyKind(dt, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
+
+    public static TblFldExecutionCommand ToExecutionCommand(ProtoGeneral.TblFldExecutionCommand request)
     {
         var command = new TblFldExecutionCommand();
         if (request.HasTblMasterId)
@@ -26,13 +33,77 @@ public static partial class FldMasterProtoMapper
         return command;
     }
 
-    public static GetExecCommandReply ToExecCommandReply(CommonResponse<CommandRModel?> source)
+    public static BulkSyncQueriesCommand ToBulkSyncQueriesCommand(ProtoGeneral.BulkSyncQueriesCommand request)
     {
-        var reply = new GetExecCommandReply
+        var cmd = new BulkSyncQueriesCommand
+        {
+            DeployVersion = request.HasDeployVersion ? request.DeployVersion : null,
+            IsFullReload = request.IsFullReload
+        };
+
+        foreach (var q in request.Queries)
+        {
+            var item = new TblMasterSyncItemCommand
+            {
+                Id = q.HasId ? q.Id : null,
+                Code = q.Code,
+                Description = q.HasDescription ? q.Description : null,
+                ExecFunc = q.HasExecFunc ? q.ExecFunc : null,
+                Query = q.HasQuery ? q.Query : null,
+                ExecType = q.ExecType,
+                ServiceName = q.HasServiceName ? q.ServiceName : null,
+                DbType = q.HasDbType ? q.DbType : null,
+            };
+
+            foreach (var f in q.Fields)
+            {
+                item.Fields.Add(new FldQueryMasterSyncCommand
+                {
+                    Id = f.HasId ? f.Id : null,
+                    FieldName = f.FieldName,
+                    FieldType = f.HasFieldType ? f.FieldType : null,
+                    FieldTypeString = f.HasFieldTypeString ? f.FieldTypeString : null,
+                    OrderSort = f.OrderSort,
+                    Description = f.HasDescription ? f.Description : null,
+                });
+            }
+
+            cmd.Queries.Add(item);
+        }
+
+        return cmd;
+    }
+
+    public static ProtoGeneral.BulkSyncQueriesResponseProto ToBulkSyncQueriesResponse(
+        CommonResponse<BulkSyncQueriesRModel?> source)
+    {
+        var reply = new ProtoGeneral.BulkSyncQueriesResponseProto
         {
             Status = source.Status,
             Version = source.Version,
-            ServerTimeUnixMs = new DateTimeOffset(DateTime.SpecifyKind(source.ServerTime, DateTimeKind.Utc)).ToUnixTimeMilliseconds()
+            ServerTimeUnixMs = ToUnixMs(source.ServerTime)
+        };
+
+        if (source.ErrorCode.HasValue) reply.ErrorCode = (int)source.ErrorCode.Value;
+        if (source.TotalRow.HasValue) reply.TotalRow = source.TotalRow.Value;
+        if (source.ErrorMessages is { Count: > 0 }) reply.ErrorMessages.AddRange(source.ErrorMessages);
+        if (source.Data != null)
+        {
+            reply.SyncedCount = source.Data.SyncedCount;
+            reply.DeployVersion = source.Data.DeployVersion;
+            reply.BroadcastReceivers = source.Data.BroadcastReceivers;
+        }
+
+        return reply;
+    }
+
+    public static ProtoGeneral.CommandRModelResponseProto ToExecCommandReply(CommonResponse<CommandRModel?> source)
+    {
+        var reply = new ProtoGeneral.CommandRModelResponseProto
+        {
+            Status = source.Status,
+            Version = source.Version,
+            ServerTimeUnixMs = ToUnixMs(source.ServerTime)
         };
 
         if (source.ErrorCode.HasValue)
@@ -47,9 +118,9 @@ public static partial class FldMasterProtoMapper
         return reply;
     }
 
-    public static CommandSpec ToProtoCommandSpec(CommandRModel source)
+    public static ProtoGeneral.CommandRModel ToProtoCommandSpec(CommandRModel source)
     {
-        var spec = new CommandSpec
+        var spec = new ProtoGeneral.CommandRModel
         {
             CommandText = source.CommandText,
             ExecType = (int)source.ExecType,
@@ -60,14 +131,21 @@ public static partial class FldMasterProtoMapper
         {
             foreach (var p in parameters)
             {
-                var paramSpec = new CommandParamSpec
+                var paramSpec = new ProtoGeneral.NpOnDbCommandParamRModel
                 {
                     ParamName = p.ParamName
                 };
                 if (p.ParamValue != null)
                     paramSpec.ParamValue = p.ParamValue.ToString();
-                if (p.ParamType != null)
-                    paramSpec.ParamType = Convert.ToInt32(p.ParamType);
+                object? rawParamType = p switch
+                {
+                    INpOnDbCommandParam<NpgsqlDbType> pgParam => pgParam.ParamType,
+                    INpOnDbCommandParam<MySqlDbType> mySqlParam => mySqlParam.ParamType,
+                    INpOnDbCommandParam<System.Data.SqlDbType> sqlParam => sqlParam.ParamType,
+                    _ => p.ParamType
+                };
+                if (rawParamType != null)
+                    paramSpec.ParamType = Convert.ToInt32(rawParamType);
                 spec.Parameters.Add(paramSpec);
             }
         }
@@ -75,13 +153,13 @@ public static partial class FldMasterProtoMapper
         return spec;
     }
 
-    public static GetExecutionReply ToExecutionReply(CommonResponse<List<TblFldRModel>> source)
+    public static ProtoGeneral.TblFldRModelListResponseProto ToExecutionReply(CommonResponse<List<TblFldRModel>> source)
     {
-        var reply = new GetExecutionReply
+        var reply = new ProtoGeneral.TblFldRModelListResponseProto
         {
             Status = source.Status,
             Version = source.Version,
-            ServerTimeUnixMs = new DateTimeOffset(DateTime.SpecifyKind(source.ServerTime, DateTimeKind.Utc)).ToUnixTimeMilliseconds()
+            ServerTimeUnixMs = ToUnixMs(source.ServerTime)
         };
 
         if (source.ErrorCode.HasValue)
@@ -102,10 +180,10 @@ public static partial class FldMasterProtoMapper
         return reply;
     }
 
-    [MapProperty(nameof(TblFldRModel.TblMaterId), nameof(TblFldItem.TblMasterId))]
-    [MapProperty(nameof(TblFldRModel.TblMaterCode), nameof(TblFldItem.Code))]
-    [MapProperty(nameof(TblFldRModel.DataBaseType), nameof(TblFldItem.DatabaseType))]
-    public static partial TblFldItem ToProtoTblFldItem(TblFldRModel source);
+    [MapProperty(nameof(TblFldRModel.TblMaterId), nameof(ProtoGeneral.TblFldRModel.TblMasterId))]
+    [MapProperty(nameof(TblFldRModel.TblMaterCode), nameof(ProtoGeneral.TblFldRModel.Code))]
+    [MapProperty(nameof(TblFldRModel.DataBaseType), nameof(ProtoGeneral.TblFldRModel.DatabaseType))]
+    public static partial ProtoGeneral.TblFldRModel ToProtoTblFldItem(TblFldRModel source);
 
     private static string? MapNullableGuid(Guid? value) => value?.ToString();
 

@@ -110,14 +110,15 @@ public abstract class GrpcInterceptorBase(
         return new LoggingAsyncStreamReader<TResponse>(responseStream, logger, Host, serviceName, action, LogError);
     }
 
-    protected abstract void WriteHeader(); // WriteHeader (next request)
+    protected virtual void WriteHeader() { } // Legacy hook kept for backward compatibility
+    protected virtual void WriteCallHeaders(Metadata headers) => WriteHeader();
 
     private void AddCallerMetadata<TRequest, TResponse>(ref ClientInterceptorContext<TRequest, TResponse> context)
         where TRequest : class
         where TResponse : class
     {
-        Metadata header = headerConfig.GetHeader() ?? new Metadata();
-        WriteHeader();
+        Metadata header = headerConfig.CloneHeader();
+        WriteCallHeaders(header);
         var options = context.Options.WithHeaders(header);
         context = new ClientInterceptorContext<TRequest, TResponse>(context.Method, context.Host, options);
     }

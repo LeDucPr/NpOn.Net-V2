@@ -49,6 +49,7 @@ public record Account : BaseAccountDomain
         AvatarUrl = accountRModel.AvatarUrl;
         Permission = accountRModel.Permission;
         Email = accountRModel.Email;
+        Status = accountRModel.Status;
         CreatedAt = accountRModel.CreatedAt;
         UpdatedAt = accountRModel.UpdatedAt;
     }

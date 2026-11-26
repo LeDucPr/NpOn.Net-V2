@@ -11,193 +11,155 @@ public class AccountTokenAndPermissionRedisRepository
     : IAccountTokenAndPermissionRedisRepository
 {
     private readonly IRedisFactoryWrapper _redisCachingFactoryWrapper;
-    private readonly int _expireTokenMinutes;
-    private readonly int _expireTokenStorageMinutes;
+    private readonly int _expirePermissionCacheMinutes;
 
     public AccountTokenAndPermissionRedisRepository(IRedisFactoryWrapper redisCachingFactoryWrapper)
     {
         _redisCachingFactoryWrapper = redisCachingFactoryWrapper;
-        _expireTokenMinutes =
-            EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt() != 0
-                ? EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt()
-                : 480;
-        _expireTokenStorageMinutes = _expireTokenMinutes + 1;
+        int expireTokenMinutes =
+            EApplicationConfiguration.LoginTokenExpiresTime.GetAppSettingConfig().AsDefaultInt();
+        int expireRefreshMinutes =
+            EApplicationConfiguration.RefreshTokenExpiredTime.GetAppSettingConfig().AsDefaultInt();
+        int baseMinutes = Math.Max(expireRefreshMinutes, expireTokenMinutes);
+        _expirePermissionCacheMinutes = baseMinutes > 1 ? baseMinutes + 1 : 480;
     }
-
-
-    #region Token & Storage
-
-    public async Task AddCachingToken(string sessionId, AccountLoginRModel accountLogin)
-    {
-        await _redisCachingFactoryWrapper.SetAsBaseResult($"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}",
-            JsonMode.ToJson(accountLogin),
-            TimeSpan.FromMinutes(_expireTokenMinutes));
-    }
-
-    public async Task<AccountLoginRModel?> GetAccountLogonBySessionIdWithPrefixCode(string sessionId)
-    {
-        sessionId = $"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}";
-        var accountLoginInfoCache =
-            await _redisCachingFactoryWrapper.Get(sessionId);
-        if (accountLoginInfoCache == null)
-            return null;
-        var cacheValue = accountLoginInfoCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
-        if (string.IsNullOrEmpty(cacheValue))
-            return null;
-        if (JsonMode.TryFromJson<AccountLoginRModel>(cacheValue, out var accountLoginInfoRModel))
-            if (accountLoginInfoRModel != null)
-                return accountLoginInfoRModel;
-        return null;
-    }
-
-    public async Task DeleteCachingToken(string sessionId)
-    {
-        sessionId = $"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}";
-        await _redisCachingFactoryWrapper.DeleteAsBaseResult(sessionId);
-    }
-
-
-    public async Task<bool> AddToCachingTokenStorageByAccountId(string accountId, string sessionId)
-    {
-        string accountCachingTokenStorage = $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}";
-        string[] existedAccountCachingTokenStorages = [$"{AccountCachingCode.PrefixCachingAccountToken}{sessionId}"];
-        existedAccountCachingTokenStorages = existedAccountCachingTokenStorages
-            .Concat(await GetCachingTokenStorageByAccountId(accountId) ?? []).ToArray();
-        await _redisCachingFactoryWrapper.SetAsBaseResult(accountCachingTokenStorage,
-            JsonMode.ToJson(existedAccountCachingTokenStorages),
-            TimeSpan.FromMinutes(_expireTokenStorageMinutes));
-        return true;
-    }
-
-    public async Task<bool> DeleteCachingTokenStorageAndTokensByAccountId(string accountId, string[]? sessionIds = null)
-    {
-        string accountCachingTokenStorage = $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}";
-        string[]? existedAccountCachingTokenStorages = await GetCachingTokenStorageByAccountId(accountId);
-        if (existedAccountCachingTokenStorages == null)
-            return true;
-        // sessionIds => delete all
-        sessionIds = sessionIds?.Select(x => $"{AccountCachingCode.PrefixCachingAccountToken}{x}").ToArray()
-                     ?? existedAccountCachingTokenStorages;
-        if (sessionIds.Length == existedAccountCachingTokenStorages.Length)
-            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(
-                sessionIds.Concat([accountCachingTokenStorage]).ToArray());
-        else
-            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(sessionIds);
-
-        // Update the storage list by removing the deleted session IDs.
-        var remainingSessionIds = existedAccountCachingTokenStorages.Where(x => !sessionIds.Contains(x)).ToArray();
-        if (remainingSessionIds is { Length: > 0 })
-            await _redisCachingFactoryWrapper.SetAsBaseResult(accountCachingTokenStorage,
-                JsonMode.ToJson(remainingSessionIds),
-                TimeSpan.FromMinutes(_expireTokenStorageMinutes));
-        return true;
-    }
-
-    public async Task<bool> DeleteCachingTokenStorageAndTokensByAccountIds(string[] accountIds)
-    {
-        string[] accountCachingTokenStorages = accountIds
-            .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}").ToArray();
-        string[]? existedAccountCachingTokenStorages = await GetCachingTokenStorageByAccountIds(accountIds);
-        if (existedAccountCachingTokenStorages == null)
-            return true;
-        if (accountCachingTokenStorages.Length > 0)
-            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(
-                accountCachingTokenStorages.Concat(existedAccountCachingTokenStorages).ToArray());
-        return true;
-    }
-
-    private async Task<string[]?> GetCachingTokenStorageByAccountId(string accountId)
-    {
-        string accountCachingTokenStorage = $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}";
-        var accountCachingTokenStorageOld =
-            await _redisCachingFactoryWrapper.Get(accountCachingTokenStorage);
-        if (accountCachingTokenStorageOld != null)
-        {
-            var cacheValue = accountCachingTokenStorageOld.Result.Values.FirstOrDefault()?.ValueAsObject
-                .AsEmptyString();
-            if (JsonMode.TryFromJson<string[]>(cacheValue, out string[]? accountLoginSessionIds))
-                return accountLoginSessionIds;
-        }
-
-        return null;
-    }
-
-    private async Task<string[]?> GetCachingTokenStorageByAccountIds(string[] accountIds)
-    {
-        string[] accountCachingTokenStorages = accountIds
-            .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountTokenStorage}{accountId}").ToArray();
-        var accountCachingTokenStorageOld =
-            await _redisCachingFactoryWrapper.GetMany(accountCachingTokenStorages);
-        if (accountCachingTokenStorageOld != null)
-        {
-            var cacheValue = accountCachingTokenStorageOld.Result.Values.FirstOrDefault()?.ValueAsObject
-                .AsEmptyString();
-            if (JsonMode.TryFromJson<string[]>(cacheValue, out string[]? accountLoginSessionIds))
-                return accountLoginSessionIds;
-        }
-
-        return null;
-    }
-
-    #endregion Token & Storage
-
 
     #region Permission
 
     public async Task<bool> AddCachingPermissionException(string accountId,
         AccountPermissionExceptionRModel[]? accountPermissions)
     {
-        if (accountPermissions != null)
-            if (!await AddCachingPermissionException(
-                    $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}",
-                    accountPermissions.Select(x => x.ControllerCode).ToArray()))
-            {
-                return false;
-            }
+        var state = new AccountPermissionExceptionCacheState
+        {
+            CatalogVersion = await GetPermissionCatalogVersion(),
+            BasePermissionMask = 0,
+            IsAccountActive = true,
+            Exceptions = accountPermissions == null
+                ? []
+                : accountPermissions.Select(x => new AccountPermissionExceptionCacheItem
+                {
+                    ControllerCode = x.ControllerCode,
+                    AccessPermission = x.AccessPermission,
+                }).ToList(),
+        };
 
-        return true;
+        return await SetAccountPermissionState(accountId, state);
     }
-
-    private async Task<bool> AddCachingPermissionException(string cachingExceptionPermissionKey,
-        string[] permissionExceptionControllerCodes)
-    {
-        if (!(await _redisCachingFactoryWrapper.SetAsBaseResult(cachingExceptionPermissionKey,
-                JsonMode.ToJson(permissionExceptionControllerCodes),
-                TimeSpan.FromMinutes(_expireTokenMinutes)))?.Status ?? false)
-            return false;
-        return true;
-    }
-
 
     public async Task<string[]?> GetCachingPermissionException(string accountId)
     {
-        var permissionExceptionCache =
-            await _redisCachingFactoryWrapper.Get(
-                $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}");
-        if (permissionExceptionCache == null) return null;
-
-        var cacheValue = permissionExceptionCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
-        if (string.IsNullOrEmpty(cacheValue)) return null;
-
-        if (JsonMode.TryFromJson<string[]>(cacheValue, out var permissionExceptionControllerCodes))
-            return permissionExceptionControllerCodes;
-        return null;
+        var state = await GetAccountPermissionState(accountId);
+        return state?.Exceptions.Select(x => x.ControllerCode).ToArray();
     }
 
-    // do not delete from redis (many session run on will be make error 403 forbidden)
+    public async Task<bool> SetAccountPermissionState(string accountId, AccountPermissionExceptionCacheState state)
+    {
+        try
+        {
+            string cacheKey = $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}";
+            var res = await _redisCachingFactoryWrapper.SetAsBaseResult(
+                cacheKey,
+                JsonMode.ToJson(state),
+                TimeSpan.FromMinutes(_expirePermissionCacheMinutes));
+            return res?.Status ?? false;
+        }
+        catch
+        {
+            // Degrade gracefully when Redis/Dragonfly is offline; Postgres remains source of truth.
+            return false;
+        }
+    }
+
+    public async Task<AccountPermissionExceptionCacheState?> GetAccountPermissionState(string accountId)
+    {
+        try
+        {
+            var permissionExceptionCache =
+                await _redisCachingFactoryWrapper.Get(
+                    $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}");
+            if (permissionExceptionCache == null || !permissionExceptionCache.Status)
+                return null;
+
+            var cacheValue = permissionExceptionCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
+            if (string.IsNullOrEmpty(cacheValue)) return null;
+
+            if (JsonMode.TryFromJson<AccountPermissionExceptionCacheState>(cacheValue, out var state) && state != null)
+                return state;
+
+            // Legacy string[] format lacks AccessPermission & BasePermissionMask -> force read-through self-heal
+            return null;
+        }
+        catch
+        {
+            // Fail-fast to DB read-through when Redis/Dragonfly is unreachable.
+            return null;
+        }
+    }
+
+    public async Task<long> GetPermissionCatalogVersion()
+    {
+        try
+        {
+            var versionRes = await _redisCachingFactoryWrapper.Get(AccountCachingCode.PermissionCatalogVersionKey);
+            if (versionRes == null || !versionRes.Status)
+                return 0;
+
+            var raw = versionRes.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
+            return long.TryParse(raw, out var version) ? version : 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    public async Task<long> BumpPermissionCatalogVersion()
+    {
+        try
+        {
+            long current = await GetPermissionCatalogVersion();
+            long next = Math.Max(current + 1, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            await _redisCachingFactoryWrapper.SetAsBaseResult(
+                AccountCachingCode.PermissionCatalogVersionKey,
+                next.ToString(),
+                TimeSpan.FromDays(365));
+            return next;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
     public async Task<bool> DeleteCachingPermissionExceptionsByAccountId(string accountId)
     {
-        string cacheKey = $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}";
-        await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(cacheKey);
-        return true;
+        try
+        {
+            string cacheKey = $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}";
+            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(cacheKey);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> DeleteCachingPermissionExceptionsByAccountIds(string[] accountIds)
     {
-        string[] cacheKeys = accountIds
-            .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}").ToArray();
-        await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(cacheKeys);
-        return true;
+        if (accountIds is not { Length: > 0 })
+            return true;
+        try
+        {
+            string[] cacheKeys = accountIds
+                .Select(accountId => $"{AccountCachingCode.PrefixCachingAccountPermissionException}{accountId}").ToArray();
+            await _redisCachingFactoryWrapper.DeleteManyAsBaseResult(cacheKeys);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     #endregion Permission

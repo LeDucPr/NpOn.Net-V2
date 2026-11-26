@@ -20,13 +20,20 @@
     <PackageReference Include="NpOn.PostgresFactory" />
     <PackageReference Include="NpOn.CassandraExtCm" />
     <PackageReference Include="NpOn.CassandraFactory" />
-    <PackageReference Include="NpOn.AccountServiceReadModel" />
-    <PackageReference Include="NpOn.AccountServiceCommand" />
-    <PackageReference Include="NpOn.ShareAccountConstant" />
-    <PackageReference Include="NpOn.IAccountService" />
+    <PackageReference Include="NpOn.Account.Proto" />
+    <PackageReference Include="NpOn.General.Proto" />
+    <PackageReference Include="NpOn.RedisExtCm" />
+    <PackageReference Include="NpOn.RedisFactory" />
+    <PackageReference Include="NpOn.RabbitMqExtMs" />
+    <PackageReference Include="NpOn.TokenValidatorExtUse" />
     <PackageReference Include="NpOn.CommonGrpcCall" />
     <PackageReference Include="NpOn.CommonHeaderConfig" />
     <PackageReference Include="NpOn.Saga" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MicroServices\Account\Service\NpOn.AccountService\NpOn.AccountService.csproj" />
+    <ProjectReference Include="..\..\MicroServices\General\Service\NpOn.GeneralService\NpOn.GeneralService.csproj" />
   </ItemGroup>
 
   <ItemGroup>

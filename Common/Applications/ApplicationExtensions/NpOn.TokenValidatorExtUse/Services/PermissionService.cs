@@ -31,9 +31,9 @@ public class PermissionService(
             throw new Exception(err);
         }
 
-        var syncTasks = new List<Task>();
+        var syncTasks = new List<Task<bool>>();
         Guid controllerStartVersionId = Guid.NewGuid();
-        List<PermissionControllerSyncItemProto> commands = [];
+        List<AccountPermissionControllerAddOrChangeCommand> commands = [];
         foreach (var endpoint in endpoints)
         {
             bool isAnonymousAllowed = endpoint.EndpointMetadata
@@ -79,13 +79,14 @@ public class PermissionService(
 
             // var httpMethods = endpoint.EndpointMetadata.OfType<HttpMethodMetadata>().SelectMany(m => m.HttpMethods).Distinct();
 
-            var command = new PermissionControllerSyncItemProto
+            var command = new AccountPermissionControllerAddOrChangeCommand
             {
-                ControllerName = controllerCode, // code
-                Permission = (long)permissionControllerAttribute.GetAllPermissionAsOne,
                 HostCode = cadName,
                 VersionId = controllerStartVersionId.ToString(),
+                ControllerName = controllerCode, // code
+                Permission = (long)permissionControllerAttribute.GetAllPermissionAsOne,
                 Description = permissionRequiredAttribute.Description ?? string.Empty,
+                RequiredPermission = (long)permissionRequiredAttribute.GetAllPermissionAsOne,
             };
             commands.Add(command);
             if (commands.Count == 500)
@@ -99,38 +100,54 @@ public class PermissionService(
             syncTasks.Add(StartSyncPermissionWithController(commands.ToArray()));
 
         logger.LogInformation("Waiting for all {TaskCount} permission sync batches to complete...", syncTasks.Count);
-        await Task.WhenAll(syncTasks);
+        bool[] syncResults = await Task.WhenAll(syncTasks);
+        if (syncResults.Any(ok => !ok))
+        {
+            logger.LogError(
+                "One or more permission sync batches failed for host '{HostCode}'. Skipping ClearOldControllersVersion to prevent deleting active routes.",
+                cadName);
+            return false;
+        }
+
         logger.LogInformation("All permission sync batches completed successfully.");
-        await SyncClearPermissionWithController(controllerStartVersionId, cadName);
+        return await SyncClearPermissionWithController(controllerStartVersionId, cadName);
+    }
+
+    private async Task<bool> StartSyncPermissionWithController(AccountPermissionControllerAddOrChangeCommand[] commands)
+    {
+        logger.LogInformation("Starting to sync a batch of {CommandCount} permissions...", commands.Length);
+        var req = new AccountPermissionControllersSyncCommand();
+        req.Items.AddRange(commands);
+        var reply = await accountPermissionProtoClient.SyncPermissionWithControllerAsync(req);
+        if (!reply.Status || !reply.Data)
+        {
+            logger.LogError("Sync batch failed: {Errors}", string.Join("; ", reply.ErrorMessages));
+            return false;
+        }
+
+        logger.LogInformation("Sync batch finished.");
         return true;
     }
 
-    private Task StartSyncPermissionWithController(PermissionControllerSyncItemProto[] commands)
+    private async Task<bool> SyncClearPermissionWithController(Guid currentVersionId, string hostCode)
     {
-        return Task.Run(async () =>
+        logger.LogInformation(
+            "Starting to clear old permission versions for host '{HostCode}' except for current version '{CurrentVersionId}'.",
+            hostCode, currentVersionId);
+        var reply = await accountPermissionProtoClient.ClearOldControllersVersionAsync(
+            new AccountPermissionControllerDeleteByHostCodeAndVersionIdCommand
+            {
+                HostCode = hostCode,
+                VersionId = currentVersionId.ToString(),
+            });
+        if (!reply.Status || !reply.Data)
         {
-            logger.LogInformation("Starting to sync a batch of {CommandCount} permissions...", commands.Length);
-            var req = new SyncPermissionControllersRequestProto();
-            req.Items.AddRange(commands);
-            await accountPermissionProtoClient.SyncPermissionWithControllerAsync(req);
-            logger.LogInformation("Sync batch finished.");
-        });
-    }
+            logger.LogError("ClearOldControllersVersion failed for host '{HostCode}': {Errors}",
+                hostCode, string.Join("; ", reply.ErrorMessages));
+            return false;
+        }
 
-    private Task SyncClearPermissionWithController(Guid currentVersionId, string hostCode)
-    {
-        return Task.Run(async () =>
-        {
-            logger.LogInformation(
-                "Starting to clear old permission versions for host '{HostCode}' except for current version '{CurrentVersionId}'.",
-                hostCode, currentVersionId);
-            await accountPermissionProtoClient.ClearOldControllersVersionAsync(
-                new ClearOldControllersVersionRequestProto
-                {
-                    HostCode = hostCode,
-                    VersionId = currentVersionId.ToString(),
-                });
-            logger.LogInformation("Finished clearing old permission versions.");
-        });
+        logger.LogInformation("Finished clearing old permission versions.");
+        return true;
     }
 }

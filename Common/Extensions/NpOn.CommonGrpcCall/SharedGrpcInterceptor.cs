@@ -1,4 +1,5 @@
 using Common.Extensions.NpOn.HeaderConfig;
+using Grpc.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -15,24 +16,35 @@ public class SharedGrpcInterceptor(
 ) : GrpcInterceptorBase(logger, headerConfig, isUseLogUnaryCall, isUseLogClientStreamingCall, isUseLogServerStreamingCall,
     isUseLogDuplexStreamingCall)
 {
-    private readonly GrpcHeaderConfig _headerConfig = headerConfig;
-
-    protected override void WriteHeader()
+    protected override void WriteCallHeaders(Metadata headers)
     {
-        // Forward session code from HTTP request to gRPC call if present
-        string? sessionKey = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
-                x.Key.Equals(DefaultHeaderConstant.GrpcInternalCallerSessionCode,
-                    StringComparison.CurrentCultureIgnoreCase))
-            .Value;
-        if (sessionKey?.Length > 0)
-            _headerConfig.Replace(DefaultHeaderConstant.GrpcInternalCallerSessionCode, sessionKey);
+        var requestHeaders = httpContextAccessor?.HttpContext?.Request.Headers;
+        if (requestHeaders == null)
+            return;
 
-        // Forward External Authorization Header (e.g. Bearer token) if present
-        string? authorizationExt = httpContextAccessor?.HttpContext?.Request.Headers.FirstOrDefault(x =>
-                x.Key.Equals("Authorization", StringComparison.CurrentCultureIgnoreCase))
-            .Value;
-        // Grpc header keys should be lower case, gRPC requires lowercase header keys.
-        if (authorizationExt?.Length > 0)
-            _headerConfig.Replace("authorization", authorizationExt);
+        // Forward session code from HTTP request to per-call gRPC Metadata only
+        if (requestHeaders.TryGetValue(DefaultHeaderConstant.GrpcInternalCallerSessionCode, out var sessionValues))
+        {
+            string? sessionKey = sessionValues.FirstOrDefault();
+            if (!string.IsNullOrEmpty(sessionKey))
+                UpsertHeader(headers, DefaultHeaderConstant.GrpcInternalCallerSessionCode, sessionKey);
+        }
+
+        // Forward External Authorization Header (e.g. Bearer token) to per-call gRPC Metadata only
+        if (requestHeaders.TryGetValue("Authorization", out var authValues))
+        {
+            string? authorizationExt = authValues.FirstOrDefault();
+            // gRPC requires lowercase header keys.
+            if (!string.IsNullOrEmpty(authorizationExt))
+                UpsertHeader(headers, "authorization", authorizationExt);
+        }
+    }
+
+    private static void UpsertHeader(Metadata headers, string key, string value)
+    {
+        var existing = headers.Get(key);
+        if (existing != null)
+            headers.Remove(existing);
+        headers.Add(key, value);
     }
 }

@@ -7,6 +7,7 @@ namespace MicroServices.General.Contract.NpOn.GeneralServiceReadModel;
 [ProtoContract]
 [ProtoInclude(100, typeof(TblFldRModel))]
 [ProtoInclude(200, typeof(CommandRModel))]
+[ProtoInclude(300, typeof(BulkSyncQueriesRModel))]
 public abstract record BaseGeneralRModel : BaseCtrl
 {
     #region Field Config

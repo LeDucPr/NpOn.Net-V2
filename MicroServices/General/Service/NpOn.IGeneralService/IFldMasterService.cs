@@ -21,4 +21,7 @@ public interface IFldMasterService
 
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecutionCommand executionCommand);
+
+    [OperationContract]
+    Task<CommonResponse<BulkSyncQueriesRModel?>> BulkSyncQueries(BulkSyncQueriesCommand command);
 }

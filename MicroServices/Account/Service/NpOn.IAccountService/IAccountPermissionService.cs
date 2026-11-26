@@ -27,4 +27,8 @@ public interface IAccountPermissionService
     [OperationContract]
     Task<CommonResponse<bool>> AddOrChangeManyAccountPermissionException(
         AccountPermissionExceptionAddOrChangeManyCommand command);
+
+    Task<CommonResponse<AccountPermissionExceptionCacheState?>> HealAndRefreshPermissionState(string accountId);
+
+    Task<CommonResponse<AccountPermissionControllerRModel?>> GetPermissionControllerByCode(string controllerCode);
 }

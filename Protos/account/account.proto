@@ -6,45 +6,45 @@ package npon.account.v1;
 
 // =============================================================================
 // Schema-First gRPC Contracts for AccountService
-// Replaces NpOn.IAccountService / AccountServiceCommand / AccountServiceReadModel
+// Domain entities (*Domain) stay strictly isolated inside AccountService.
 // =============================================================================
 
 service AuthenticationProtoService {
-  rpc Signup (AccountSignupRequestProto) returns (AccountLoginReplyProto);
-  rpc ChangeAccountStatus (AccountSetStatusRequestProto) returns (BoolReplyProto);
-  rpc ChangeAccountPassword (AccountChangePasswordRequestProto) returns (BoolReplyProto);
-  rpc Login (AccountLoginRequestProto) returns (AccountLoginReplyProto);
-  rpc RefreshToken (AccountRefreshTokenRequestProto) returns (AccountLoginReplyProto);
-  rpc GetLogonTokenBySessionId (AccountSessionRequestProto) returns (AccountLoginReplyProto);
-  rpc IsValidLogonPermissionExceptionControllers (AccountPermissionExceptionCheckRequestProto) returns (BoolReplyProto);
-  rpc LogOut (AccountSessionRequestProto) returns (StringReplyProto);
+  rpc Signup (AccountSignupCommand) returns (AccountLoginResponseProto);
+  rpc ChangeAccountStatus (AccountSetStatusCommand) returns (CommonBoolResponseProto);
+  rpc ChangeAccountPassword (AccountChangePasswordCommand) returns (CommonBoolResponseProto);
+  rpc Login (AccountLoginQuery) returns (AccountLoginResponseProto);
+  rpc RefreshToken (AccountRefreshTokenQuery) returns (AccountLoginResponseProto);
+  rpc GetLogonTokenBySessionId (AccountGetLogonInfoBySessionIdQuery) returns (AccountLoginResponseProto);
+  rpc IsValidLogonPermissionExceptionControllers (AccountPermissionExceptionCachingCheckValidQuery) returns (CommonBoolResponseProto);
+  rpc LogOut (AccountLogoutQuery) returns (CommonStringResponseProto);
 }
 
 service AccountInfoProtoService {
-  rpc AccountInfoGetByAccountIds (AccountIdsRequestProto) returns (AccountInfoListReplyProto);
-  rpc AccountInfoGetByAccountId (AccountIdRequestProto) returns (AccountInfoSingleReplyProto);
-  rpc AccountInfoAddOrChange (AccountInfoAddOrChangeRequestProto) returns (CommonStatusReplyProto);
-  rpc AccountAddressesAddOrChange (AccountAddressesAddOrChangeRequestProto) returns (CommonStatusReplyProto);
+  rpc AccountInfoGetByAccountIds (AccountInfoGetByAccountIdsQuery) returns (AccountInfoListResponseProto);
+  rpc AccountInfoGetByAccountId (AccountInfoGetByAccountIdQuery) returns (AccountInfoResponseProto);
+  rpc AccountInfoAddOrChange (AccountInfoAddOrChangeCommand) returns (CommonResponseProto);
+  rpc AccountAddressesAddOrChange (AccountAddressesAddOrChangeCommand) returns (CommonResponseProto);
 }
 
 service AccountGroupProtoService {
-  rpc GroupAddOrChange (AccountGroupAddOrChangeRequestProto) returns (CommonStatusReplyProto);
-  rpc GroupCopy (AccountGroupCopyRequestProto) returns (CommonStatusReplyProto);
-  rpc Search (AccountGroupSearchRequestProto) returns (CommonStatusReplyProto);
-  rpc GroupOrMemberDelete (AccountGroupDeleteRequestProto) returns (CommonStatusReplyProto);
+  rpc GroupAddOrChange (AccountGroupAddOrChangeCommand) returns (CommonResponseProto);
+  rpc GroupCopy (AccountGroupCopyCommand) returns (CommonResponseProto);
+  rpc Search (AccountGroupSearchQuery) returns (CommonResponseProto);
+  rpc GroupOrMemberDelete (AccountGroupDeleteCommand) returns (CommonResponseProto);
 }
 
 service AccountPermissionProtoService {
-  rpc AccountPermissionExceptionQuickGetByAccountId (AccountIdRequestProto) returns (AccountPermissionExceptionListReplyProto);
-  rpc SyncPermissionWithController (SyncPermissionControllersRequestProto) returns (BoolReplyProto);
-  rpc ClearOldControllersVersion (ClearOldControllersVersionRequestProto) returns (BoolReplyProto);
-  rpc AddOrChangeAccountPermissionException (AddOrChangeAccountPermissionExceptionsRequestProto) returns (BoolReplyProto);
-  rpc AddOrChangeManyAccountPermissionException (AddOrChangeManyAccountPermissionExceptionRequestProto) returns (BoolReplyProto);
+  rpc AccountPermissionExceptionQuickGetByAccountId (AccountPermissionExceptionGetByAccountIdQuery) returns (AccountPermissionExceptionListResponseProto);
+  rpc SyncPermissionWithController (AccountPermissionControllersSyncCommand) returns (CommonBoolResponseProto);
+  rpc ClearOldControllersVersion (AccountPermissionControllerDeleteByHostCodeAndVersionIdCommand) returns (CommonBoolResponseProto);
+  rpc AddOrChangeAccountPermissionException (AccountPermissionExceptionsAddOrChangeCommand) returns (CommonBoolResponseProto);
+  rpc AddOrChangeManyAccountPermissionException (AccountPermissionExceptionAddOrChangeManyCommand) returns (CommonBoolResponseProto);
 }
 
 // --- Common Response Envelopes ---
 
-message CommonStatusReplyProto {
+message CommonResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
@@ -53,7 +53,7 @@ message CommonStatusReplyProto {
   optional int32 total_row = 6;
 }
 
-message BoolReplyProto {
+message CommonBoolResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
@@ -63,7 +63,7 @@ message BoolReplyProto {
   bool data = 7;
 }
 
-message StringReplyProto {
+message CommonStringResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
@@ -75,7 +75,7 @@ message StringReplyProto {
 
 // --- Authentication Messages ---
 
-message AccountSignupRequestProto {
+message AccountSignupCommand {
   string email = 1;
   string phone_number = 2;
   string user_name = 3;
@@ -91,19 +91,19 @@ message AccountSignupRequestProto {
   optional string process_uid = 13;
 }
 
-message AccountSetStatusRequestProto {
+message AccountSetStatusCommand {
   string account_id = 1;
   int32 account_status = 2;
   optional string process_uid = 3;
 }
 
-message AccountChangePasswordRequestProto {
+message AccountChangePasswordCommand {
   string account_id = 1;
   string new_password = 2;
   optional string process_uid = 3;
 }
 
-message AccountLoginRequestProto {
+message AccountLoginQuery {
   optional string email = 1;
   optional string phone_number = 2;
   optional string user_name = 3;
@@ -118,7 +118,7 @@ message AccountLoginRequestProto {
   optional string process_uid = 12;
 }
 
-message AccountRefreshTokenRequestProto {
+message AccountRefreshTokenQuery {
   string refresh_token = 1;
   optional string device_info = 2;
   optional int32 login_type = 3;
@@ -127,18 +127,23 @@ message AccountRefreshTokenRequestProto {
   optional string process_uid = 6;
 }
 
-message AccountSessionRequestProto {
+message AccountGetLogonInfoBySessionIdQuery {
   string session_id = 1;
   optional string process_uid = 2;
 }
 
-message AccountPermissionExceptionCheckRequestProto {
+message AccountLogoutQuery {
+  string session_id = 1;
+  optional string process_uid = 2;
+}
+
+message AccountPermissionExceptionCachingCheckValidQuery {
   string account_id = 1;
   string controller_code = 2;
   bool is_has_base_permission = 3;
 }
 
-message AccountLoginItemProto {
+message AccountLoginRModel {
   optional string id = 1;
   string account_id = 2;
   string user_name = 3;
@@ -160,27 +165,27 @@ message AccountLoginItemProto {
   optional string avatar_url = 19;
 }
 
-message AccountLoginReplyProto {
+message AccountLoginResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
   int32 version = 4;
   int64 server_time_unix_ms = 5;
   optional int32 total_row = 6;
-  optional AccountLoginItemProto data = 7;
+  optional AccountLoginRModel data = 7;
 }
 
 // --- Account Info & Address Messages ---
 
-message AccountIdRequestProto {
+message AccountInfoGetByAccountIdQuery {
   string account_id = 1;
 }
 
-message AccountIdsRequestProto {
+message AccountInfoGetByAccountIdsQuery {
   repeated string account_ids = 1;
 }
 
-message AccountAddressItemProto {
+message AccountAddressRModel {
   string id = 1;
   string account_id = 2;
   optional string country_id = 3;
@@ -193,7 +198,7 @@ message AccountAddressItemProto {
   optional int64 updated_at_unix_ms = 10;
 }
 
-message AccountInfoItemProto {
+message AccountInfoRModel {
   string account_id = 1;
   optional string country_id = 2;
   optional string province_id = 3;
@@ -215,32 +220,32 @@ message AccountInfoItemProto {
   optional string company_address = 19;
   int32 status = 20;
   string id = 21;
-  repeated AccountAddressItemProto addresses = 22;
+  repeated AccountAddressRModel addresses = 22;
   optional int64 created_at_unix_ms = 23;
   optional int64 updated_at_unix_ms = 24;
 }
 
-message AccountInfoSingleReplyProto {
+message AccountInfoResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
   int32 version = 4;
   int64 server_time_unix_ms = 5;
   optional int32 total_row = 6;
-  optional AccountInfoItemProto data = 7;
+  optional AccountInfoRModel data = 7;
 }
 
-message AccountInfoListReplyProto {
+message AccountInfoListResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
   int32 version = 4;
   int64 server_time_unix_ms = 5;
   optional int32 total_row = 6;
-  repeated AccountInfoItemProto data = 7;
+  repeated AccountInfoRModel data = 7;
 }
 
-message AccountInfoAddOrChangeRequestProto {
+message AccountInfoAddOrChangeCommand {
   string account_id = 1;
   optional string full_name = 2;
   optional int64 date_of_birth_unix_ms = 3;
@@ -262,7 +267,7 @@ message AccountInfoAddOrChangeRequestProto {
   optional string address_line = 19;
 }
 
-message AccountAddressAddOrChangeItemProto {
+message AccountAddressAddOrChangeCommand {
   string account_id = 1;
   optional string country_id = 2;
   optional string province_id = 3;
@@ -272,13 +277,13 @@ message AccountAddressAddOrChangeItemProto {
   int32 address_type = 7;
 }
 
-message AccountAddressesAddOrChangeRequestProto {
-  repeated AccountAddressAddOrChangeItemProto items = 1;
+message AccountAddressesAddOrChangeCommand {
+  repeated AccountAddressAddOrChangeCommand items = 1;
 }
 
 // --- Account Group Messages ---
 
-message AccountGroupAddOrChangeRequestProto {
+message AccountGroupAddOrChangeCommand {
   optional string group_id = 1;
   string leader = 2;
   repeated string members = 3;
@@ -286,7 +291,7 @@ message AccountGroupAddOrChangeRequestProto {
   repeated int32 group_types = 5;
 }
 
-message AccountGroupCopyComponentProto {
+message AccountGroupCopyComponentCommand {
   string leader = 1;
   optional string group_name = 2;
   repeated string member_excludes = 3;
@@ -294,19 +299,19 @@ message AccountGroupCopyComponentProto {
   repeated int32 group_types = 5;
 }
 
-message AccountGroupCopyRequestProto {
+message AccountGroupCopyCommand {
   string group_id_need_copy = 1;
-  repeated AccountGroupCopyComponentProto components = 2;
+  repeated AccountGroupCopyComponentCommand components = 2;
 }
 
-message AccountGroupSearchRequestProto {
+message AccountGroupSearchQuery {
   optional string keyword = 1;
   optional string leader = 2;
   int32 page_size = 3;
   int32 page_index = 4;
 }
 
-message AccountGroupDeleteRequestProto {
+message AccountGroupDeleteCommand {
   string group_id = 1;
   string leader = 2;
   repeated string members = 3;
@@ -315,56 +320,61 @@ message AccountGroupDeleteRequestProto {
 
 // --- Account Permission Messages ---
 
-message AccountPermissionExceptionItemProto {
+message AccountPermissionExceptionGetByAccountIdQuery {
+  string account_id = 1;
+}
+
+message AccountPermissionExceptionRModel {
   string account_id = 1;
   string controller_code = 2;
   int32 access_permission = 3;
 }
 
-message AccountPermissionExceptionListReplyProto {
+message AccountPermissionExceptionListResponseProto {
   bool status = 1;
   optional int32 error_code = 2;
   repeated string error_messages = 3;
   int32 version = 4;
   int64 server_time_unix_ms = 5;
   optional int32 total_row = 6;
-  repeated AccountPermissionExceptionItemProto data = 7;
+  repeated AccountPermissionExceptionRModel data = 7;
 }
 
-message PermissionControllerSyncItemProto {
+message AccountPermissionControllerAddOrChangeCommand {
   string host_code = 1;
   string version_id = 2;
   string controller_name = 3;
   int64 permission = 4;
   optional string description = 5;
+  optional int64 required_permission = 6;
 }
 
-message SyncPermissionControllersRequestProto {
-  repeated PermissionControllerSyncItemProto items = 1;
+message AccountPermissionControllersSyncCommand {
+  repeated AccountPermissionControllerAddOrChangeCommand items = 1;
 }
 
-message ClearOldControllersVersionRequestProto {
+message AccountPermissionControllerDeleteByHostCodeAndVersionIdCommand {
   string host_code = 1;
   string version_id = 2;
 }
 
-message AccountPermissionExceptionChangeItemProto {
+message AccountPermissionExceptionAddOrChangeCommand {
   string account_id = 1;
   string controller_code = 2;
   int32 access_permission = 3;
 }
 
-message AddOrChangeAccountPermissionExceptionsRequestProto {
-  repeated AccountPermissionExceptionChangeItemProto items = 1;
+message AccountPermissionExceptionsAddOrChangeCommand {
+  repeated AccountPermissionExceptionAddOrChangeCommand items = 1;
 }
 
-message PermissionExceptionManyControllerCodeProto {
+message AccountPermissionExceptionAddOrChangeManyControllerCodeCommand {
   string controller_code = 1;
   int32 access_permission = 2;
 }
 
-message AddOrChangeManyAccountPermissionExceptionRequestProto {
+message AccountPermissionExceptionAddOrChangeManyCommand {
   repeated string account_ids = 1;
   repeated string group_ids = 2;
-  repeated PermissionExceptionManyControllerCodeProto controller_components = 3;
+  repeated AccountPermissionExceptionAddOrChangeManyControllerCodeCommand controller_components = 3;
 }

@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
+using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using Microsoft.IdentityModel.Tokens;
 using NpOn.Protos.Account.V1;
@@ -79,21 +80,34 @@ public class ContextService(
         return user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value.AsDefaultGuid();
     }
 
-    public AccountLoginItemProto? UserInfo()
+    public AccountLoginRModel? UserInfo()
     {
-        var isAuthenticated = httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;
-        if (!isAuthenticated)
+        var user = httpContextAccessor?.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
             return null;
 
-        string? key = GetSessionKey();
-        if (string.IsNullOrEmpty(key))
+        string? sessionId = GetSessionKey();
+        string? accountId = user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
+        if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(accountId))
             return null;
 
-        var userInfo = authenService.GetLoginInfoSync(key);
-        return userInfo;
+        return new AccountLoginRModel
+        {
+            AccountId = accountId,
+            UserName = user.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? string.Empty,
+            Password = string.Empty,
+            AuthType = (int)EAuthentication.WebApp,
+            LoginType = user.FindFirst(ContextServiceCode.LoginTypeEnumCode)?.Value.AsDefaultInt() ?? (int)ELoginType.Default,
+            Permission = user.FindFirst(ContextServiceCode.Permission)?.Value is { Length: > 0 } p && long.TryParse(p, out var permVal)
+                ? permVal
+                : 0,
+            SessionId = sessionId,
+            MinuteExpire = user.FindFirst(ContextServiceCode.MinuteExpirePrefix)?.Value.AsDefaultInt() ?? 0,
+            TokenStatus = (int)ETokenStatus.Active
+        };
     }
 
-    public AccountLoginItemProto UserInfoRequired()
+    public AccountLoginRModel UserInfoRequired()
     {
         var userInfo = UserInfo();
         if (userInfo == null)
@@ -104,7 +118,7 @@ public class ContextService(
         return userInfo;
     }
 
-    public AccountLoginItemProto? UserInfoBySessionId(string sessionId)
+    public AccountLoginRModel? UserInfoBySessionId(string sessionId)
     {
         var userInfo = authenService.GetLoginInfoSync(sessionId);
         return userInfo;
@@ -136,6 +150,8 @@ public class ContextService(
                 IssuerSigningKey = mySecurityKey,
                 ValidateIssuer = false,
                 ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromSeconds(30),
             }, out SecurityToken validatedToken);
         }
         catch (Exception exception)

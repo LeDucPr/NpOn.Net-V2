@@ -61,10 +61,11 @@ public class PermissionValidationMiddleware(RequestDelegate next)
                 return;
             string accessControllerCode = contextService.GenControllerCodeFormula(hostCode, controller, action);
            
-            isHasPermission = permissionControllerAttribute.IsHasPermission(permission);
+            bool isHasBasePermission =
+                permissionControllerAttribute.IsHasPermission(permission) &&
+                pmsRequired.IsHasPermission(permission);
             isHasPermission = await authenService.CheckLogonPermissionExceptionControllers(
-                accountId, accessControllerCode, isHasPermission);
-            isHasPermission &= pmsRequired.IsHasPermission(permission);
+                accountId, accessControllerCode, isHasBasePermission);
         }
         else // not has PermissionControllerAttribute => pass
         {

@@ -22,6 +22,7 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
     private readonly Metadata? _metadataHeaders;
     private readonly Metadata? _acceptMetadataHeaders;
     private readonly List<Metadata.Entry>? _metadataEntries;
+    private readonly Lock _headerLock = new();
     private readonly EGrpcEndUseType _endUseType;
     private readonly IInterServiceTokenService? _tokenService;
     private readonly string? _serviceName;
@@ -98,26 +99,47 @@ public class GrpcHeaderConfig : IHeaderConfig<Metadata, Metadata.Entry>
 
     public void Replace(string key, string value)
     {
-        if (_metadataHeaders == null)
-            return;
-        if (_endUseType == EGrpcEndUseType.InternalServer || _endUseType == EGrpcEndUseType.ExternalServer)
+        lock (_headerLock)
         {
-            var callerUserEntry = _metadataHeaders.Get(key);
-            if (callerUserEntry != null)
-                _metadataHeaders.Remove(callerUserEntry);
-            _metadataHeaders.Add(key, value);
-            return;
+            if (_metadataHeaders == null)
+                return;
+            if (_endUseType == EGrpcEndUseType.InternalServer || _endUseType == EGrpcEndUseType.ExternalServer)
+            {
+                var callerUserEntry = _metadataHeaders.Get(key);
+                if (callerUserEntry != null)
+                    _metadataHeaders.Remove(callerUserEntry);
+                _metadataHeaders.Add(key, value);
+                return;
+            }
+
+            if (_acceptMetadataHeaders == null)
+                return;
+            if (_endUseType == EGrpcEndUseType.Client)
+            {
+                var callerUserEntry = _acceptMetadataHeaders.Get(key);
+                if (callerUserEntry != null)
+                    _acceptMetadataHeaders.Remove(callerUserEntry);
+                _acceptMetadataHeaders.Add(key, value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates an isolated per-call Metadata snapshot from baseline entries so concurrent gRPC calls
+    /// never mutate or race on a shared Metadata collection or leak per-request auth headers.
+    /// </summary>
+    public Metadata CloneHeader()
+    {
+        var metadata = new Metadata();
+        if (_metadataEntries is { Count: > 0 } entries)
+        {
+            foreach (var entry in entries)
+            {
+                metadata.Add(entry.Key, entry.Value);
+            }
         }
 
-        if (_acceptMetadataHeaders == null)
-            return;
-        if (_endUseType == EGrpcEndUseType.Client)
-        {
-            var callerUserEntry = _acceptMetadataHeaders.Get(key);
-            if (callerUserEntry != null)
-                _acceptMetadataHeaders.Remove(callerUserEntry);
-            _acceptMetadataHeaders.Add(key, value);
-        }
+        return metadata;
     }
 
     public Metadata? GetHeader() => _metadataHeaders ?? _acceptMetadataHeaders;

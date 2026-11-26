@@ -44,5 +44,6 @@ public class PermissionRequiredAttribute : Attribute
         return isHasFlag;
     }
 
+    public EPermission GetAllPermissionAsOne => _permission;
     private EPermission[] GetAllPermission() => _permission.GetFlags();
 }

@@ -11,4 +11,7 @@ public interface IAccountPermissionStorageAdapter
         string accountId, string[] controllerCodes);
 
     Task<List<AccountPermissionControllerRModel>?> AccountPermissionControllerGetByCodes(string[]? codes);
+
+    Task<bool> AccountPermissionExceptionDeleteOrphaned();
+    Task<bool> AccountPermissionExceptionsReconcileByControllerCodes(string[] controllerCodes);
 }

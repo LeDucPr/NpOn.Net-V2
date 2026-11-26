@@ -48,6 +48,10 @@ PostgresConnectionString: "Host=localhost;Port=5432;Username=postgres;Password=p
 PostgresConnectionNumber: 100
 WorkerThreadMin: 2500
 
+IsUseRedisCache: true
+RedisConnectString: "localhost:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+RedisConnectionNumber: 100
+
 #CORS: "*"
 #CorsPolicy: NpOnCorsPolicy
 

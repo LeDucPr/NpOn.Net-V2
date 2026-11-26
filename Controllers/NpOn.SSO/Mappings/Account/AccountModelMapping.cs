@@ -6,7 +6,7 @@ namespace Controllers.NpOn.SSO.Mappings.Account;
 
 public static class AccountModelMapping
 {
-    public static AccountLoginOutputModel ToModel(this AccountLoginItemProto accountLogin)
+    public static AccountLoginOutputModel ToModel(this AccountLoginRModel accountLogin)
     {
         return new AccountLoginOutputModel
         {
