@@ -57,9 +57,32 @@ if check_local_port 9042; then
     SCYLLA_UP=1
     SCYLLA_HEALTHY=1
     if command -v docker >/dev/null 2>&1; then
-        if docker ps --filter "name=^/scylla-node1$" --format "{{.Names}}" 2>/dev/null | grep -qx "scylla-node1"; then
-            if docker exec scylla-node1 nodetool status 2>/dev/null | grep -Eq "^(\?N|D[NLMJ])[[:space:]]"; then
+        DOCKER_PS_NAMES="$(docker ps --filter "name=scylla-node1" --format "{{.Names}}" 2>/dev/null)"
+        SCYLLA_NODE1_RUNNING=0
+        while IFS= read -r cname; do
+            cname="${cname%$(printf '\r')}"
+            if [ "$cname" = "scylla-node1" ]; then
+                SCYLLA_NODE1_RUNNING=1
+                break
+            fi
+        done <<EOF
+$DOCKER_PS_NAMES
+EOF
+        if [ "$SCYLLA_NODE1_RUNNING" -eq 1 ]; then
+            NODETOOL_OUT="$(docker exec scylla-node1 nodetool status 2>/dev/null)"
+            if [ $? -ne 0 ] || [ -z "$NODETOOL_OUT" ]; then
                 SCYLLA_HEALTHY=0
+            else
+                while IFS= read -r nline; do
+                    case "$nline" in
+                        "?N "*|"DN "*|"DL "*|"DM "*|"DJ "*)
+                            SCYLLA_HEALTHY=0
+                            break
+                            ;;
+                    esac
+                done <<EOF
+$NODETOOL_OUT
+EOF
             fi
         fi
     fi
