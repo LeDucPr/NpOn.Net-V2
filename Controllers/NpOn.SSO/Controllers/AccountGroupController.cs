@@ -3,18 +3,15 @@ using Common.Extensions.NpOn.CommonGrpcContract;
 using Common.Extensions.NpOn.CommonMode;
 using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.Validators;
-using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
-using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Mvc;
+using NpOn.Protos.Account.V1;
 
 namespace Controllers.NpOn.SSO.Controllers;
 
 public class AccountGroupController(
     ILogger<AccountController> logger,
     ContextService contextService,
-    // IAuthenticationService authenticationService,
-    // IAccountPermissionService accountPermissionService,
-    IAccountGroupService accountGroupService
+    AccountGroupProtoService.AccountGroupProtoServiceClient accountGroupProtoClient
 ) : BaseSsoController(logger, contextService)
 {
     [HttpPost]
@@ -30,14 +27,17 @@ public class AccountGroupController(
                 return;
             }
 
-            var addOrChangeResponse = await accountGroupService.GroupAddOrChange(new AccountGroupAddOrChangeCommand()
+            var protoReq = new AccountGroupAddOrChangeRequestProto
             {
-                GroupId = request.GroupId.AsDefaultGuid(),
-                Leader = request.Leader,
-                Members = request.Members,
-                GroupName = request.GroupName,
-                GroupTypes = request.GroupTypes
-            });
+                Leader = request.Leader.ToString(),
+            };
+            var groupId = request.GroupId.AsDefaultGuid();
+            if (groupId != Guid.Empty) protoReq.GroupId = groupId.ToString();
+            if (request.GroupName != null) protoReq.GroupName = request.GroupName;
+            if (request.Members is { Length: > 0 }) protoReq.Members.AddRange(request.Members.Select(x => x.ToString()));
+            if (request.GroupTypes is { Length: > 0 }) protoReq.GroupTypes.AddRange(request.GroupTypes.Select(x => (int)x));
+
+            var addOrChangeResponse = await accountGroupProtoClient.GroupAddOrChangeAsync(protoReq);
 
             if (!addOrChangeResponse.Status)
             {
@@ -62,18 +62,24 @@ public class AccountGroupController(
                 return;
             }
 
-            var addOrChangeResponse = await accountGroupService.GroupCopy(new AccountGroupCopyCommand
+            var protoReq = new AccountGroupCopyRequestProto
             {
-                GroupIdNeedCopy = request.GroupIdNeedCopy,
-                Components = request.Components.Select(x => new AccountGroupCopyComponentCommand
+                GroupIdNeedCopy = request.GroupIdNeedCopy.ToString(),
+            };
+            foreach (var x in request.Components)
+            {
+                var comp = new AccountGroupCopyComponentProto
                 {
-                    Leader = x.Leader,
-                    GroupName = x.GroupName,
-                    GroupTypes = x.GroupTypes,
-                    MemberAdds = x.MemberAdds,
-                    MemberExcludes = x.MemberExcludes,
-                }).ToArray(),
-            });
+                    Leader = x.Leader.ToString(),
+                };
+                if (x.GroupName != null) comp.GroupName = x.GroupName;
+                if (x.GroupTypes is { Length: > 0 }) comp.GroupTypes.AddRange(x.GroupTypes.Select(t => (int)t));
+                if (x.MemberAdds is { Length: > 0 }) comp.MemberAdds.AddRange(x.MemberAdds.Select(m => m.ToString()));
+                if (x.MemberExcludes is { Length: > 0 }) comp.MemberExcludes.AddRange(x.MemberExcludes.Select(m => m.ToString()));
+                protoReq.Components.Add(comp);
+            }
+
+            var addOrChangeResponse = await accountGroupProtoClient.GroupCopyAsync(protoReq);
 
             if (!addOrChangeResponse.Status)
             {
@@ -98,13 +104,15 @@ public class AccountGroupController(
                 return;
             }
 
-            var addOrChangeResponse = await accountGroupService.GroupOrMemberDelete(new AccountGroupDeleteCommand()
+            var protoReq = new AccountGroupDeleteRequestProto
             {
-                GroupId = request.GroupId,
-                Leader = request.Leader,
-                Members = request.Members,
-                GroupName = request.GroupName
-            });
+                GroupId = request.GroupId.ToString(),
+                Leader = request.Leader.ToString(),
+            };
+            if (request.GroupName != null) protoReq.GroupName = request.GroupName;
+            if (request.Members is { Length: > 0 }) protoReq.Members.AddRange(request.Members.Select(x => x.ToString()));
+
+            var addOrChangeResponse = await accountGroupProtoClient.GroupOrMemberDeleteAsync(protoReq);
 
             if (!addOrChangeResponse.Status)
             {

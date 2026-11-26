@@ -17,6 +17,7 @@ $swTotal = [System.Diagnostics.Stopwatch]::StartNew()
 
 $rootDir = $PSScriptRoot
 $commonDir = Join-Path $rootDir "Common"
+$protoDir = Join-Path $rootDir "Protos"
 $artifactsDir = Join-Path $rootDir "artifacts"
 $packagesDir = Join-Path $artifactsDir "packages"
 $hashFile = Join-Path $artifactsDir ".package_hashes.json"
@@ -59,11 +60,19 @@ if (-not $globalPackagesDir) {
 #   Phase 3: Common TokenValidatorExtUse (depends on Phase 2 Account contracts via NuGet)
 $tokenValidatorProj = [System.IO.Path]::GetFullPath((Join-Path $commonDir "Applications\ApplicationExtensions\NpOn.TokenValidatorExtUse\NpOn.TokenValidatorExtUse.csproj"))
 
-$phase1Projects = @(
-    Get-ChildItem -Path $commonDir -Recurse -Filter "*.csproj" |
+$protoProjects = if (Test-Path $protoDir) {
+    Get-ChildItem -Path $protoDir -Recurse -Filter "*.csproj" |
     ForEach-Object { [System.IO.Path]::GetFullPath($_.FullName) } |
-    Where-Object { $_ -ne $tokenValidatorProj } |
     Sort-Object
+} else { @() }
+
+$phase1Projects = @(
+    $protoProjects + @(
+        Get-ChildItem -Path $commonDir -Recurse -Filter "*.csproj" |
+        ForEach-Object { [System.IO.Path]::GetFullPath($_.FullName) } |
+        Where-Object { $_ -ne $tokenValidatorProj } |
+        Sort-Object
+    )
 )
 
 $phase2RelPaths = @(
@@ -140,9 +149,13 @@ foreach ($projPath in $allProjects) {
     $projName = [System.IO.Path]::GetFileNameWithoutExtension($projPath)
     $targetNupkg = Join-Path $packagesDir "$projName.$pkgVersion.nupkg"
 
-    $files = Get-ChildItem -Path $projDir -Recurse -Include "*.cs", "*.csproj" |
+    $files = @(Get-ChildItem -Path $projDir -Recurse -Include "*.cs", "*.csproj", "*.proto" |
         Where-Object { $_.FullName -notmatch "[\\/](bin|obj)[\\/]" } |
-        Sort-Object FullName
+        Sort-Object FullName)
+    if ((Test-Path $protoDir) -and $projPath.StartsWith($protoDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $sharedProtos = @(Get-ChildItem -Path $protoDir -Recurse -Filter "*.proto" | Sort-Object FullName)
+        $files = @(@($files) + @($sharedProtos) | Sort-Object FullName -Unique)
+    }
     $ms = [System.IO.MemoryStream]::new()
     $bw = [System.IO.BinaryWriter]::new($ms)
     foreach ($f in $files) {

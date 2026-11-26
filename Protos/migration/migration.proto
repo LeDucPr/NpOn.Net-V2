@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "NpOn.Protos.Migration.V1";
+
+package npon.migration.v1;
+
+// Schema-First gRPC contract for MigrationService
+service CassandraMigrationProtoService {
+  rpc TransferTable (MigrationTransferTableRequestProto) returns (MigrationCommonReplyProto);
+}
+
+message MigrationTransferTableRequestProto {
+}
+
+message MigrationCommonReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+}

@@ -1,5 +1,5 @@
-﻿using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
-using MicroServices.Account.Definitions.NpOn.AccountEnum;
+﻿using MicroServices.Account.Definitions.NpOn.AccountEnum;
+using NpOn.Protos.Account.V1;
 
 namespace Controllers.NpOn.SSO.Requests;
 
@@ -40,45 +40,50 @@ public class AccountAddressesAddOrChangeRequest
 
 public static class AccountInfoAddOrChangeRequestExtensions
 {
-    public static AccountInfoAddOrChangeCommand ToCommand(this AccountInfoAddOrChangeRequest request, string accountIdString)
+    public static AccountInfoAddOrChangeRequestProto ToProtoCommand(
+        this AccountInfoAddOrChangeRequest request,
+        string accountIdString)
     {
-        return new AccountInfoAddOrChangeCommand
+        var cmd = new AccountInfoAddOrChangeRequestProto
         {
-            // Id = request.Id,
-            AccountId = accountIdString,
-            FullName = request.FullName,
-            DateOfBirth = request.DateOfBirth,
-            Gender = request.Gender,
-            Occupation = request.Occupation,
-            MaritalStatus = request.MaritalStatus,
-            Bio = request.Bio,
-            Website = request.Website,
-            SocialLinks = request.SocialLinks,
-            IdentificationNumber = request.IdentificationNumber,
-            PassportNumber = request.PassportNumber,
-            TaxCode = request.TaxCode,
-            CompanyName = request.CompanyName,
-            CompanyAddress = request.CompanyAddress,
-            CountryId = request.CountryId,
-            ProvinceId = request.ProvinceId,
-            DistrictId = request.DistrictId,
-            WardId = request.WardId,
-            AddressLine = request.AddressLine,
+            AccountId = accountIdString
         };
+        if (request.FullName != null) cmd.FullName = request.FullName;
+        if (request.DateOfBirth.HasValue)
+            cmd.DateOfBirthUnixMs = new DateTimeOffset(DateTime.SpecifyKind(request.DateOfBirth.Value, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
+        if (request.Gender.HasValue) cmd.Gender = (int)request.Gender.Value;
+        if (request.Occupation != null) cmd.Occupation = request.Occupation;
+        if (request.MaritalStatus != null) cmd.MaritalStatus = request.MaritalStatus;
+        if (request.Bio != null) cmd.Bio = request.Bio;
+        if (request.Website != null) cmd.Website = request.Website;
+        if (request.SocialLinks != null) cmd.SocialLinks = request.SocialLinks;
+        if (request.IdentificationNumber != null) cmd.IdentificationNumber = request.IdentificationNumber;
+        if (request.PassportNumber != null) cmd.PassportNumber = request.PassportNumber;
+        if (request.TaxCode != null) cmd.TaxCode = request.TaxCode;
+        if (request.CompanyName != null) cmd.CompanyName = request.CompanyName;
+        if (request.CompanyAddress != null) cmd.CompanyAddress = request.CompanyAddress;
+        if (request.CountryId.HasValue) cmd.CountryId = request.CountryId.Value.ToString();
+        if (request.ProvinceId.HasValue) cmd.ProvinceId = request.ProvinceId.Value.ToString();
+        if (request.DistrictId.HasValue) cmd.DistrictId = request.DistrictId.Value.ToString();
+        if (request.WardId.HasValue) cmd.WardId = request.WardId.Value.ToString();
+        if (request.AddressLine != null) cmd.AddressLine = request.AddressLine;
+        return cmd;
     }
 
-    public static AccountAddressAddOrChangeCommand ToCommand(this AccountAddressesAddOrChangeRequest request, Guid accountId)
+    public static AccountAddressAddOrChangeItemProto ToProtoCommand(
+        this AccountAddressesAddOrChangeRequest request,
+        Guid accountId)
     {
-        return new AccountAddressAddOrChangeCommand()
+        var cmd = new AccountAddressAddOrChangeItemProto
         {
-            AccountId = accountId,
-            CountryId = request.CountryId,
-            ProvinceId = request.ProvinceId,
-            DistrictId = request.DistrictId,
-            WardId = request.WardId,
-            AddressLine = request.AddressLine,
-            AddressType = request.AddressType,
-
+            AccountId = accountId.ToString(),
+            AddressType = (int)request.AddressType
         };
+        if (request.CountryId.HasValue) cmd.CountryId = request.CountryId.Value.ToString();
+        if (request.ProvinceId.HasValue) cmd.ProvinceId = request.ProvinceId.Value.ToString();
+        if (request.DistrictId.HasValue) cmd.DistrictId = request.DistrictId.Value.ToString();
+        if (request.WardId.HasValue) cmd.WardId = request.WardId.Value.ToString();
+        if (request.AddressLine != null) cmd.AddressLine = request.AddressLine;
+        return cmd;
     }
 }

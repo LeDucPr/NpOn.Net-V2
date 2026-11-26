@@ -18,10 +18,11 @@ using MicroServices.Account.Service.NpOn.AccountService.RabbitMqConsumers;
 using MicroServices.Account.Service.NpOn.AccountService.Services;
 using MicroServices.Account.Service.NpOn.IAccountService;
 using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
+using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter.GeneralProtoClient;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
-using MicroServices.General.Service.NpOn.IGeneralService;
-using MicroServices.Tracker.Service.NpOn.ITrackerService;
 using NpOn.CommonGrpcCall;
+using NpOn.Protos.Account.V1;
+using NpOn.Protos.Tracker.V1;
 
 namespace MicroServices.Account.Service.NpOn.AccountService;
 
@@ -52,9 +53,15 @@ public sealed class Program : HttpCommonProgram
                     null,
                     sp.GetRequiredService<IInterServiceTokenService>(),
                     serviceName))
-                .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
-                .AddConnectService(new TrackerServiceClientResolver(), null, EUrlConfiguration.TrackerServiceUrl)
-                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+                .AddConnectService(new GeneralProtoClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
+                .AddProtoConnectService<TrackerLogProtoService.TrackerLogProtoServiceClient>(EUrlConfiguration.TrackerServiceUrl)
+                .AddProtoConnectService(EUrlConfiguration.AccountServiceUrl, (s, url) =>
+                {
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountInfoProtoService.AccountInfoProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AuthenticationProtoService.AuthenticationProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountPermissionProtoService.AccountPermissionProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountGroupProtoService.AccountGroupProtoServiceClient>(url);
+                });
         }
 
         // Register ObjectPoolStore and pre-allocate PostgresResultSetWrapper
@@ -122,7 +129,11 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
-        // Add Map Grpc Service
+        // Add Map Grpc Service (Schema-First .proto + Code-First coexistence)
+        app.MapGrpcService<AccountInfoProtoGrpcService>();
+        app.MapGrpcService<AuthenticationProtoGrpcService>();
+        app.MapGrpcService<AccountPermissionProtoGrpcService>();
+        app.MapGrpcService<AccountGroupProtoGrpcService>();
         app.MapGrpcService<AccountInfoService>();
         app.MapGrpcService<AuthenticationService>();
         app.MapGrpcService<AccountPermissionService>();

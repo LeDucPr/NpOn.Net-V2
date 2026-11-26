@@ -10,20 +10,18 @@ using Controllers.NpOn.SSO.OutputModels;
 using Controllers.NpOn.SSO.Validators;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
-using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Controllers.NpOn.SSO.InterfaceGrpcControllers;
-using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
-using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
+using NpOn.Protos.Account.V1;
 
 namespace Controllers.NpOn.SSO.Controllers;
 
 public class AccountController(
     ILogger<AccountController> logger,
     ContextService contextService,
-    IAuthenticationService authenticationService,
-    IAccountPermissionService accountPermissionService
+    AuthenticationProtoService.AuthenticationProtoServiceClient authenticationProtoClient,
+    AccountPermissionProtoService.AccountPermissionProtoServiceClient accountPermissionProtoClient
 ) : BaseSsoController(logger, contextService), IAccountGrpcController
 {
     private readonly ContextService _contextService = contextService;
@@ -42,22 +40,24 @@ public class AccountController(
                 return;
             }
 
-            var signupResponse = await authenticationService.Signup(new AccountSignupCommand
+            var protoReq = new AccountSignupRequestProto
             {
-                AuthType = request.AuthType,
+                AuthType = (int)request.AuthType,
                 ClientId = _contextService.ClientId,
                 Email = request.Email.AsEmptyString(),
                 PhoneNumber = request.PhoneNumber.AsEmptyString(),
                 UserName = request.UserName.AsEmptyString(),
-                Password = CreateHashPassword(request.Password)
-                    .AsEmptyString(),
-                LoginType = ELoginType.Default,
-                SignupIp = _contextService.GetIp(),
-                DeviceSignupInfo = request.DeviceInfo,
-                AuthenApplicationId = request.AppId,
+                Password = CreateHashPassword(request.Password).AsEmptyString(),
+                LoginType = (int)ELoginType.Default,
                 FullName = request.FullName.AsEmptyString(),
-                AvatarUrl = request.AvatarUrl
-            });
+            };
+            var signupIp = _contextService.GetIp();
+            if (!string.IsNullOrEmpty(signupIp)) protoReq.SignupIp = signupIp;
+            if (request.DeviceInfo != null) protoReq.DeviceSignupInfo = request.DeviceInfo;
+            if (request.AppId != null) protoReq.AuthenApplicationId = request.AppId;
+            if (request.AvatarUrl != null) protoReq.AvatarUrl = request.AvatarUrl;
+
+            var signupResponse = await authenticationProtoClient.SignupAsync(protoReq);
 
             if (!signupResponse.Status)
             {
@@ -82,11 +82,12 @@ public class AccountController(
     {
         return await ProcessRequest<string>(async (response) =>
         {
-            var signupResponse = await authenticationService.ChangeAccountStatus(new AccountSetStatusCommand()
-            {
-                AccountId = request.AccountId,
-                AccountStatus = request.AccountStatus,
-            });
+            var signupResponse = await authenticationProtoClient.ChangeAccountStatusAsync(
+                new AccountSetStatusRequestProto
+                {
+                    AccountId = request.AccountId.ToString(),
+                    AccountStatus = (int)request.AccountStatus,
+                });
 
             if (!signupResponse.Status)
             {
@@ -119,12 +120,12 @@ public class AccountController(
             string? newPassword = request.NewPassword;
             if (string.IsNullOrEmpty(newPassword))
                 newPassword = GeneratePassword();
-            var signupResponse = await authenticationService.ChangeAccountPassword(new AccountChangePasswordCommand()
-            {
-                AccountId = request.AccountId,
-                NewPassword = CreateHashPassword(newPassword)
-                    .AsEmptyString(),
-            });
+            var signupResponse = await authenticationProtoClient.ChangeAccountPasswordAsync(
+                new AccountChangePasswordRequestProto
+                {
+                    AccountId = request.AccountId.ToString(),
+                    NewPassword = CreateHashPassword(newPassword).AsEmptyString(),
+                });
 
             if (!signupResponse.Status || signupResponse.Data)
             {
@@ -154,21 +155,23 @@ public class AccountController(
 
             bool isUseMultiDevice = !string.IsNullOrWhiteSpace(request.DeviceInfo) &&
                                     request.AuthType == EAuthentication.WebApp;
-            AccountLoginQuery inputQuery = new AccountLoginQuery
+            var protoQuery = new AccountLoginRequestProto
             {
-                Email = request.Email,
                 ClientId = _contextService.ClientId,
-                PhoneNumber = request.PhoneNumber,
-                UserName = request.UserName,
                 Password = CreateHashPassword(request.Password),
-                DeviceLoginInfo = request.DeviceInfo,
-                LoginType = request.LoginType,
-                Ip = _contextService.GetIp(),
-                AuthenApplicationId = request.AppId,
-                AuthType = request.AuthType,
+                AuthType = (int)request.AuthType,
                 IsEnableMultiDevice = isUseMultiDevice
             };
-            var accountLoginResponse = await authenticationService.Login(inputQuery);
+            if (request.Email != null) protoQuery.Email = request.Email;
+            if (request.PhoneNumber != null) protoQuery.PhoneNumber = request.PhoneNumber;
+            if (request.UserName != null) protoQuery.UserName = request.UserName;
+            if (request.DeviceInfo != null) protoQuery.DeviceLoginInfo = request.DeviceInfo;
+            if (request.LoginType.HasValue) protoQuery.LoginType = (int)request.LoginType.Value;
+            var ip = _contextService.GetIp();
+            if (!string.IsNullOrEmpty(ip)) protoQuery.Ip = ip;
+            if (request.AppId != null) protoQuery.AuthenApplicationId = request.AppId;
+
+            var accountLoginResponse = await authenticationProtoClient.LoginAsync(protoQuery);
             if (!accountLoginResponse.Status)
             {
                 response.SetFail(accountLoginResponse.ErrorMessages);
@@ -181,7 +184,6 @@ public class AccountController(
                 return;
             }
 
-            // response.Data = await LoginProcess(tokenResult.Data);
             response.Data = new AccountLoginResponseWrapper
             {
                 Model = accountLoginResponse.Data.ToModel(),
@@ -203,16 +205,18 @@ public class AccountController(
                 return;
             }
 
-            AccountRefreshTokenQuery inputQuery = new AccountRefreshTokenQuery
+            var protoQuery = new AccountRefreshTokenRequestProto
             {
                 RefreshToken = request.RefreshToken,
-                DeviceInfo = request.DeviceInfo,
-                LoginType = request.LoginType,
-                AuthType = request.AuthType,
+                AuthType = (int)request.AuthType,
                 SessionId = _contextService.GetSessionKey().AsDefaultString(),
-                ProcessUId = _contextService.GetAccountIdAsString(),
             };
-            var accountLoginResponse = await authenticationService.RefreshToken(inputQuery);
+            if (request.DeviceInfo != null) protoQuery.DeviceInfo = request.DeviceInfo;
+            if (request.LoginType.HasValue) protoQuery.LoginType = (int)request.LoginType.Value;
+            var uid = _contextService.GetAccountIdAsString();
+            if (uid != null) protoQuery.ProcessUid = uid;
+
+            var accountLoginResponse = await authenticationProtoClient.RefreshTokenAsync(protoQuery);
             if (!accountLoginResponse.Status)
             {
                 response.SetFail(accountLoginResponse.ErrorMessages);
@@ -225,7 +229,6 @@ public class AccountController(
                 return;
             }
 
-            // response.Data = await LoginProcess(tokenResult.Data);
             response.Data = new
             {
                 Model = accountLoginResponse.Data.ToModel(),
@@ -240,12 +243,14 @@ public class AccountController(
     {
         return await ProcessRequest<string>(async (response) =>
         {
-            var logoutResponse = await authenticationService.LogOut(
-                new AccountLogoutQuery
-                {
-                    SessionId = _contextService.GetSessionKey().AsDefaultString(),
-                    ProcessUId = _contextService.GetAccountIdAsString(),
-                });
+            var protoQuery = new AccountSessionRequestProto
+            {
+                SessionId = _contextService.GetSessionKey().AsDefaultString(),
+            };
+            var uid = _contextService.GetAccountIdAsString();
+            if (uid != null) protoQuery.ProcessUid = uid;
+
+            var logoutResponse = await authenticationProtoClient.LogOutAsync(protoQuery);
 
             response.Data = logoutResponse.Status ? "Logout successful" : "Logout fail";
             if (!logoutResponse.Status)
@@ -274,19 +279,19 @@ public class AccountController(
                 return;
             }
 
-            List<AccountPermissionExceptionAddOrChangeCommand> commands = [];
+            var protoReq = new AddOrChangeAccountPermissionExceptionsRequestProto();
             foreach (var controller in request.Controllers)
             {
-                commands.Add(new AccountPermissionExceptionAddOrChangeCommand
+                protoReq.Items.Add(new AccountPermissionExceptionChangeItemProto
                 {
-                    AccountId = request.AccountId,
+                    AccountId = request.AccountId.ToString(),
                     ControllerCode = controller.ControllerCode,
-                    AccessPermission = controller.AccessPermission,
+                    AccessPermission = (int)controller.AccessPermission,
                 });
             }
 
             var addOrChangePermissionResponse =
-                await accountPermissionService.AddOrChangeAccountPermissionException(commands.ToArray());
+                await accountPermissionProtoClient.AddOrChangeAccountPermissionExceptionAsync(protoReq);
 
             response.Data = addOrChangePermissionResponse.Status
                 ? "Change Permission successful"
@@ -316,21 +321,25 @@ public class AccountController(
                 return;
             }
 
-            AccountPermissionExceptionAddOrChangeManyCommand command =
-                new AccountPermissionExceptionAddOrChangeManyCommand()
+            var protoReq = new AddOrChangeManyAccountPermissionExceptionRequestProto();
+            if (request.AccountIds is { Length: > 0 })
+                protoReq.AccountIds.AddRange(request.AccountIds.Select(x => x.ToString()));
+            if (request.GroupIds is { Length: > 0 })
+                protoReq.GroupIds.AddRange(request.GroupIds.Select(x => x.ToString()));
+            if (request.Controllers is { Length: > 0 })
+            {
+                foreach (var c in request.Controllers)
                 {
-                    AccountIds = request.AccountIds,
-                    GroupIds = request.GroupIds,
-                    ControllerComponents = request.Controllers?.Select(x =>
-                        new AccountPermissionExceptionAddOrChangeManyControllerCodeCommand
-                        {
-                            ControllerCode = x.ControllerCode,
-                            AccessPermission = x.AccessPermission,
-                        }).ToArray(),
-                };
+                    protoReq.ControllerComponents.Add(new PermissionExceptionManyControllerCodeProto
+                    {
+                        ControllerCode = c.ControllerCode,
+                        AccessPermission = (int)c.AccessPermission,
+                    });
+                }
+            }
 
             var addOrChangePermissionResponse =
-                await accountPermissionService.AddOrChangeManyAccountPermissionException(command);
+                await accountPermissionProtoClient.AddOrChangeManyAccountPermissionExceptionAsync(protoReq);
 
             response.Data = addOrChangePermissionResponse.Status
                 ? "Change Permission successful"

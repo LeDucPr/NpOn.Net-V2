@@ -8,13 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Grpc.Net.ClientFactory"/>
+        <PackageReference Include="NpOn.General.Proto"/>
+        <PackageReference Include="NpOn.CommonGrpcCall"/>
         <PackageReference Include="NpOn.PostgresAppExtUse"/>
         <PackageReference Include="NpOn.RedisAppExtUse"/>
         <PackageReference Include="NpOn.CommonEnums"/>
         <PackageReference Include="NpOn.CommonMode"/>
         <PackageReference Include="NpOn.HandleFlow"/>
         <PackageReference Include="NpOn.RedisExtCm"/>
-        <PackageReference Include="NpOn.IGeneralService"/>
     </ItemGroup>
 
     <ItemGroup>

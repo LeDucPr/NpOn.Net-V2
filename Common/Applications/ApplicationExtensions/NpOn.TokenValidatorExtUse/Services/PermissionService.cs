@@ -1,16 +1,15 @@
 ﻿using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Attributes;
-using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Commands;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
-using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using NpOn.Protos.Account.V1;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 
 public class PermissionService(
     ContextService contextService,
-    IAccountPermissionService accountPermissionService,
+    AccountPermissionProtoService.AccountPermissionProtoServiceClient accountPermissionProtoClient,
     IActionDescriptorCollectionProvider actionDescriptorCollectionProvider,
     ILogger<PermissionService> logger)
 {
@@ -34,7 +33,7 @@ public class PermissionService(
 
         var syncTasks = new List<Task>();
         Guid controllerStartVersionId = Guid.NewGuid();
-        List<AccountPermissionControllerAddOrChangeCommand> commands = [];
+        List<PermissionControllerSyncItemProto> commands = [];
         foreach (var endpoint in endpoints)
         {
             bool isAnonymousAllowed = endpoint.EndpointMetadata
@@ -80,13 +79,13 @@ public class PermissionService(
 
             // var httpMethods = endpoint.EndpointMetadata.OfType<HttpMethodMetadata>().SelectMany(m => m.HttpMethods).Distinct();
 
-            AccountPermissionControllerAddOrChangeCommand command = new AccountPermissionControllerAddOrChangeCommand
+            var command = new PermissionControllerSyncItemProto
             {
                 ControllerName = controllerCode, // code
-                Permission = permissionControllerAttribute.GetAllPermissionAsOne,
+                Permission = (long)permissionControllerAttribute.GetAllPermissionAsOne,
                 HostCode = cadName,
-                VersionId = controllerStartVersionId,
-                Description = permissionRequiredAttribute.Description,
+                VersionId = controllerStartVersionId.ToString(),
+                Description = permissionRequiredAttribute.Description ?? string.Empty,
             };
             commands.Add(command);
             if (commands.Count == 500)
@@ -106,12 +105,14 @@ public class PermissionService(
         return true;
     }
 
-    private Task StartSyncPermissionWithController(AccountPermissionControllerAddOrChangeCommand[] commands)
+    private Task StartSyncPermissionWithController(PermissionControllerSyncItemProto[] commands)
     {
         return Task.Run(async () =>
         {
             logger.LogInformation("Starting to sync a batch of {CommandCount} permissions...", commands.Length);
-            await accountPermissionService.SyncPermissionWithController(commands);
+            var req = new SyncPermissionControllersRequestProto();
+            req.Items.AddRange(commands);
+            await accountPermissionProtoClient.SyncPermissionWithControllerAsync(req);
             logger.LogInformation("Sync batch finished.");
         });
     }
@@ -123,11 +124,11 @@ public class PermissionService(
             logger.LogInformation(
                 "Starting to clear old permission versions for host '{HostCode}' except for current version '{CurrentVersionId}'.",
                 hostCode, currentVersionId);
-            await accountPermissionService.ClearOldControllersVersion(
-                new AccountPermissionControllerDeleteByHostCodeAndVersionIdCommand()
+            await accountPermissionProtoClient.ClearOldControllersVersionAsync(
+                new ClearOldControllersVersionRequestProto
                 {
                     HostCode = hostCode,
-                    VersionId = currentVersionId,
+                    VersionId = currentVersionId.ToString(),
                 });
             logger.LogInformation("Finished clearing old permission versions.");
         });

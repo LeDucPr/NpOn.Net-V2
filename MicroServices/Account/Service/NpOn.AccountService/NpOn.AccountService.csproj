@@ -17,6 +17,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="NpOn.Account.Proto"/>
+        <PackageReference Include="NpOn.Tracker.Proto"/>
+        <PackageReference Include="Riok.Mapperly"/>
         <PackageReference Include="NpOn.AddGrpcAppExtUse"/>
         <PackageReference Include="NpOn.KafkaAppExtUse"/>
         <PackageReference Include="NpOn.PostgresAppExtUse"/>
@@ -31,7 +34,6 @@
         <PackageReference Include="NpOn.HandleFlow"/>
         <PackageReference Include="NpOn.KafkaExtCm"/>
         <PackageReference Include="NpOn.RabbitMqExtMs"/>
-        <PackageReference Include="NpOn.ITrackerService"/>
         <PackageReference Include="NpOn.Tracker2WayService"/>
     </ItemGroup>
 

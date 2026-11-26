@@ -27,7 +27,8 @@
         <PackageReference Include="NpOn.CommonGrpcContract" />
         <PackageReference Include="NpOn.CommonInternalCache" />
         <PackageReference Include="NpOn.CommonMode" />
-        <PackageReference Include="NpOn.IAccountService" />
+        <PackageReference Include="NpOn.Account.Proto" />
+        <PackageReference Include="NpOn.Sso.Proto" />
     </ItemGroup>
 
     <ItemGroup>

@@ -8,10 +8,11 @@ using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Controllers.NpOn.SSO.Controllers;
-using MicroServices.Account.Service.NpOn.IAccountService;
+using Controllers.NpOn.SSO.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using NpOn.CommonGrpcCall;
+using NpOn.Protos.Account.V1;
 
 namespace Controllers.NpOn.SSO;
 
@@ -41,7 +42,13 @@ public sealed class Program : HttpCommonProgram
                     null,
                     sp.GetRequiredService<IInterServiceTokenService>(),
                     serviceName))
-                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
+                .AddProtoConnectService(EUrlConfiguration.AccountServiceUrl, (s, url) =>
+                {
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountInfoProtoService.AccountInfoProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AuthenticationProtoService.AuthenticationProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountPermissionProtoService.AccountPermissionProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountGroupProtoService.AccountGroupProtoServiceClient>(url);
+                });
         }
 
         services.UseCorsDefaultMode() // cors
@@ -95,6 +102,7 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
+        app.MapGrpcService<SsoAccountProtoGrpcService>();
         app.MapGrpcService<AccountController>();
 
         if (EApplicationConfiguration.IsUseMiddlewareLogger.GetAppSettingConfig().AsDefaultBool())

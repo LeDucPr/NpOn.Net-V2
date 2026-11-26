@@ -79,6 +79,7 @@ public sealed class Program : HttpCommonProgram
     protected override Task ConfigurePipeline(WebApplication app)
     {
         app.MapGrpcService<FldMasterService>();
+        app.MapGrpcService<FldMasterProtoGrpcService>();
         return Task.CompletedTask;
     }
 }

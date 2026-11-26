@@ -4,15 +4,14 @@ using Common.Extensions.NpOn.CommonMode;
 using Controllers.NpOn.SSO.Mappings.Account;
 using Controllers.NpOn.SSO.Requests;
 using Controllers.NpOn.SSO.Validators;
-using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
-using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.AspNetCore.Mvc;
+using NpOn.Protos.Account.V1;
 
 namespace Controllers.NpOn.SSO.Controllers;
 
 public class AccountInfoController(
     ContextService contextService,
-    IAccountInfoService accountInfoService,
+    AccountInfoProtoService.AccountInfoProtoServiceClient accountInfoProtoClient,
     ILogger<AccountController> logger
 ) : BaseSsoController(logger, contextService)
 {
@@ -30,8 +29,8 @@ public class AccountInfoController(
                 return;
             }
 
-            var accountInfoResponse = await accountInfoService.AccountInfoGetByAccountId(
-                new AccountInfoGetByAccountIdQuery
+            var accountInfoResponse = await accountInfoProtoClient.AccountInfoGetByAccountIdAsync(
+                new AccountIdRequestProto
                 {
                     AccountId = accountId,
                 });
@@ -69,7 +68,8 @@ public class AccountInfoController(
                 return;
             }
 
-            var accountInfoResponse = await accountInfoService.AccountInfoAddOrChange(request.ToCommand(accountId));
+            var accountInfoResponse = await accountInfoProtoClient.AccountInfoAddOrChangeAsync(
+                request.ToProtoCommand(accountId));
             if (!accountInfoResponse.Status)
             {
                 response.SetFail(request.Id == null || request.Id == Guid.Empty ? "add fail" : "update fail");
@@ -100,7 +100,9 @@ public class AccountInfoController(
                 return;
             }
 
-            var accountInfoResponse = await accountInfoService.AccountAddressesAddOrChange([request.ToCommand(accountId)]);
+            var protoReq = new AccountAddressesAddOrChangeRequestProto();
+            protoReq.Items.Add(request.ToProtoCommand(accountId));
+            var accountInfoResponse = await accountInfoProtoClient.AccountAddressesAddOrChangeAsync(protoReq);
             if (!accountInfoResponse.Status)
             {
                 response.SetFail("Address Add/Change fail");

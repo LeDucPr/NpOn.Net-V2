@@ -1,0 +1,370 @@
+syntax = "proto3";
+
+option csharp_namespace = "NpOn.Protos.Account.V1";
+
+package npon.account.v1;
+
+// =============================================================================
+// Schema-First gRPC Contracts for AccountService
+// Replaces NpOn.IAccountService / AccountServiceCommand / AccountServiceReadModel
+// =============================================================================
+
+service AuthenticationProtoService {
+  rpc Signup (AccountSignupRequestProto) returns (AccountLoginReplyProto);
+  rpc ChangeAccountStatus (AccountSetStatusRequestProto) returns (BoolReplyProto);
+  rpc ChangeAccountPassword (AccountChangePasswordRequestProto) returns (BoolReplyProto);
+  rpc Login (AccountLoginRequestProto) returns (AccountLoginReplyProto);
+  rpc RefreshToken (AccountRefreshTokenRequestProto) returns (AccountLoginReplyProto);
+  rpc GetLogonTokenBySessionId (AccountSessionRequestProto) returns (AccountLoginReplyProto);
+  rpc IsValidLogonPermissionExceptionControllers (AccountPermissionExceptionCheckRequestProto) returns (BoolReplyProto);
+  rpc LogOut (AccountSessionRequestProto) returns (StringReplyProto);
+}
+
+service AccountInfoProtoService {
+  rpc AccountInfoGetByAccountIds (AccountIdsRequestProto) returns (AccountInfoListReplyProto);
+  rpc AccountInfoGetByAccountId (AccountIdRequestProto) returns (AccountInfoSingleReplyProto);
+  rpc AccountInfoAddOrChange (AccountInfoAddOrChangeRequestProto) returns (CommonStatusReplyProto);
+  rpc AccountAddressesAddOrChange (AccountAddressesAddOrChangeRequestProto) returns (CommonStatusReplyProto);
+}
+
+service AccountGroupProtoService {
+  rpc GroupAddOrChange (AccountGroupAddOrChangeRequestProto) returns (CommonStatusReplyProto);
+  rpc GroupCopy (AccountGroupCopyRequestProto) returns (CommonStatusReplyProto);
+  rpc Search (AccountGroupSearchRequestProto) returns (CommonStatusReplyProto);
+  rpc GroupOrMemberDelete (AccountGroupDeleteRequestProto) returns (CommonStatusReplyProto);
+}
+
+service AccountPermissionProtoService {
+  rpc AccountPermissionExceptionQuickGetByAccountId (AccountIdRequestProto) returns (AccountPermissionExceptionListReplyProto);
+  rpc SyncPermissionWithController (SyncPermissionControllersRequestProto) returns (BoolReplyProto);
+  rpc ClearOldControllersVersion (ClearOldControllersVersionRequestProto) returns (BoolReplyProto);
+  rpc AddOrChangeAccountPermissionException (AddOrChangeAccountPermissionExceptionsRequestProto) returns (BoolReplyProto);
+  rpc AddOrChangeManyAccountPermissionException (AddOrChangeManyAccountPermissionExceptionRequestProto) returns (BoolReplyProto);
+}
+
+// --- Common Response Envelopes ---
+
+message CommonStatusReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+}
+
+message BoolReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  bool data = 7;
+}
+
+message StringReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  optional string data = 7;
+}
+
+// --- Authentication Messages ---
+
+message AccountSignupRequestProto {
+  string email = 1;
+  string phone_number = 2;
+  string user_name = 3;
+  string password = 4;
+  optional int32 login_type = 5;
+  int32 auth_type = 6;
+  string client_id = 7;
+  optional string signup_ip = 8;
+  optional string device_signup_info = 9;
+  optional string authen_application_id = 10;
+  string full_name = 11;
+  optional string avatar_url = 12;
+  optional string process_uid = 13;
+}
+
+message AccountSetStatusRequestProto {
+  string account_id = 1;
+  int32 account_status = 2;
+  optional string process_uid = 3;
+}
+
+message AccountChangePasswordRequestProto {
+  string account_id = 1;
+  string new_password = 2;
+  optional string process_uid = 3;
+}
+
+message AccountLoginRequestProto {
+  optional string email = 1;
+  optional string phone_number = 2;
+  optional string user_name = 3;
+  optional string password = 4;
+  optional int32 login_type = 5;
+  int32 auth_type = 6;
+  string client_id = 7;
+  optional string ip = 8;
+  optional string device_login_info = 9;
+  optional string authen_application_id = 10;
+  bool is_enable_multi_device = 11;
+  optional string process_uid = 12;
+}
+
+message AccountRefreshTokenRequestProto {
+  string refresh_token = 1;
+  optional string device_info = 2;
+  optional int32 login_type = 3;
+  int32 auth_type = 4;
+  string session_id = 5;
+  optional string process_uid = 6;
+}
+
+message AccountSessionRequestProto {
+  string session_id = 1;
+  optional string process_uid = 2;
+}
+
+message AccountPermissionExceptionCheckRequestProto {
+  string account_id = 1;
+  string controller_code = 2;
+  bool is_has_base_permission = 3;
+}
+
+message AccountLoginItemProto {
+  optional string id = 1;
+  string account_id = 2;
+  string user_name = 3;
+  string password = 4;
+  int32 auth_type = 5;
+  int32 login_type = 6;
+  optional int64 permission = 7;
+  optional string full_name = 8;
+  optional string phone_number = 9;
+  optional string device_id = 10;
+  optional string token = 11;
+  optional string refresh_token = 12;
+  optional int64 created_at_unix_ms = 13;
+  optional int64 updated_at_unix_ms = 14;
+  string session_id = 15;
+  int32 minute_expire = 16;
+  int32 token_status = 17;
+  optional string email = 18;
+  optional string avatar_url = 19;
+}
+
+message AccountLoginReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  optional AccountLoginItemProto data = 7;
+}
+
+// --- Account Info & Address Messages ---
+
+message AccountIdRequestProto {
+  string account_id = 1;
+}
+
+message AccountIdsRequestProto {
+  repeated string account_ids = 1;
+}
+
+message AccountAddressItemProto {
+  string id = 1;
+  string account_id = 2;
+  optional string country_id = 3;
+  optional string province_id = 4;
+  optional string district_id = 5;
+  optional string ward_id = 6;
+  optional string address_line = 7;
+  int32 address_type = 8;
+  optional int64 created_at_unix_ms = 9;
+  optional int64 updated_at_unix_ms = 10;
+}
+
+message AccountInfoItemProto {
+  string account_id = 1;
+  optional string country_id = 2;
+  optional string province_id = 3;
+  optional string district_id = 4;
+  optional string ward_id = 5;
+  optional string full_name = 6;
+  optional int64 date_of_birth_unix_ms = 7;
+  optional int32 gender = 8;
+  optional string address = 9;
+  optional string occupation = 10;
+  optional string marital_status = 11;
+  optional string bio = 12;
+  optional string website = 13;
+  optional string social_links = 14;
+  optional string identification_number = 15;
+  optional string passport_number = 16;
+  optional string tax_code = 17;
+  optional string company_name = 18;
+  optional string company_address = 19;
+  int32 status = 20;
+  string id = 21;
+  repeated AccountAddressItemProto addresses = 22;
+  optional int64 created_at_unix_ms = 23;
+  optional int64 updated_at_unix_ms = 24;
+}
+
+message AccountInfoSingleReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  optional AccountInfoItemProto data = 7;
+}
+
+message AccountInfoListReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  repeated AccountInfoItemProto data = 7;
+}
+
+message AccountInfoAddOrChangeRequestProto {
+  string account_id = 1;
+  optional string full_name = 2;
+  optional int64 date_of_birth_unix_ms = 3;
+  optional int32 gender = 4;
+  optional string occupation = 5;
+  optional string marital_status = 6;
+  optional string bio = 7;
+  optional string website = 8;
+  optional string social_links = 9;
+  optional string identification_number = 10;
+  optional string passport_number = 11;
+  optional string tax_code = 12;
+  optional string company_name = 13;
+  optional string company_address = 14;
+  optional string country_id = 15;
+  optional string province_id = 16;
+  optional string district_id = 17;
+  optional string ward_id = 18;
+  optional string address_line = 19;
+}
+
+message AccountAddressAddOrChangeItemProto {
+  string account_id = 1;
+  optional string country_id = 2;
+  optional string province_id = 3;
+  optional string district_id = 4;
+  optional string ward_id = 5;
+  optional string address_line = 6;
+  int32 address_type = 7;
+}
+
+message AccountAddressesAddOrChangeRequestProto {
+  repeated AccountAddressAddOrChangeItemProto items = 1;
+}
+
+// --- Account Group Messages ---
+
+message AccountGroupAddOrChangeRequestProto {
+  optional string group_id = 1;
+  string leader = 2;
+  repeated string members = 3;
+  optional string group_name = 4;
+  repeated int32 group_types = 5;
+}
+
+message AccountGroupCopyComponentProto {
+  string leader = 1;
+  optional string group_name = 2;
+  repeated string member_excludes = 3;
+  repeated string member_adds = 4;
+  repeated int32 group_types = 5;
+}
+
+message AccountGroupCopyRequestProto {
+  string group_id_need_copy = 1;
+  repeated AccountGroupCopyComponentProto components = 2;
+}
+
+message AccountGroupSearchRequestProto {
+  optional string keyword = 1;
+  optional string leader = 2;
+  int32 page_size = 3;
+  int32 page_index = 4;
+}
+
+message AccountGroupDeleteRequestProto {
+  string group_id = 1;
+  string leader = 2;
+  repeated string members = 3;
+  optional string group_name = 4;
+}
+
+// --- Account Permission Messages ---
+
+message AccountPermissionExceptionItemProto {
+  string account_id = 1;
+  string controller_code = 2;
+  int32 access_permission = 3;
+}
+
+message AccountPermissionExceptionListReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  repeated AccountPermissionExceptionItemProto data = 7;
+}
+
+message PermissionControllerSyncItemProto {
+  string host_code = 1;
+  string version_id = 2;
+  string controller_name = 3;
+  int64 permission = 4;
+  optional string description = 5;
+}
+
+message SyncPermissionControllersRequestProto {
+  repeated PermissionControllerSyncItemProto items = 1;
+}
+
+message ClearOldControllersVersionRequestProto {
+  string host_code = 1;
+  string version_id = 2;
+}
+
+message AccountPermissionExceptionChangeItemProto {
+  string account_id = 1;
+  string controller_code = 2;
+  int32 access_permission = 3;
+}
+
+message AddOrChangeAccountPermissionExceptionsRequestProto {
+  repeated AccountPermissionExceptionChangeItemProto items = 1;
+}
+
+message PermissionExceptionManyControllerCodeProto {
+  string controller_code = 1;
+  int32 access_permission = 2;
+}
+
+message AddOrChangeManyAccountPermissionExceptionRequestProto {
+  repeated string account_ids = 1;
+  repeated string group_ids = 2;
+  repeated PermissionExceptionManyControllerCodeProto controller_components = 3;
+}

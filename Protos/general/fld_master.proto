@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+option csharp_namespace = "NpOn.Protos.General.V1";
+
+package npon.general.v1;
+
+// Schema-First gRPC contract for GeneralService metadata & query execution lookups.
+// Single Source of Truth shared between GeneralService (Server) and consumer services (Client)
+// without sharing C# Domain/ReadModel/DB assemblies.
+service FldMasterProtoService {
+  rpc GetExecCommand (GetExecCommandRequest) returns (GetExecCommandReply);
+  rpc GetExecution (GetExecCommandRequest) returns (GetExecutionReply);
+}
+
+message ExecParamInput {
+  string param_name = 1;
+}
+
+message GetExecCommandRequest {
+  optional string tbl_master_id = 1;
+  optional string code = 2;
+  repeated ExecParamInput exec_params = 3;
+}
+
+message CommandParamSpec {
+  string param_name = 1;
+  optional string param_value = 2;
+  optional int32 param_type = 3;
+}
+
+message CommandSpec {
+  string command_text = 1;
+  int32 exec_type = 2;
+  int32 database_type = 3;
+  repeated CommandParamSpec parameters = 4;
+}
+
+message GetExecCommandReply {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  optional CommandSpec data = 7;
+}
+
+message TblFldItem {
+  optional string field_name = 1;
+  optional int32 field_type = 2;
+  optional int32 field_db_type = 3;
+  optional string query = 4;
+  optional string exec_func = 5;
+  optional int32 exec_type = 6;
+  optional int32 database_type = 7;
+  optional string tbl_master_id = 8;
+  optional string code = 9;
+}
+
+message GetExecutionReply {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+  repeated TblFldItem items = 7;
+}

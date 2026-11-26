@@ -7,9 +7,10 @@ using Common.Extensions.NpOn.CommonInternalCache.ObjectPoolings;
 using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.HeaderConfig;
 using Common.Extensions.NpOn.ICommonDb.DbResults;
-using MicroServices.Account.Service.NpOn.IAccountService;
-using MicroServices.General.Service.NpOn.IGeneralService;
 using NpOn.CommonGrpcCall;
+using NpOn.Protos.Account.V1;
+using NpOn.Protos.General.V1;
+using NpOn.Protos.Tracker.V1;
 using Common.Applications.ApplicationsExtensions.NpOn.ClickHouseAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.RedisAppExtUse;
 using Common.Applications.ApplicationsExtensions.NpOn.ZeroMqAppExtUse;
@@ -51,9 +52,15 @@ public sealed class Program : HttpCommonProgram
                     null,
                     sp.GetRequiredService<IInterServiceTokenService>(),
                     serviceName))
-                .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
-                .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl)
-                .AddConnectService(new TrackerServiceClientResolver(), null, EUrlConfiguration.TrackerServiceUrl);
+                .AddProtoConnectService<FldMasterProtoService.FldMasterProtoServiceClient>(EUrlConfiguration.GeneralServiceUrl)
+                .AddProtoConnectService(EUrlConfiguration.AccountServiceUrl, (s, url) =>
+                {
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountInfoProtoService.AccountInfoProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AuthenticationProtoService.AuthenticationProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountPermissionProtoService.AccountPermissionProtoServiceClient>(url);
+                    s.RegisterSchemaFirstGrpcClientLoadBalancing<AccountGroupProtoService.AccountGroupProtoServiceClient>(url);
+                })
+                .AddProtoConnectService<TrackerLogProtoService.TrackerLogProtoServiceClient>(EUrlConfiguration.TrackerServiceUrl);
         }
 
         IObjectPoolStore store = new ObjectPoolStore().PreAllocate(
@@ -97,7 +104,8 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
-        // Add Map Grpc Service
+        // Add Map Grpc Service (Schema-First .proto + Code-First coexistence)
+        app.MapGrpcService<TrackerLogProtoGrpcService>();
         app.MapGrpcService<TrackerLogService>();
 
         app.MapGet("/metrics", () => Results.Text(TrackerLogMetrics.Collect(), "text/plain; version=0.0.4"));

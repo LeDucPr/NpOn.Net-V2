@@ -16,6 +16,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="NpOn.General.Proto"/>
+        <PackageReference Include="Riok.Mapperly"/>
         <PackageReference Include="NpOn.AddGrpcAppExtUse"/>
         <PackageReference Include="NpOn.PostgresAppExtUse"/>
         <PackageReference Include="NpOn.CommonHttpApplication"/>

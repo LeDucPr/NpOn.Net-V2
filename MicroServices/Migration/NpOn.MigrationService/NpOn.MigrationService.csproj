@@ -18,6 +18,7 @@
         <PackageReference Include="NpOn.CommonHttpApplication" />
         <PackageReference Include="NpOn.CommonGrpcCall" />
         <PackageReference Include="NpOn.CommonHeaderConfig" />
+        <PackageReference Include="NpOn.Migration.Proto" />
     </ItemGroup>
 
     <ItemGroup>

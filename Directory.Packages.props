@@ -10,8 +10,11 @@
     <PackageVersion Include="Dapper" Version="2.1.72" />
     <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.2.2" />
     <PackageVersion Include="FluentValidation" Version="12.1.0" />
+    <PackageVersion Include="Google.Protobuf" Version="3.27.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.64.0" />
+    <PackageVersion Include="Grpc.Core.Api" Version="2.71.0" />
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.64.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.2.25502.107" />
@@ -42,6 +45,7 @@
     <PackageVersion Include="protobuf-net.Grpc.ClientFactory" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
     <PackageVersion Include="RabbitMQ.Client" Version="7.1.2" />
+    <PackageVersion Include="Riok.Mapperly" Version="4.1.1" />
     <PackageVersion Include="Serilog" Version="4.3.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
@@ -112,15 +116,20 @@
     <PackageVersion Include="NpOn.ShareAccountConstant" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.AccountServiceCommand" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.AccountServiceReadModel" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Account.Proto" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.IAccountService" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.GeneralServiceCommand" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.GeneralServiceReadModel" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.General.Proto" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.IGeneralService" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Migration.Proto" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.IMigrationService" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Sso.Proto" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.TrackerEnum" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.TrackerConstant" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.TrackerServiceCommand" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.TrackerServiceReadModel" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Tracker.Proto" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.ITrackerService" Version="$(NpOnPackageVersion)" />
     <PackageVersion Include="NpOn.Tracker2WayService" Version="$(NpOnPackageVersion)" />
   </ItemGroup>

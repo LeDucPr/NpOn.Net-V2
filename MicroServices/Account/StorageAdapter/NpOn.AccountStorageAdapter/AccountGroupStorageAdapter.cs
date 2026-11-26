@@ -1,36 +1,29 @@
-﻿using Common.Extensions.NpOn.CommonGrpcContract;
-using Common.Extensions.NpOn.CommonMode;
+﻿using Common.Extensions.NpOn.CommonMode;
 using Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountConstant;
+using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter.GeneralProtoClient;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
-using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
-using MicroServices.General.Contract.NpOn.GeneralServiceReadModel.ReadModels;
-using MicroServices.General.Service.NpOn.IGeneralService;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AccountGroupStorageAdapter(
     IPostgresFactoryWrapper postgresFactoryWrapper,
-    IFldMasterService fldMasterService
+    IGeneralCommandClient generalCommandClient
 ) : IAccountGroupStorageAdapter
 {
     public async Task<List<AccountGroupRModel>?> AccountGroupGetByGroupIds(
         string[] groupIds, int pageSize, int pageIndex) // Guids
     {
-        var execution = new TblFldExecutionCommand
-        {
-            Code = AccountGroupServiceCode.AccountGroupGetByGroupIds,
-        };
-        CommonResponse<CommandRModel?> commandResponse = await fldMasterService.GetExecCommand(execution);
-        if (!commandResponse.Status || commandResponse.Data == null)
+        var command = await generalCommandClient.GetExecCommandAsync(
+            AccountGroupServiceCode.AccountGroupGetByGroupIds);
+        if (command == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
+        var result = await postgresFactoryWrapper.Execute(command
             .AddParameterValue("group_ids", groupIds.AsArrayJoin())
             .AddParameterValue("page_size", pageSize)
-            .AddParameterValue("page_index", pageIndex)
-            .ToCommand());
+            .AddParameterValue("page_index", pageIndex));
         return result.ToList<AccountGroupRModel>();
     }
 }

@@ -11,12 +11,13 @@
     <ItemGroup>
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
       <ProjectReference Include="..\..\..\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
+      <ProjectReference Include="..\..\..\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="NpOn.Account.Proto" />
       <PackageReference Include="NpOn.AccountEnum" />
       <PackageReference Include="NpOn.ShareAccountConstant" />
-      <PackageReference Include="NpOn.IAccountService" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt"/>
     </ItemGroup>
 

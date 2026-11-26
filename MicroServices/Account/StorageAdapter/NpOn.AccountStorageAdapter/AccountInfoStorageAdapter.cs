@@ -3,39 +3,36 @@ using Common.Extensions.NpOn.ICommonDb.DbResults.Extensions;
 using Common.Infrastructures.DbFactories.NpOn.PostgresDbFactory;
 using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountConstant;
+using MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter.GeneralProtoClient;
 using MicroServices.Account.StorageAdapter.NpOn.IAccountStorageAdapter;
-using MicroServices.General.Contract.NpOn.GeneralServiceCommand.Queries;
-using MicroServices.General.Service.NpOn.IGeneralService;
 
 namespace MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter;
 
 public class AccountInfoStorageAdapter(
     IPostgresFactoryWrapper postgresFactoryWrapper,
-    IFldMasterService fldMasterService
+    IGeneralCommandClient generalCommandClient
 ) : IAccountInfoStorageAdapter
 {
     // info
     public async Task<AccountInfoRModel?> AccountInfoActiveGetByAccountId(string accountId)
     {
-        var execution = new TblFldExecutionCommand(AccountServiceQueryCode.AccountInfoActiveGetByAccountId);
-        var commandResponse = await fldMasterService.GetExecCommand(execution);
-        if (!commandResponse.Status || commandResponse.Data == null)
+        var command = await generalCommandClient.GetExecCommandAsync(
+            AccountServiceQueryCode.AccountInfoActiveGetByAccountId);
+        if (command == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
-            .AddParameterValue("account_id", accountId)
-            .ToCommand());
+        var result = await postgresFactoryWrapper.Execute(command
+            .AddParameterValue("account_id", accountId));
         return result.ToFirstOrDefault<AccountInfoRModel>();
     }
 
     public async Task<List<AccountInfoRModel>?> AccountInfoActiveGetByAccountIds(string[] accountIds)
     {
-        var execution = new TblFldExecutionCommand(AccountServiceQueryCode.AccountInfoActiveGetByAccountIds);
-        var commandResponse = await fldMasterService.GetExecCommand(execution);
-        if (!commandResponse.Status || commandResponse.Data == null)
+        var command = await generalCommandClient.GetExecCommandAsync(
+            AccountServiceQueryCode.AccountInfoActiveGetByAccountIds);
+        if (command == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
-            .AddParameterValue("account_ids", accountIds.AsArrayJoin())
-            .ToCommand());
+        var result = await postgresFactoryWrapper.Execute(command
+            .AddParameterValue("account_ids", accountIds.AsArrayJoin()));
         return result.ToList<AccountInfoRModel>();
     }
 
@@ -43,25 +40,23 @@ public class AccountInfoStorageAdapter(
     // address
     public async Task<List<AccountAddressRModel>?> AccountAddressesGetByIds(string[] accountIds)
     {
-        var execution = new TblFldExecutionCommand(AccountServiceQueryCode.AccountAddressesGetByIds);
-        var commandResponse = await fldMasterService.GetExecCommand(execution);
-        if (!commandResponse.Status || commandResponse.Data == null)
+        var command = await generalCommandClient.GetExecCommandAsync(
+            AccountServiceQueryCode.AccountAddressesGetByIds);
+        if (command == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
-            .AddParameterValue("ids", accountIds.AsArrayJoin())
-            .ToCommand());
+        var result = await postgresFactoryWrapper.Execute(command
+            .AddParameterValue("ids", accountIds.AsArrayJoin()));
         return result.ToList<AccountAddressRModel>();
     }
 
     public async Task<List<AccountAddressRModel>?> AccountAddressesDefaultGetByAccountIds(string[] accountIds)
     {
-        var execution = new TblFldExecutionCommand(AccountServiceQueryCode.AccountAddressesDefaultGetByAccountIds);
-        var commandResponse = await fldMasterService.GetExecCommand(execution);
-        if (!commandResponse.Status || commandResponse.Data == null)
+        var command = await generalCommandClient.GetExecCommandAsync(
+            AccountServiceQueryCode.AccountAddressesDefaultGetByAccountIds);
+        if (command == null)
             return null;
-        var result = await postgresFactoryWrapper.Execute(commandResponse.Data
-            .AddParameterValue("account_ids", accountIds.AsArrayJoin())
-            .ToCommand());
+        var result = await postgresFactoryWrapper.Execute(command
+            .AddParameterValue("account_ids", accountIds.AsArrayJoin()));
         return result.ToList<AccountAddressRModel>();
     }
 }

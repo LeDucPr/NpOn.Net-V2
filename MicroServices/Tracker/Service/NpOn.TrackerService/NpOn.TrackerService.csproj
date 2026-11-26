@@ -18,8 +18,9 @@
         <PackageReference Include="NpOn.CommonHeaderConfig" />
         <PackageReference Include="NpOn.CommonMode" />
         <PackageReference Include="NpOn.ClickHouseAppExtUse" />
-        <PackageReference Include="NpOn.IAccountService" />
-        <PackageReference Include="NpOn.IGeneralService" />
+        <PackageReference Include="NpOn.Account.Proto" />
+        <PackageReference Include="NpOn.General.Proto" />
+        <PackageReference Include="NpOn.Tracker.Proto" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,18 +1,15 @@
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.Account.Contracts.NpOn.AccountServiceCommand.Queries;
-using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
-using MicroServices.Account.Service.NpOn.IAccountService;
+using NpOn.Protos.Account.V1;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 
 public class AuthenService(
-    // ILogger<AuthenService> logger,
-    IAuthenticationService authenticationService
-) 
+    AuthenticationProtoService.AuthenticationProtoServiceClient authenticationProtoClient
+)
 {
     /// <param name="key">sessionId</param>
     /// <returns></returns>
-    public AccountLoginRModel? GetLoginInfoSync(string key)
+    public AccountLoginItemProto? GetLoginInfoSync(string key)
     {
         if (string.IsNullOrEmpty(key))
             return null;
@@ -20,12 +17,13 @@ public class AuthenService(
         return loginInfo;
     }
 
-    public async Task<AccountLoginRModel?> GetLogonInfoBySessionId(string sessionId)
+    public async Task<AccountLoginItemProto?> GetLogonInfoBySessionId(string sessionId)
     {
-        var logonResponse = await authenticationService.GetLogonTokenBySessionId(new AccountGetLogonInfoBySessionIdQuery
-        {
-            SessionId = sessionId.AsDefaultString(),
-        });
+        var logonResponse = await authenticationProtoClient.GetLogonTokenBySessionIdAsync(
+            new AccountSessionRequestProto
+            {
+                SessionId = sessionId.AsDefaultString(),
+            });
         if (!logonResponse.Status || logonResponse.Data == null)
             return null;
         return logonResponse.Data;
@@ -35,8 +33,8 @@ public class AuthenService(
         (string accountId, string controllerCode, bool isHasBasePermission)
     {
         var logonPermissionExceptionControllers =
-            await authenticationService.IsValidLogonPermissionExceptionControllers(
-                new AccountPermissionExceptionCachingCheckValidQuery
+            await authenticationProtoClient.IsValidLogonPermissionExceptionControllersAsync(
+                new AccountPermissionExceptionCheckRequestProto
                 {
                     AccountId = accountId.AsDefaultString(),
                     ControllerCode = controllerCode,

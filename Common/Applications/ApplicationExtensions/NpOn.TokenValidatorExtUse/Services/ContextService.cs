@@ -4,9 +4,9 @@ using System.Security.Claims;
 using System.Text;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using Microsoft.IdentityModel.Tokens;
+using NpOn.Protos.Account.V1;
 
 // using System.Reflection.Metadata;
 
@@ -79,7 +79,7 @@ public class ContextService(
         return user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value.AsDefaultGuid();
     }
 
-    public AccountLoginRModel? UserInfo()
+    public AccountLoginItemProto? UserInfo()
     {
         var isAuthenticated = httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;
         if (!isAuthenticated)
@@ -93,7 +93,7 @@ public class ContextService(
         return userInfo;
     }
 
-    public AccountLoginRModel UserInfoRequired()
+    public AccountLoginItemProto UserInfoRequired()
     {
         var userInfo = UserInfo();
         if (userInfo == null)
@@ -104,7 +104,7 @@ public class ContextService(
         return userInfo;
     }
 
-    public AccountLoginRModel? UserInfoBySessionId(string sessionId)
+    public AccountLoginItemProto? UserInfoBySessionId(string sessionId)
     {
         var userInfo = authenService.GetLoginInfoSync(sessionId);
         return userInfo;

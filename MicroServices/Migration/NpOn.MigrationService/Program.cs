@@ -14,6 +14,7 @@ using MicroServices.Migration.Service.NpOn.IMigrationService;
 using MicroServices.Migration.Service.NpOn.MigrationService.Services;
 using Microsoft.AspNetCore.Builder;
 using NpOn.CommonGrpcCall;
+using NpOn.Protos.Migration.V1;
 
 namespace MicroServices.Migration.Service.NpOn.MigrationService;
 
@@ -44,7 +45,7 @@ public sealed class Program : HttpCommonProgram
                     null,
                     sp.GetRequiredService<IInterServiceTokenService>(),
                     serviceName))
-                .AddConnectService(new MigrationServiceClientResolver(), null, EUrlConfiguration.MigrationService);
+                .AddProtoConnectService<CassandraMigrationProtoService.CassandraMigrationProtoServiceClient>(EUrlConfiguration.MigrationService);
         }
         // .AddConnectService(new GeneralServiceClientResolver(), null, EUrlConfiguration.GeneralServiceUrl)
         // .AddConnectService(new AccountServiceClientResolver(), null, EUrlConfiguration.AccountServiceUrl);
@@ -105,7 +106,8 @@ public sealed class Program : HttpCommonProgram
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
-        // Add Map Grpc Service
+        // Add Map Grpc Service (Schema-First .proto + Code-First coexistence)
+        app.MapGrpcService<CassandraMigrationProtoGrpcService>();
         app.MapGrpcService<CassandraMigration>();
         return Task.CompletedTask;
     }

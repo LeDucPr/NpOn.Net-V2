@@ -3,11 +3,11 @@ using System.Security.Claims;
 using Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Services;
 using Common.Extensions.NpOn.CommonEnums.AppConfigEnums;
 using Common.Extensions.NpOn.CommonMode;
-using MicroServices.Account.Contracts.NpOn.AccountServiceReadModel.ReadModels;
 using MicroServices.Account.Definitions.NpOn.AccountEnum;
 using MicroServices.Account.Definitions.NpOn.ShareAccountConstant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Net.Http.Headers;
+using NpOn.Protos.Account.V1;
 
 namespace Common.Applications.ApplicationsExtensions.NpOn.TokenValidatorExtUse.Middlewares;
 
@@ -73,8 +73,8 @@ public class TokenValidationMiddleware(RequestDelegate next)
                     return; // stop pipeline
                 }
 
-                AccountLoginRModel? accountInfo = await authenService.GetLogonInfoBySessionId(tokenSessionId);
-                if (accountInfo == null || accountInfo.TokenStatus == ETokenStatus.Inactive)
+                AccountLoginItemProto? accountInfo = await authenService.GetLogonInfoBySessionId(tokenSessionId);
+                if (accountInfo == null || (ETokenStatus)accountInfo.TokenStatus == ETokenStatus.Inactive)
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.WriteAsync("Invalid or expired token.");

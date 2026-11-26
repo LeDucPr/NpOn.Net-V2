@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option csharp_namespace = "NpOn.Protos.Tracker.V1";
+
+package npon.tracker.v1;
+
+// Schema-First gRPC contract for TrackerService
+service TrackerLogProtoService {
+  rpc PushLogs (PushTrackerLogsRequestProto) returns (TrackerCommonReplyProto);
+}
+
+message TrackerLogItemProto {
+  optional int64 event_date_unix_ms = 1;
+  int32 level = 2;
+  string source = 3;
+  string message = 4;
+  repeated int32 tracker_log_types = 5;
+  map<string, string> attributes = 6;
+}
+
+message PushTrackerLogsRequestProto {
+  repeated TrackerLogItemProto commands = 1;
+}
+
+message TrackerCommonReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional int32 total_row = 6;
+}

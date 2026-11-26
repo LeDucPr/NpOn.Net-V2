@@ -22,8 +22,40 @@ public abstract class SharedGrpcClientResolver
     }
 }
 
+public sealed class ActionGrpcClientResolver(Action<IServiceCollection, string> registerAction) : SharedGrpcClientResolver
+{
+    protected override Func<IServiceCollection, string, Task> RegistrationAction =>
+        (services, url) =>
+        {
+            registerAction(services, url);
+            return Task.CompletedTask;
+        };
+}
+
 public static class SharedGrpcClientResolverExtensions
 {
+    public static IServiceCollection AddProtoConnectService<TClient>(
+        this IServiceCollection services,
+        EUrlConfiguration eUrlConfiguration)
+        where TClient : class
+    {
+        return services.AddConnectService(
+            new ActionGrpcClientResolver((s, url) => s.RegisterSchemaFirstGrpcClientLoadBalancing<TClient>(url)),
+            null,
+            eUrlConfiguration);
+    }
+
+    public static IServiceCollection AddProtoConnectService(
+        this IServiceCollection services,
+        EUrlConfiguration eUrlConfiguration,
+        Action<IServiceCollection, string> registerClients)
+    {
+        return services.AddConnectService(
+            new ActionGrpcClientResolver(registerClients),
+            null,
+            eUrlConfiguration);
+    }
+
     public static IServiceCollection AddConnectService // other service call this method
     (this IServiceCollection services, SharedGrpcClientResolver resolver, string? url = null,
         EUrlConfiguration? eUrlConfiguration = null)
@@ -150,6 +182,30 @@ public static class SharedGrpcClientResolverExtensions
         }
 
         services.AddCodeFirstGrpcClient<T>((provider, options) => { ConfigGrpcClientOptions(options, url, provider); })
+            .AddInterceptor(provider =>
+            {
+                SharedGrpcInterceptor loggerInterceptor = provider.GetRequiredService<SharedGrpcInterceptor>();
+                loggerInterceptor.Host = url;
+                return loggerInterceptor;
+            });
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a Schema-First (.proto generated) gRPC client with the same load-balancing, HTTP/2 pooling,
+    /// mTLS / ServiceMesh / JWT auth config, and SharedGrpcInterceptor as Code-First clients.
+    /// </summary>
+    public static IServiceCollection RegisterSchemaFirstGrpcClientLoadBalancing<TClient>(
+        this IServiceCollection services,
+        string? url)
+        where TClient : class
+    {
+        if (url is not { Length: > 0 })
+        {
+            return services;
+        }
+
+        services.AddGrpcClient<TClient>((provider, options) => { ConfigGrpcClientOptions(options, url, provider); })
             .AddInterceptor(provider =>
             {
                 SharedGrpcInterceptor loggerInterceptor = provider.GetRequiredService<SharedGrpcInterceptor>();

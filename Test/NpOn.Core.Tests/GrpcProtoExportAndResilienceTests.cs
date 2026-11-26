@@ -1,4 +1,3 @@
-using MicroServices.Account.Service.NpOn.IAccountService;
 using Microsoft.Extensions.Logging.Abstractions;
 using NpOn.CommonGrpcCall;
 using Xunit;

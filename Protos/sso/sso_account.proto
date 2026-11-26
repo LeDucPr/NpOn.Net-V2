@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option csharp_namespace = "NpOn.Protos.Sso.V1";
+
+package npon.sso.v1;
+
+// Schema-First public gRPC contract exposed by Controllers/NpOn.SSO
+service SsoAccountProtoService {
+  rpc Login (SsoLoginRequestProto) returns (SsoLoginReplyProto);
+}
+
+message SsoLoginRequestProto {
+  optional string email = 1;
+  optional string phone_number = 2;
+  optional string user_name = 3;
+  string password = 4;
+  optional string device_info = 5;
+  optional int32 login_type = 6;
+  int32 auth_type = 7;
+  optional string app_id = 8;
+  optional bool is_old_system_account = 9;
+}
+
+message SsoLoginModelProto {
+  string account_id = 1;
+  int32 auth_type = 2;
+  int32 login_type = 3;
+  optional string full_name = 4;
+  optional string phone_number = 5;
+  optional string token = 6;
+  optional string refresh_token = 7;
+  optional int64 created_at_unix_ms = 8;
+  string session_id = 9;
+  int32 minute_expire = 10;
+}
+
+message SsoLoginReplyProto {
+  bool status = 1;
+  optional int32 error_code = 2;
+  repeated string error_messages = 3;
+  int32 version = 4;
+  int64 server_time_unix_ms = 5;
+  optional SsoLoginModelProto model = 6;
+}

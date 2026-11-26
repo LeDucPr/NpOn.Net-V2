@@ -55,8 +55,8 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      contains(toLower(github.event.head_commit.message), 'buildci') ||
-      contains(toLower(github.event.pull_request.title), 'buildci')
+      contains(github.event.head_commit.message, 'buildci') ||
+      contains(github.event.pull_request.title, 'buildci')
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
