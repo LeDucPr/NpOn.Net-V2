@@ -310,6 +310,8 @@ public class CassandraDriverExhaustiveTests(ITestOutputHelper output)
     #region 2. High Concurrency & Stress Queries (Mirroring Postgres AuthenticationFlowTests)
 
     [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "IntegrationScylla")]
     public async Task Cassandra_AccountQuery_ShouldSucceed100TimesWithoutFailure()
     {
         var option = CreateOption();
@@ -337,6 +339,8 @@ public class CassandraDriverExhaustiveTests(ITestOutputHelper output)
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "IntegrationScylla")]
     public async Task Cassandra_AccountQuery_Concurrent50Tasks_ShouldAllSucceed()
     {
         var option = CreateOption();
@@ -369,6 +373,8 @@ public class CassandraDriverExhaustiveTests(ITestOutputHelper output)
     #region 3. Full Data Types Live Cluster Verification (All 22 CQL Types)
 
     [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "IntegrationScylla")]
     public async Task CassandraDriver_AllDataTypes_NonNullValues_ShouldInsertQueryAndMapSuccessfully()
     {
         // Arrange
@@ -487,6 +493,8 @@ INSERT INTO scarlight.test_all_types (
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "IntegrationScylla")]
     public async Task CassandraDriver_AllDataTypes_NullValues_ShouldHandleSafelyWithoutException()
     {
         // Arrange

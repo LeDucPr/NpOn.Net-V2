@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rancher-secret
+  namespace: npon-v2
+type: Opaque
+stringData:
+  CATTLE_BOOTSTRAP_PASSWORD: "admin123"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rancher-data
+  namespace: npon-v2
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rancher
+  namespace: npon-v2
+  labels:
+    app: rancher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rancher
+  template:
+    metadata:
+      labels:
+        app: rancher
+    spec:
+      containers:
+        - name: rancher
+          image: rancher/rancher:latest
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+          env:
+            - name: CATTLE_BOOTSTRAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rancher-secret
+                  key: CATTLE_BOOTSTRAP_PASSWORD
+            - name: CATTLE_SERVER_URL
+              value: "https://rancher.npon-v2.svc.cluster.local"
+          volumeMounts:
+            - name: rancher-data
+              mountPath: /var/lib/rancher
+          readinessProbe:
+            tcpSocket:
+              port: 443
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+      volumes:
+        - name: rancher-data
+          persistentVolumeClaim:
+            claimName: rancher-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rancher
+  namespace: npon-v2
+  labels:
+    app: rancher
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 443
+  selector:
+    app: rancher

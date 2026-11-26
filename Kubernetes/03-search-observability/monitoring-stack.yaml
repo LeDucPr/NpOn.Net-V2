@@ -1,0 +1,554 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-prometheus-config
+  namespace: npon-v2
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 20s
+      scrape_timeout: 15s
+      evaluation_interval: 20s
+      external_labels:
+        monitor: 'npon-scylla-monitor'
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager.npon-v2.svc.cluster.local:9093']
+    scrape_configs:
+      - job_name: 'prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: ['localhost:9090']
+      - job_name: 'redpanda'
+        static_configs:
+          - targets: ['redpanda.npon-v2.svc.cluster.local:9644']
+      - job_name: 'scylla'
+        static_configs:
+          - targets:
+              - 'scylla-0.scylla-headless.npon-v2.svc.cluster.local:9180'
+              - 'scylla-1.scylla-headless.npon-v2.svc.cluster.local:9180'
+              - 'scylla-2.scylla-headless.npon-v2.svc.cluster.local:9180'
+      - job_name: 'scylla-node-exporter'
+        static_configs:
+          - targets:
+              - 'scylla-0.scylla-headless.npon-v2.svc.cluster.local:9100'
+              - 'scylla-1.scylla-headless.npon-v2.svc.cluster.local:9100'
+              - 'scylla-2.scylla-headless.npon-v2.svc.cluster.local:9100'
+      - job_name: 'scylla-manager'
+        static_configs:
+          - targets: ['scylla-manager.npon-v2.svc.cluster.local:56090']
+      - job_name: 'envoy-sidecars'
+        metrics_path: /stats/prometheus
+        static_configs:
+          - targets:
+              - 'sso-controller.npon-v2.svc.cluster.local:9901'
+              - 'account-service.npon-v2.svc.cluster.local:9901'
+              - 'general-service.npon-v2.svc.cluster.local:9901'
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'localhost:25'
+      smtp_from: 'alertmanager@npon.local'
+    route:
+      receiver: 'default-receiver'
+      group_by: ['alertname', 'cluster']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
+    receivers:
+      - name: 'default-receiver'
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: npon-v2
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: npon-v2
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.51.0
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+          ports:
+            - containerPort: 9090
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+            - name: data
+              mountPath: /prometheus
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+      volumes:
+        - name: config
+          configMap:
+            name: monitoring-prometheus-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: prometheus-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: npon-v2
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+  selector:
+    app: prometheus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: npon-v2
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.27.0
+          args:
+            - "--config.file=/etc/alertmanager/config.yml"
+          ports:
+            - containerPort: 9093
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager/config.yml
+              subPath: alertmanager.yml
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+      volumes:
+        - name: config
+          configMap:
+            name: monitoring-prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: npon-v2
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9093
+      targetPort: 9093
+  selector:
+    app: alertmanager
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-loki-config
+  namespace: npon-v2
+data:
+  loki-config.yaml: |
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    ingester:
+      lifecycler:
+        address: 127.0.0.1
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+        final_sleep: 0s
+      chunk_idle_period: 1h
+      max_chunk_age: 1h
+      chunk_target_size: 1048576
+      chunk_retain_period: 30s
+      max_transfer_retries: 0
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /wal/boltdb-shipper-active
+        cache_location: /wal/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /wal/chunks
+    compactor:
+      working_directory: /wal/boltdb-shipper-compactor
+      shared_store: filesystem
+    limits_config:
+      reject_old_samples: true
+      reject_old_samples_max_age: 24h
+    chunk_store_config:
+      max_look_back_period: 24h
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 24h
+    ruler:
+      storage:
+        type: local
+        local:
+          directory: /etc/loki/rules
+      rule_path: /tmp/loki/rules-temp
+      alertmanager_url: http://alertmanager.npon-v2.svc.cluster.local:9093
+      ring:
+        kvstore:
+          store: inmemory
+      enable_api: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+  namespace: npon-v2
+  labels:
+    app: loki
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3100
+      targetPort: 3100
+  selector:
+    app: loki
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  namespace: npon-v2
+  labels:
+    app: loki
+spec:
+  serviceName: loki
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+        - name: loki
+          image: grafana/loki:2.9.5
+          args: ["--config.file=/mnt/config/loki-config.yaml"]
+          ports:
+            - containerPort: 3100
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /mnt/config
+            - name: loki-wal
+              mountPath: /wal
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3100
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+      volumes:
+        - name: config
+          configMap:
+            name: monitoring-loki-config
+  volumeClaimTemplates:
+    - metadata:
+        name: loki-wal
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-promtail-config
+  namespace: npon-v2
+data:
+  promtail.yml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+    positions:
+      filename: /tmp/positions.yaml
+    clients:
+      - url: http://loki.npon-v2.svc.cluster.local:3100/loki/api/v1/push
+    scrape_configs:
+      - job_name: kubernetes-pods
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: varlogs
+              __path__: /var/log/pods/npon-v2_*/*/*.log
+      - job_name: syslog
+        syslog:
+          listen_address: 0.0.0.0:1514
+          labels:
+            job: syslog
+        relabel_configs:
+          - source_labels: ['__syslog_connection_ip_address']
+            target_label: 'instance'
+          - source_labels: ['__syslog_message_app_name']
+            target_label: 'app'
+          - source_labels: ['__syslog_message_severity']
+            target_label: 'severity'
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: promtail
+  namespace: npon-v2
+  labels:
+    app: promtail
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      containers:
+        - name: promtail
+          image: grafana/promtail:2.9.5
+          args: ["--config.file=/etc/promtail/config.yml"]
+          ports:
+            - containerPort: 9080
+              name: http
+            - containerPort: 1514
+              name: syslog
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail/config.yml
+              subPath: promtail.yml
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+      volumes:
+        - name: config
+          configMap:
+            name: monitoring-promtail-config
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail
+  namespace: npon-v2
+  labels:
+    app: promtail
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9080
+      targetPort: 9080
+    - name: syslog
+      port: 1514
+      targetPort: 1514
+  selector:
+    app: promtail
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-grafana-datasources
+  namespace: npon-v2
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.npon-v2.svc.cluster.local:9090
+        isDefault: true
+        editable: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.npon-v2.svc.cluster.local:3100
+        editable: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secret
+  namespace: npon-v2
+type: Opaque
+stringData:
+  GF_SECURITY_ADMIN_USER: "npon_grafana"
+  GF_SECURITY_ADMIN_PASSWORD: "npon_grafana_pass"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: monitoring-grafana-data
+  namespace: npon-v2
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: npon-v2
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.3.5
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: GF_PANELS_DISABLE_SANITIZE_HTML
+              value: "true"
+            - name: GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS
+              value: "scylladb-scylla-datasource"
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-piechart-panel"
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secret
+                  key: GF_SECURITY_ADMIN_USER
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secret
+                  key: GF_SECURITY_ADMIN_PASSWORD
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+              subPath: datasources.yaml
+            - name: data
+              mountPath: /var/lib/grafana
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+      volumes:
+        - name: datasources
+          configMap:
+            name: monitoring-grafana-datasources
+        - name: data
+          persistentVolumeClaim:
+            claimName: monitoring-grafana-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: npon-v2
+  labels:
+    app: grafana
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: grafana

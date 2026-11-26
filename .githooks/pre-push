@@ -1,35 +1,104 @@
 #!/bin/sh
 # ==============================================================================
 # NpOn.Net-V2 Git Hook: pre-push
-# Tu dong kiem tra bien dich va test truoc khi cho phep push code len GitHub
+# Tu dong dong bo Common DLLs, bien dich, va test truoc khi cho phep git push
 # ==============================================================================
 
 echo "================================================================================"
 echo " [GIT HOOK] DANG KIEM TRA AN TOAN TRUOC KHI PUSH (PRE-PUSH GATE)..."
 echo "================================================================================"
 
+# 0. Refresh local NuGet packages (artifacts/packages) via build-common.ps1 if PowerShell is available
+if [ -f "./build-common.ps1" ]; then
+    if command -v pwsh >/dev/null 2>&1; then
+        echo " [0/2] Refreshing Common NuGet packages via pwsh ./build-common.ps1..."
+        pwsh -NoProfile -ExecutionPolicy Bypass -File ./build-common.ps1 -Configuration Release || exit 1
+    elif command -v powershell.exe >/dev/null 2>&1; then
+        echo " [0/2] Refreshing Common NuGet packages via powershell.exe ./build-common.ps1..."
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./build-common.ps1 -Configuration Release || exit 1
+    elif command -v powershell >/dev/null 2>&1; then
+        echo " [0/2] Refreshing Common NuGet packages via powershell ./build-common.ps1..."
+        powershell -NoProfile -ExecutionPolicy Bypass -File ./build-common.ps1 -Configuration Release || exit 1
+    else
+        echo " [INFO] PowerShell not found; using existing artifacts/packages NuGet feed."
+    fi
+fi
+
 # 1. Kiem tra bien dich toan bo Solution
 echo " [1/2] Dang kiem tra bien dich NpOnV2.sln (Release)..."
 dotnet build NpOnV2.sln -c Release --nologo -v q
 if [ $? -ne 0 ]; then
-    echo "\n❌ [ERROR] BIEN DICH THAT BAI! Co loi xay ra trong ma nguon."
-    echo "❌ Lenh git push da bi chan. Vui long sua loi bien dich truoc khi push!\n"
+    echo "\n[ERROR] BIEN DICH THAT BAI! Co loi xay ra trong ma nguon."
+    echo "Lenh git push da bi chan. Vui long sua loi bien dich truoc khi push!\n"
     exit 1
 fi
 echo " --> [PASS] Bien dich thanh cong 100%!"
 
-# 2. Chay toan bo Unit Tests & Dynamic IL Emit Verification
-echo " [2/2] Dang chay bo kiem thu Unit Tests & Dynamic IL Emit..."
-dotnet test Test/NpOn.Core.Tests/NpOn.Core.Tests.csproj -c Release --no-build --nologo
+# Probe local live DB ports (timeout 1s)
+check_local_port() {
+    port="$1"
+    if command -v powershell.exe >/dev/null 2>&1; then
+        powershell.exe -NoProfile -Command "\$c = New-Object System.Net.Sockets.TcpClient; try { \$ok = \$c.ConnectAsync('127.0.0.1', $port).Wait(1000); if (\$ok -and \$c.Connected) { exit 0 } else { exit 1 } } catch { exit 1 } finally { \$c.Dispose() }" >/dev/null 2>&1
+        return $?
+    elif command -v pwsh >/dev/null 2>&1; then
+        pwsh -NoProfile -Command "\$c = New-Object System.Net.Sockets.TcpClient; try { \$ok = \$c.ConnectAsync('127.0.0.1', $port).Wait(1000); if (\$ok -and \$c.Connected) { exit 0 } else { exit 1 } } catch { exit 1 } finally { \$c.Dispose() }" >/dev/null 2>&1
+        return $?
+    elif command -v timeout >/dev/null 2>&1 && command -v bash >/dev/null 2>&1; then
+        timeout 1 bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/$port" >/dev/null 2>&1
+        return $?
+    fi
+    return 1
+}
+
+SCYLLA_UP=0
+SCYLLA_HEALTHY=0
+PG_UP=0
+if check_local_port 9042; then
+    SCYLLA_UP=1
+    SCYLLA_HEALTHY=1
+    if command -v docker >/dev/null 2>&1; then
+        if docker ps --filter "name=^/scylla-node1$" --format "{{.Names}}" 2>/dev/null | grep -qx "scylla-node1"; then
+            if docker exec scylla-node1 nodetool status 2>/dev/null | grep -Eq "^(\?N|D[NLMJ])[[:space:]]"; then
+                SCYLLA_HEALTHY=0
+            fi
+        fi
+    fi
+fi
+check_local_port 5432 && PG_UP=1
+
+FILTER_ARG=""
+if [ "$SCYLLA_HEALTHY" -eq 1 ] && [ "$PG_UP" -eq 1 ]; then
+    echo " [INFO] ScyllaDB (127.0.0.1:9042) & PostgreSQL (127.0.0.1:5432) healthy -> running FULL test suite."
+elif [ "$PG_UP" -eq 1 ]; then
+    FILTER_ARG="Category!=IntegrationScylla"
+    if [ "$SCYLLA_UP" -eq 1 ]; then
+        echo " [INFO] ScyllaDB cluster degraded (DN/?N replicas) -> skipping IntegrationScylla tests (--filter \"$FILTER_ARG\")."
+    else
+        echo " [INFO] ScyllaDB (127.0.0.1:9042) unreachable -> skipping IntegrationScylla tests (--filter \"$FILTER_ARG\")."
+    fi
+elif [ "$SCYLLA_HEALTHY" -eq 1 ]; then
+    FILTER_ARG="Category!=IntegrationPostgres"
+    echo " [INFO] PostgreSQL (127.0.0.1:5432) unreachable -> skipping IntegrationPostgres tests (--filter \"$FILTER_ARG\")."
+else
+    FILTER_ARG="Category!=Integration"
+    echo " [INFO] Live DBs unavailable/degraded -> running unit/in-memory/loopback tests (--filter \"$FILTER_ARG\")."
+fi
+
+# 2. Chay bo kiem thu Unit Tests & Dynamic IL Emit Verification
+echo " [2/2] Dang chay bo kiem thu NpOn.Core.Tests..."
+if [ -n "$FILTER_ARG" ]; then
+    dotnet test Test/NpOn.Core.Tests/NpOn.Core.Tests.csproj -c Release --no-build --filter "$FILTER_ARG" --nologo
+else
+    dotnet test Test/NpOn.Core.Tests/NpOn.Core.Tests.csproj -c Release --no-build --nologo
+fi
 if [ $? -ne 0 ]; then
-    echo "\n❌ [ERROR] TEST THAT BAI! Mot hoac nhieu Unit Test khong vuot qua."
-    echo "❌ Lenh git push da bi chan. Vui long kiem tra va fix loi test truoc!\n"
+    echo "\n[ERROR] TEST THAT BAI! Mot hoac nhieu Test khong vuot qua."
+    echo "Lenh git push da bi chan. Vui long kiem tra va fix loi test truoc!\n"
     exit 1
 fi
-echo " --> [PASS] Toan bo 29/29 Unit Tests hoan thanh xuat sac!"
+echo " --> [PASS] Toan bo Unit Tests hoan thanh xuat sac!"
 
 echo "================================================================================"
-echo " ✅ TAT CA DIEU KIEN AN TOAN DA DAT CHUAN! CHO PHEP GIT PUSH."
+echo " [PASS] TAT CA DIEU KIEN AN TOAN DA DAT CHUAN! CHO PHEP GIT PUSH."
 echo "================================================================================"
 exit 0
-

@@ -12,24 +12,21 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-    <ProjectReference Include="..\..\Common\Infrastructures\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
-    <ProjectReference Include="..\..\Common\Infrastructures\DbFactories\NpOn.PostgresFactory\NpOn.PostgresFactory.csproj" />
-    <ProjectReference Include="..\..\Common\Infrastructures\NpOn.CassandraExtCm\NpOn.CassandraExtCm.csproj" />
-    <ProjectReference Include="..\..\Common\Infrastructures\DbFactories\NpOn.CassandraFactory\NpOn.CassandraFactory.csproj" />
-    <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceReadModel\NpOn.AccountServiceReadModel.csproj" />
-    <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceCommand\NpOn.AccountServiceCommand.csproj" />
-    <ProjectReference Include="..\..\MicroServices\Account\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj" />
-    <ProjectReference Include="..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.Saga\NpOn.Saga.csproj" />
+    <PackageReference Include="NpOn.CommonMode" />
+    <PackageReference Include="NpOn.CommonInternalCache" />
+    <PackageReference Include="NpOn.ICommonDb" />
+    <PackageReference Include="NpOn.CommonDb" />
+    <PackageReference Include="NpOn.PostgresExtCm" />
+    <PackageReference Include="NpOn.PostgresFactory" />
+    <PackageReference Include="NpOn.CassandraExtCm" />
+    <PackageReference Include="NpOn.CassandraFactory" />
+    <PackageReference Include="NpOn.AccountServiceReadModel" />
+    <PackageReference Include="NpOn.AccountServiceCommand" />
+    <PackageReference Include="NpOn.ShareAccountConstant" />
+    <PackageReference Include="NpOn.IAccountService" />
+    <PackageReference Include="NpOn.CommonGrpcCall" />
+    <PackageReference Include="NpOn.CommonHeaderConfig" />
+    <PackageReference Include="NpOn.Saga" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trino-config
+  namespace: npon-v2
+data:
+  config.properties: |
+    coordinator=true
+    node-scheduler.include-coordinator=true
+    http-server.http.port=8080
+    catalog.management=dynamic
+  catalog-setup.sql: |
+    CREATE CATALOG IF NOT EXISTS scylla USING cassandra WITH (
+      "cassandra.contact-points" = 'scylla.npon-v2.svc.cluster.local',
+      "cassandra.native-protocol-port" = '9042',
+      "cassandra.load-policy.dc-aware.local-dc" = 'DataCenter1'
+    );
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trino
+  namespace: npon-v2
+  labels:
+    app: trino
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8080
+  selector:
+    app: trino
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trino
+  namespace: npon-v2
+  labels:
+    app: trino
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trino
+  template:
+    metadata:
+      labels:
+        app: trino
+    spec:
+      containers:
+        - name: trino
+          image: trinodb/trino:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: TRINO_HEAP
+              value: "2G"
+            - name: TRINO_EXTRA_CONFIG
+              value: "catalog.management=dynamic"
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              rm -rf /etc/trino/catalog/*
+              printf "catalog.management=dynamic\n" >> /etc/trino/config.properties
+              exec /usr/lib/trino/bin/run-trino
+          volumeMounts:
+            - name: trino-data
+              mountPath: /data/trino
+          readinessProbe:
+            httpGet:
+              path: /v1/info
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /v1/info
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "3Gi"
+      volumes:
+        - name: trino-data
+          emptyDir: {}

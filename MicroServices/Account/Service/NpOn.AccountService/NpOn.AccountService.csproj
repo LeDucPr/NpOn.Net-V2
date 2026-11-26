@@ -17,22 +17,25 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.KafkaAppExtUse\NpOn.KafkaAppExtUse.csproj" />
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RabbitMqAppExtUse\NpOn.RabbitMqAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.ZeroMqAppExtUse\NpOn.ZeroMqAppExtUse.csproj" />
-        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.ZeroMqExtCm\NpOn.ZeroMqExtCm.csproj" />
-        <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonScope\NpOn.CommonScope.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj" />
-        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj"/>
-        <ProjectReference Include="..\..\..\Tracker\Service\NpOn.ITrackerService\NpOn.ITrackerService.csproj" />
-        <ProjectReference Include="..\..\..\Tracker\Service\NpOn.Tracker2WayService\NpOn.Tracker2WayService.csproj" />
+        <PackageReference Include="NpOn.AddGrpcAppExtUse"/>
+        <PackageReference Include="NpOn.KafkaAppExtUse"/>
+        <PackageReference Include="NpOn.PostgresAppExtUse"/>
+        <PackageReference Include="NpOn.RabbitMqAppExtUse"/>
+        <PackageReference Include="NpOn.ZeroMqAppExtUse"/>
+        <PackageReference Include="NpOn.ZeroMqExtCm"/>
+        <PackageReference Include="NpOn.CommonHttpApplication"/>
+        <PackageReference Include="NpOn.CommonBaseDomain"/>
+        <PackageReference Include="NpOn.CommonEnums"/>
+        <PackageReference Include="NpOn.CommonMode"/>
+        <PackageReference Include="NpOn.CommonScope"/>
+        <PackageReference Include="NpOn.HandleFlow"/>
+        <PackageReference Include="NpOn.KafkaExtCm"/>
+        <PackageReference Include="NpOn.RabbitMqExtMs"/>
+        <PackageReference Include="NpOn.ITrackerService"/>
+        <PackageReference Include="NpOn.Tracker2WayService"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\Contract\NpOn.AccountServiceDomain\NpOn.AccountServiceDomain.csproj" />
         <ProjectReference Include="..\..\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj"/>
         <ProjectReference Include="..\..\Definitions\NpOn.ShareAccountConstant\NpOn.ShareAccountConstant.csproj"/>

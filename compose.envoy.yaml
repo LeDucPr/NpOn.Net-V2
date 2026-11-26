@@ -1,0 +1,63 @@
+services:
+  sso:
+    environment:
+      - InterServiceAuthMode=ServiceMesh
+      - InterServiceUseMTLS=false
+      - InterServiceServiceMeshTrustDomain=cluster.local
+      - InterServiceTrustedProxyIps=127.0.0.1,::1,172.16.0.0/12,192.168.0.0/16
+      - AccountServiceUrl=http://envoy-sso:15004
+    depends_on:
+      - envoy-sso
+
+  accountservice:
+    environment:
+      - InterServiceAuthMode=ServiceMesh
+      - InterServiceUseMTLS=false
+      - InterServiceServiceMeshTrustDomain=cluster.local
+      - InterServiceTrustedProxyIps=127.0.0.1,::1,172.16.0.0/12,192.168.0.0/16
+      - GeneralServiceUrl=http://envoy-account:15000
+    depends_on:
+      - envoy-account
+
+  generalservice:
+    environment:
+      - InterServiceAuthMode=ServiceMesh
+      - InterServiceUseMTLS=false
+      - InterServiceServiceMeshTrustDomain=cluster.local
+      - InterServiceTrustedProxyIps=127.0.0.1,::1,172.16.0.0/12,192.168.0.0/16
+      - AccountServiceUrl=http://envoy-general:15004
+    depends_on:
+      - envoy-general
+
+  envoy-sso:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: envoy-sso
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    volumes:
+      - ./Docker/Envoy/envoy.sso.yaml:/etc/envoy/envoy.yaml:ro
+      - ./Docker/Envoy/certs:/certs:ro
+    networks:
+      - npon-v2-backend-net
+    restart: unless-stopped
+
+  envoy-account:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: envoy-account
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    volumes:
+      - ./Docker/Envoy/envoy.account.yaml:/etc/envoy/envoy.yaml:ro
+      - ./Docker/Envoy/certs:/certs:ro
+    networks:
+      - npon-v2-backend-net
+    restart: unless-stopped
+
+  envoy-general:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: envoy-general
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    volumes:
+      - ./Docker/Envoy/envoy.general.yaml:/etc/envoy/envoy.yaml:ro
+      - ./Docker/Envoy/certs:/certs:ro
+    networks:
+      - npon-v2-backend-net
+    restart: unless-stopped

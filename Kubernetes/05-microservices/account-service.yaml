@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: account-service
+  namespace: npon-v2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: account-service
+  namespace: npon-v2
+  labels:
+    app: account-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: envoy-mtls
+      port: 15443
+      targetPort: 15443
+    - name: grpc-local
+      port: 40004
+      targetPort: 40004
+    - name: envoy-admin
+      port: 9901
+      targetPort: 9901
+  selector:
+    app: account-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-service
+  namespace: npon-v2
+  labels:
+    app: account-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: account-service
+  template:
+    metadata:
+      labels:
+        app: account-service
+    spec:
+      serviceAccountName: account-service
+      containers:
+        - name: account-service
+          image: ghcr.io/leducpr/account-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 40004
+              name: grpc-local
+          envFrom:
+            - configMapRef:
+                name: npon-common-config
+            - secretRef:
+                name: npon-interservice-secret
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:40004"
+            - name: HostDomain
+              value: "http://0.0.0.0"
+            - name: HostPort
+              value: "40004"
+            - name: GeneralServiceUrl
+              value: "http://127.0.0.1:15000"
+            - name: PostgresConnectionString
+              value: "Host=postgres.npon-v2.svc.cluster.local;Port=5432;Username=postgres;Password=password;Database=account;"
+            - name: ConnectionString
+              value: "Host=postgres.npon-v2.svc.cluster.local;Port=5432;Username=postgres;Password=password;Database=account;"
+            - name: RedisConnectString
+              value: "dragonfly.npon-v2.svc.cluster.local:6379,user=default,password=NpOn.Net-V2_Dragonfly"
+            - name: RabbitMqConnection
+              value: "amqp://rabbitmq:password@rabbitmq.npon-v2.svc.cluster.local:5672/"
+            - name: RabbitMqExchangeName
+              value: "NpOn.AccountService"
+            - name: InterServiceAuthMode
+              value: "ServiceMesh"
+          readinessProbe:
+            tcpSocket:
+              port: 40004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 40004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+
+        - name: envoy
+          image: envoyproxy/envoy:v1.31-latest
+          args: ["-c", "/etc/envoy/envoy.yaml", "--concurrency", "2"]
+          ports:
+            - containerPort: 15443
+              name: envoy-mtls
+            - containerPort: 9901
+              name: envoy-admin
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy/envoy.yaml
+              subPath: envoy-account.yaml
+              readOnly: true
+            - name: mesh-certs
+              mountPath: /certs
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9901
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 9901
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: npon-envoy-3b-config
+        - name: mesh-certs
+          secret:
+            secretName: npon-mesh-certs-account
+            optional: true

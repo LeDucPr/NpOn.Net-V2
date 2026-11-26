@@ -13,14 +13,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore"/>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
     <PackageReference Include="NetEscapades.Configuration.Yaml"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj" />
-    <ProjectReference Include="..\..\Common\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
-    <ProjectReference Include="..\..\Common\Infrastructures\DbFactories\NpOn.PostgresFactory\NpOn.PostgresFactory.csproj" />
-    <ProjectReference Include="..\..\MicroServices\Account\Contract\NpOn.AccountServiceReadModel\NpOn.AccountServiceReadModel.csproj" />
+    <PackageReference Include="NpOn.CommonMode" />
+    <PackageReference Include="NpOn.ICommonDb" />
+    <PackageReference Include="NpOn.CommonInternalCache" />
+    <PackageReference Include="NpOn.PostgresFactory" />
+    <PackageReference Include="NpOn.AccountServiceReadModel" />
   </ItemGroup>
 
 </Project>

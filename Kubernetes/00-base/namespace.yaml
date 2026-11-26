@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: npon-v2
+  labels:
+    app.kubernetes.io/part-of: npon-net-v2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npon-common-config
+  namespace: npon-v2
+data:
+  TZ: "Asia/Ho_Chi_Minh"
+  IsUsePostgres: "true"
+  PostgresConnectionNumber: "100"
+  ConnectionNumber: "100"
+  RedisConnectionNumber: "1000"
+  IsUseGrpcStandardMode: "true"
+  IsUseEnableUnencryptedMode: "true"
+  InterServiceRequireAuth: "true"
+  InterServiceAuthMode: "ServiceMesh"
+  InterServiceUseMTLS: "false"
+  InterServiceServiceMeshTrustDomain: "cluster.local"
+  InterServiceTrustedProxyIps: "127.0.0.1,::1"
+  InterServiceAllowedIdentities: "sso-controller,account-service,general-service"
+  InterServiceTokenLifetimeMinutes: "60"
+  InterServiceKeyRotationMinutes: "360"
+  LoginTokenExpiresTime: "480"
+  KeepAlivePingDelaySeconds: "60"
+  KeepAlivePingTimeoutSeconds: "30"
+  DnsResolverFactory: "60"
+  WorkerThreadMin: "2500"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: npon-interservice-secret
+  namespace: npon-v2
+type: Opaque
+stringData:
+  InterServiceSecretKey: "NpOn-InterService-Secret-Key-2024-Change-In-Production"

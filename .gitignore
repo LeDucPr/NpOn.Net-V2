@@ -53,6 +53,13 @@ NpOn.sln.DotSettings.user
 # Bỏ qua các file image nén của Rancher/K8s
 *.tar.gz
 
+## Ignore generated Envoy mTLS certificates & private keys
+Docker/Envoy/certs/*.crt
+Docker/Envoy/certs/*.key
+Docker/Envoy/certs/*.csr
+Docker/Envoy/certs/*.srl
+Docker/Envoy/certs/*.pfx
+
 ## Allow Agent & Harness framework files (DO NOT IGNORE)
 !AGENTS.md
 !agents.md

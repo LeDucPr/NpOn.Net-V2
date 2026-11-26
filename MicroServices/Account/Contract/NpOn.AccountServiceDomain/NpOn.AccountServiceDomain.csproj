@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="NpOn.CommonBaseDomain" />
         <PackageReference Include="protobuf-net.Core"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
       <ProjectReference Include="..\..\Definitions\NpOn.AccountEnum\NpOn.AccountEnum.csproj" />
       <ProjectReference Include="..\NpOn.AccountServiceCommand\NpOn.AccountServiceCommand.csproj" />
       <ProjectReference Include="..\NpOn.AccountServiceReadModel\NpOn.AccountServiceReadModel.csproj" />

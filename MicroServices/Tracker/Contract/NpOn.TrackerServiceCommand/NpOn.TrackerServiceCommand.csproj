@@ -8,7 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+      <PackageReference Include="NpOn.CommonGrpcContract" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\..\Definitions\NpOn.TrackerEnum\NpOn.TrackerEnum.csproj" />
     </ItemGroup>
 

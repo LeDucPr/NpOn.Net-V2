@@ -8,7 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\DbFactories\NpOn.ClickHouseFactory\NpOn.ClickHouseFactory.csproj" />
+      <PackageReference Include="NpOn.ClickHouseFactory" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\NpOn.ITrackerStorageAdapter\NpOn.ITrackerStorageAdapter.csproj" />
     </ItemGroup>
 

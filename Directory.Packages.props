@@ -54,5 +54,74 @@
     <PackageVersion Include="tusdotnet" Version="2.7.2" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+
+    <!-- Internal NpOn Common & Contract NuGet Libraries (packed into artifacts/packages via build-common.ps1) -->
+    <PackageVersion Include="NpOn.AddGrpcAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CassandraAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ClickHouseAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ElasticSearchAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.KafkaAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MssqlAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MySqlAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Neo4JAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.PostgresAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.RabbitMqAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.RedisAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.TokenValidatorExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.YugaByteAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ZeroMqAppExtUse" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonApplication" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonHttpApplication" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.BaseDbFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonBaseDomain" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonDb" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonEnums" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonGrpcCall" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonGrpcContract" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonHeaderConfig" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonInternalCache" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonMode" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CommonScope" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.HandleFlow" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ICommonDb" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Saga" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CassandraFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ClickHouseFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ElasticSearchFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.GenericDbFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MssqlFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MySqlFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Neo4JFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.PostgresFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.RedisFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.YugaByteFactory" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.CassandraExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ClickHouseExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ElasticSearchExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.KafkaExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MongoDbExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MssqlExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.MySqlExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Neo4JExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.PostgresExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.RabbitMqExtMs" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.RedisExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.YugaByteExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ZeroMqExtCm" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.AccountEnum" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ShareAccountConstant" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.AccountServiceCommand" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.AccountServiceReadModel" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.IAccountService" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.GeneralServiceCommand" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.GeneralServiceReadModel" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.IGeneralService" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.IMigrationService" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.TrackerEnum" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.TrackerConstant" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.TrackerServiceCommand" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.TrackerServiceReadModel" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.ITrackerService" Version="$(NpOnPackageVersion)" />
+    <PackageVersion Include="NpOn.Tracker2WayService" Version="$(NpOnPackageVersion)" />
   </ItemGroup>
 </Project>

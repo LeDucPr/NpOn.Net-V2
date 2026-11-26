@@ -9,12 +9,12 @@
 
     <ItemGroup>
         <PackageReference Include="Grpc.Net.ClientFactory"/>
+        <PackageReference Include="NpOn.CommonGrpcCall" />
+        <PackageReference Include="NpOn.CommonGrpcContract" />
         <PackageReference Include="System.ServiceModel.Primitives"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceCommand\NpOn.GeneralServiceCommand.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceReadModel\NpOn.GeneralServiceReadModel.csproj" />
     </ItemGroup>

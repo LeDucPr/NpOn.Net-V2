@@ -15,6 +15,8 @@ using Xunit.Abstractions;
 
 namespace NpOn.Core.Tests;
 
+[Trait("Category", "Integration")]
+[Trait("Category", "IntegrationScylla")]
 public class ScyllaClusterDriverTests(ITestOutputHelper output)
 {
     private const string ClusterHost = "127.0.0.1";

@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # NpOn.Net-V2 Automated Agent Harness Orchestrator
 # Executes all 5 mandatory stages:
 #   1. Architecture & Dependency Analysis
@@ -87,8 +87,8 @@ if (-not $SkipBuild) {
         & $commonBuildScript -Configuration $Configuration
     }
 
-    Write-Badge "INFO" "Dang bien dich NpOnV2.sln (Configuration: $Configuration, Accelerate: UseCommonDlls)..."
-    $buildOutput = dotnet build NpOnV2.sln -c $Configuration -p:UseCommonDlls=true --nologo 2>&1
+    Write-Badge "INFO" "Dang bien dich NpOnV2.sln (Configuration: $Configuration, Feed: artifacts/packages)..."
+    $buildOutput = dotnet build NpOnV2.sln -c $Configuration --nologo 2>&1
     $buildExitCode = $LASTEXITCODE
 
     $errorLines = $buildOutput | Where-Object { $_ -match ": error [A-Z0-9]+" }
@@ -125,8 +125,54 @@ $Report.Stages["Stage1_Architecture"] = [ordered]@{
 Write-Header "STAGE 2: TEST THU NGHIEM (AUTOMATED VERIFICATION)"
 $stage2Start = Get-Date
 
+function Test-LocalTcpPort([string]$HostName, [int]$Port, [int]$TimeoutMs = 500) {
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $task = $client.ConnectAsync($HostName, $Port)
+        if ($task.Wait($TimeoutMs) -and $client.Connected) { return $true }
+        return $false
+    } catch {
+        return $false
+    } finally {
+        $client.Dispose()
+    }
+}
+
+$scyllaUp = Test-LocalTcpPort -HostName "127.0.0.1" -Port 9042 -TimeoutMs 500
+$scyllaHealthy = $scyllaUp
+if ($scyllaUp -and (Get-Command docker -ErrorAction SilentlyContinue)) {
+    $scyllaRunning = docker ps --filter "name=^/scylla-node1$" --format "{{.Names}}" 2>$null
+    if ($scyllaRunning -eq "scylla-node1") {
+        $nodetoolOut = docker exec scylla-node1 nodetool status 2>$null | Out-String
+        if ($nodetoolOut -match "(?m)^(\?N|D[NLMJ])\s") {
+            $scyllaHealthy = $false
+        }
+    }
+}
+$postgresUp = Test-LocalTcpPort -HostName "127.0.0.1" -Port 5432 -TimeoutMs 500
+
+$testFilter = $null
+if ($scyllaHealthy -and $postgresUp) {
+    Write-Badge "INFO" "Live DB probes: ScyllaDB (9042)=HEALTHY, PostgreSQL (5432)=UP -> running FULL test suite."
+} elseif ($postgresUp) {
+    $testFilter = "Category!=IntegrationScylla"
+    $scyllaNote = if ($scyllaUp) { "DEGRADED (DN/?N replicas)" } else { "OFFLINE" }
+    Write-Badge "INFO" "Live DB probes: ScyllaDB (9042)=$scyllaNote, PostgreSQL (5432)=UP -> running with filter '$testFilter'."
+} elseif ($scyllaHealthy) {
+    $testFilter = "Category!=IntegrationPostgres"
+    Write-Badge "INFO" "Live DB probes: ScyllaDB (9042)=HEALTHY, PostgreSQL (5432)=OFFLINE -> running with filter '$testFilter'."
+} else {
+    $testFilter = "Category!=Integration"
+    $scyllaNote = if ($scyllaUp) { "DEGRADED (DN/?N replicas)" } else { "OFFLINE" }
+    Write-Badge "INFO" "Live DB probes: ScyllaDB (9042)=$scyllaNote, PostgreSQL (5432)=OFFLINE -> skipping live DB integration tests (--filter '$testFilter')."
+}
+
 Write-Badge "INFO" "Dang thuc thi bo test NpOn.Core.Tests..."
-$testOutput = dotnet test Test/NpOn.Core.Tests/NpOn.Core.Tests.csproj -c $Configuration --no-build --nologo 2>&1
+$testArgs = @("test", "Test/NpOn.Core.Tests/NpOn.Core.Tests.csproj", "-c", $Configuration, "--no-build", "--nologo")
+if ($testFilter) {
+    $testArgs += @("--filter", $testFilter)
+}
+$testOutput = & dotnet @testArgs 2>&1
 $testExitCode = $LASTEXITCODE
 
 $testSummaryMatch = $testOutput | Where-Object { $_ -match "Failed:\s+(\d+),\s+Passed:\s+(\d+),\s+Skipped:\s+(\d+),\s+Total:\s+(\d+)" }
@@ -161,6 +207,7 @@ $Report.Stages["Stage2_Testing"] = [ordered]@{
     TotalTests = $testsTotal
     PassedTests = $testsPassed
     FailedTests = $testsFailed
+    FilterApplied = if ($testFilter) { $testFilter } else { "None (Full)" }
 }
 
 # ==============================================================================
@@ -267,7 +314,7 @@ $mdContent = @"
 | Giai doan | Trang thai | Thoi gian | Chi tiet |
 |---|---|---|---|
 | **1. Kien truc & Compilation** | $($Report.Stages["Stage1_Architecture"].Status) | $($Report.Stages["Stage1_Architecture"].DurationMs) ms | Errors: $($Report.Stages["Stage1_Architecture"].ErrorsCount), Warnings: $($Report.Stages["Stage1_Architecture"].WarningsCount) |
-| **2. Test & Verification** | $($Report.Stages["Stage2_Testing"].Status) | $($Report.Stages["Stage2_Testing"].DurationMs) ms | Passed: $($Report.Stages["Stage2_Testing"].PassedTests)/$($Report.Stages["Stage2_Testing"].TotalTests) (IL Emit verified) |
+| **2. Test & Verification** | $($Report.Stages["Stage2_Testing"].Status) | $($Report.Stages["Stage2_Testing"].DurationMs) ms | Passed: $($Report.Stages["Stage2_Testing"].PassedTests)/$($Report.Stages["Stage2_Testing"].TotalTests) (Filter: $($Report.Stages["Stage2_Testing"].FilterApplied), IL Emit verified) |
 | **3. Hieu nang & Zero-Allocation** | $($Report.Stages["Stage3_Performance"].Status) | $($Report.Stages["Stage3_Performance"].DurationMs) ms | Throughput: $opsPerSec ops/sec, GC Delta: G0=$finalGen0/G1=$finalGen1/G2=$finalGen2 |
 | **4. De doc cho nguoi** | PASS | - | CLI Dashboard formatted & Markdown exported |
 | **5. Debug & Chuan doan** | PASS | - | IL OpCode stacks balanced, Semaphore pool intact |

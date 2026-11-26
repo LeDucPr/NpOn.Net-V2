@@ -11,6 +11,13 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Hosting"/>
+        <PackageReference Include="NpOn.AddGrpcAppExtUse" />
+        <PackageReference Include="NpOn.CassandraAppExtUse" />
+        <PackageReference Include="NpOn.PostgresAppExtUse" />
+        <PackageReference Include="NpOn.RabbitMqAppExtUse" />
+        <PackageReference Include="NpOn.CommonHttpApplication" />
+        <PackageReference Include="NpOn.CommonGrpcCall" />
+        <PackageReference Include="NpOn.CommonHeaderConfig" />
     </ItemGroup>
 
     <ItemGroup>
@@ -20,13 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.CassandraAppExtUse\NpOn.CassandraAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\Common\Applications\ApplicationExtensions\NpOn.RabbitMqAppExtUse\NpOn.RabbitMqAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
-      <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
-      <ProjectReference Include="..\..\..\Common\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
       <ProjectReference Include="..\NpOn.IMigrationService\NpOn.IMigrationService.csproj" />
     </ItemGroup>
 </Project>

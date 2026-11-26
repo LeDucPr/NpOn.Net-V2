@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dragonfly-secret
+  namespace: npon-v2
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "NpOn.Net-V2_Dragonfly"
+  HTTP_USER: "admin"
+  HTTP_PASSWORD: "admin_pass"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dragonfly
+  namespace: npon-v2
+  labels:
+    app: dragonfly
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+  selector:
+    app: dragonfly
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dragonfly
+  namespace: npon-v2
+  labels:
+    app: dragonfly
+spec:
+  serviceName: dragonfly
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dragonfly
+  template:
+    metadata:
+      labels:
+        app: dragonfly
+    spec:
+      containers:
+        - name: dragonfly
+          image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+          ports:
+            - containerPort: 6379
+              name: redis
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dragonfly-secret
+                  key: REDIS_PASSWORD
+            - name: DFLY_requirepass
+              valueFrom:
+                secretKeyRef:
+                  name: dragonfly-secret
+                  key: REDIS_PASSWORD
+          args:
+            - "--logtostderr"
+            - "--requirepass=$(REDIS_PASSWORD)"
+            - "--cache_mode=true"
+            - "--maxmemory=2gb"
+            - "--proactor_threads=4"
+            - "--dir=/data"
+            - "--snapshot_cron=*/5 * * * *"
+          volumeMounts:
+            - name: dragonfly-data
+              mountPath: /data
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2560Mi"
+  volumeClaimTemplates:
+    - metadata:
+        name: dragonfly-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dragonfly-ui-data
+  namespace: npon-v2
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dragonfly-ui
+  namespace: npon-v2
+  labels:
+    app: dragonfly-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dragonfly-ui
+  template:
+    metadata:
+      labels:
+        app: dragonfly-ui
+    spec:
+      containers:
+        - name: dragonfly-ui
+          image: rediscommander/redis-commander:latest
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dragonfly-secret
+                  key: REDIS_PASSWORD
+            - name: REDIS_HOSTS
+              value: "local:dragonfly:6379:0:$(REDIS_PASSWORD)"
+            - name: HTTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: dragonfly-secret
+                  key: HTTP_USER
+            - name: HTTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dragonfly-secret
+                  key: HTTP_PASSWORD
+          volumeMounts:
+            - name: dragonfly-ui-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+      volumes:
+        - name: dragonfly-ui-data
+          persistentVolumeClaim:
+            claimName: dragonfly-ui-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dragonfly-ui
+  namespace: npon-v2
+  labels:
+    app: dragonfly-ui
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8081
+  selector:
+    app: dragonfly-ui

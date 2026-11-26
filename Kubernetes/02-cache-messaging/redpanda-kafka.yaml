@@ -1,0 +1,226 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redpanda-secret
+  namespace: npon-v2
+type: Opaque
+stringData:
+  REDPANDA_ADMIN_USER: "npon_admin"
+  REDPANDA_ADMIN_PASSWORD: "npon_admin_pass"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: npon-v2
+  labels:
+    app: redpanda
+spec:
+  type: ClusterIP
+  ports:
+    - name: kafka-internal
+      port: 9092
+      targetPort: 9092
+    - name: kafka-external
+      port: 19092
+      targetPort: 19092
+    - name: admin
+      port: 9644
+      targetPort: 9644
+  selector:
+    app: redpanda
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redpanda
+  namespace: npon-v2
+  labels:
+    app: redpanda
+spec:
+  serviceName: redpanda
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      containers:
+        - name: redpanda
+          image: docker.redpanda.com/redpandadata/redpanda:latest
+          args:
+            - redpanda
+            - start
+            - --overprovisioned
+            - --smp
+            - "1"
+            - --memory
+            - "1G"
+            - --reserve-memory
+            - "0M"
+            - --node-id
+            - "0"
+            - --check=false
+            - --set
+            - redpanda.enable_sasl=true
+            - --set
+            - redpanda.superusers=["npon_admin"]
+            - --kafka-addr
+            - "PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092"
+            - --advertise-kafka-addr
+            - "PLAINTEXT://redpanda.npon-v2.svc.cluster.local:9092,OUTSIDE://redpanda.npon-v2.svc.cluster.local:19092"
+          ports:
+            - containerPort: 9092
+              name: kafka-internal
+            - containerPort: 19092
+              name: kafka-external
+            - containerPort: 9644
+              name: admin
+          volumeMounts:
+            - name: redpanda-data
+              mountPath: /var/lib/redpanda/data
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9644
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9644
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1500m"
+              memory: "1536Mi"
+  volumeClaimTemplates:
+    - metadata:
+        name: redpanda-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redpanda-init
+  namespace: npon-v2
+  labels:
+    app: redpanda
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: redpanda-init
+          image: docker.redpanda.com/redpandadata/redpanda:latest
+          env:
+            - name: REDPANDA_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: redpanda-secret
+                  key: REDPANDA_ADMIN_USER
+            - name: REDPANDA_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redpanda-secret
+                  key: REDPANDA_ADMIN_PASSWORD
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while ! rpk cluster health --api-urls redpanda.npon-v2.svc.cluster.local:9644; do
+                sleep 2
+              done
+              rpk acl user create "${REDPANDA_ADMIN_USER}" -p "${REDPANDA_ADMIN_PASSWORD}" \
+                --api-urls redpanda.npon-v2.svc.cluster.local:9644 \
+                --mechanism SCRAM-SHA-256 || true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redpanda-console-config
+  namespace: npon-v2
+data:
+  config.yml: |
+    kafka:
+      brokers: ["redpanda.npon-v2.svc.cluster.local:9092"]
+      sasl:
+        enabled: true
+        username: npon_admin
+        password: npon_admin_pass
+        mechanism: SCRAM-SHA-256
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redpanda-console
+  namespace: npon-v2
+  labels:
+    app: redpanda-console
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda-console
+  template:
+    metadata:
+      labels:
+        app: redpanda-console
+    spec:
+      containers:
+        - name: redpanda-console
+          image: docker.redpanda.com/redpandadata/console:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: CONFIG_FILEPATH
+              value: "/etc/redpanda-console/config.yml"
+          volumeMounts:
+            - name: console-config
+              mountPath: /etc/redpanda-console
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+      volumes:
+        - name: console-config
+          configMap:
+            name: redpanda-console-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda-console
+  namespace: npon-v2
+  labels:
+    app: redpanda-console
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: redpanda-console

@@ -8,11 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
+      <PackageReference Include="NpOn.CommonDb" />
+      <PackageReference Include="NpOn.HandleFlow" />
       <PackageReference Include="Npgsql"/>
     </ItemGroup>
 

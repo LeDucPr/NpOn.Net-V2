@@ -9,20 +9,20 @@
 
     <ItemGroup>
         <PackageReference Include="Grpc.AspNetCore"/>
+        <PackageReference Include="NpOn.AddGrpcAppExtUse" />
+        <PackageReference Include="NpOn.RedisAppExtUse" />
+        <PackageReference Include="NpOn.ZeroMqAppExtUse" />
+        <PackageReference Include="NpOn.CommonHttpApplication" />
+        <PackageReference Include="NpOn.CommonEnums" />
+        <PackageReference Include="NpOn.CommonGrpcCall" />
+        <PackageReference Include="NpOn.CommonHeaderConfig" />
+        <PackageReference Include="NpOn.CommonMode" />
+        <PackageReference Include="NpOn.ClickHouseAppExtUse" />
+        <PackageReference Include="NpOn.IAccountService" />
+        <PackageReference Include="NpOn.IGeneralService" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RedisAppExtUse\NpOn.RedisAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.ZeroMqAppExtUse\NpOn.ZeroMqAppExtUse.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcCall\NpOn.CommonGrpcCall.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonHeaderConfig\NpOn.CommonHeaderConfig.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
-      <ProjectReference Include="..\..\..\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj" />
-      <ProjectReference Include="..\..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />
-      <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.ClickHouseAppExtUse\NpOn.ClickHouseAppExtUse.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.TrackerServiceCommand\NpOn.TrackerServiceCommand.csproj" />
       <ProjectReference Include="..\..\Contract\NpOn.TrackerServiceDomain\NpOn.TrackerServiceDomain.csproj" />
       <ProjectReference Include="..\..\Definitions\NpOn.TrackerConstant\NpOn.TrackerConstant.csproj" />

@@ -16,16 +16,20 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.AddGrpcAppExtUse\NpOn.AddGrpcAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\NpOn.CommonHttpApplication\NpOn.CommonHttpApplication.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonDb\NpOn.CommonDb.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.ICommonDb\NpOn.ICommonDb.csproj"/>
+        <PackageReference Include="NpOn.AddGrpcAppExtUse"/>
+        <PackageReference Include="NpOn.PostgresAppExtUse"/>
+        <PackageReference Include="NpOn.CommonHttpApplication"/>
+        <PackageReference Include="NpOn.CommonBaseDomain"/>
+        <PackageReference Include="NpOn.CommonDb"/>
+        <PackageReference Include="NpOn.CommonEnums"/>
+        <PackageReference Include="NpOn.CommonGrpcContract"/>
+        <PackageReference Include="NpOn.CommonMode"/>
+        <PackageReference Include="NpOn.HandleFlow"/>
+        <PackageReference Include="NpOn.ICommonDb"/>
+        <PackageReference Include="MySqlConnector"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceCommand\NpOn.GeneralServiceCommand.csproj" />
         <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceReadModel\NpOn.GeneralServiceReadModel.csproj" />
         <ProjectReference Include="..\..\Definitions\NpOn.GeneralConstant\NpOn.GeneralConstant.csproj"/>
@@ -39,16 +43,6 @@
         <Content Include="appsettings.yaml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Reference Include="MySqlConnector">
-        <HintPath>..\..\..\..\..\..\..\.nuget\packages\mysqlconnector\2.5.0\lib\net10.0\MySqlConnector.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="MySqlConnector"/>
     </ItemGroup>
 
 </Project>

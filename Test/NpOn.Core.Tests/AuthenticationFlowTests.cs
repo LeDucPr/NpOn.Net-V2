@@ -61,6 +61,8 @@ public class AuthenticationFlowTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "IntegrationPostgres")]
     public async Task Postgres_AccountQuery_ShouldSucceed100TimesWithoutFailure()
     {
         string connStr = "Host=localhost;Port=5432;Database=account;Username=postgres;Password=password;";
@@ -88,6 +90,8 @@ public class AuthenticationFlowTests
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "IntegrationPostgres")]
     public async Task Postgres_AccountQuery_Concurrent50Tasks_ShouldAllSucceed()
     {
         string connStr = "Host=localhost;Port=5432;Database=account;Username=postgres;Password=password;";

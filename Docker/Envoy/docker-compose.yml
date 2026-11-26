@@ -1,0 +1,45 @@
+services:
+  envoy-sso:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: npon-envoy-sso
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    volumes:
+      - ./envoy.sso.yaml:/etc/envoy/envoy.yaml:ro
+      - ./certs:/certs:ro
+    ports:
+      - "15443:15443"
+      - "15004:15004"
+      - "15000:15000"
+    networks:
+      - npon-envoy-mesh-net
+    restart: unless-stopped
+
+  envoy-account:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: npon-envoy-account
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    volumes:
+      - ./envoy.account.yaml:/etc/envoy/envoy.yaml:ro
+      - ./certs:/certs:ro
+    ports:
+      - "16443:15443"
+    networks:
+      - npon-envoy-mesh-net
+    restart: unless-stopped
+
+  envoy-general:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: npon-envoy-general
+    command: ["envoy", "-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    volumes:
+      - ./envoy.general.yaml:/etc/envoy/envoy.yaml:ro
+      - ./certs:/certs:ro
+    ports:
+      - "17443:15443"
+    networks:
+      - npon-envoy-mesh-net
+    restart: unless-stopped
+
+networks:
+  npon-envoy-mesh-net:
+    driver: bridge

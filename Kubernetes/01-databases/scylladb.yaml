@@ -1,0 +1,442 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scylla-config
+  namespace: npon-v2
+data:
+  cassandra-rackdc.properties: |
+    dc=DataCenter1
+    rack=Rack1
+  scylla.yaml: |
+    cluster_name: 'NpOn Scylla Cluster'
+    num_tokens: 256
+    commitlog_sync: periodic
+    commitlog_sync_period_in_ms: 10000
+    commitlog_segment_size_in_mb: 32
+    schema_commitlog_segment_size_in_mb: 128
+    seed_provider:
+      - class_name: org.apache.cassandra.locator.SimpleSeedProvider
+        parameters:
+          - seeds: "scylla-0.scylla-headless.npon-v2.svc.cluster.local"
+    native_transport_port: 9042
+    native_shard_aware_transport_port: 19042
+    read_request_timeout_in_ms: 5000
+    write_request_timeout_in_ms: 2000
+    cas_contention_timeout_in_ms: 1000
+    endpoint_snitch: GossipingPropertyFileSnitch
+    rpc_address: 0.0.0.0
+    rpc_port: 9160
+    api_port: 10000
+    api_address: 0.0.0.0
+    batch_size_warn_threshold_in_kb: 128
+    batch_size_fail_threshold_in_kb: 1024
+    experimental_features:
+      - udf
+      - uda
+    partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+    commitlog_total_space_in_mb: -1
+    murmur3_partitioner_ignore_msb_bits: 12
+    force_schema_commit_log: true
+    task_ttl_in_seconds: 10
+    consistent_cluster_management: true
+    strict_is_not_null_in_views: true
+    api_ui_dir: /opt/scylladb/swagger-ui/dist/
+    api_doc_dir: /opt/scylladb/api/api-doc/
+    enable_keyspace_column_family_metrics: true
+    developer_mode: true
+    overprovisioned: true
+    start_native_transport: true
+    start_rpc: true
+    server_encryption_options:
+      internode_encryption: none
+    client_encryption_options:
+      enabled: false
+  scylla-manager.yaml: |
+    http: ":5080"
+    prometheus: ":56090"
+    database:
+      hosts:
+        - scylla-manager-db
+      replication_factor: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylla-headless
+  namespace: npon-v2
+  labels:
+    app: scylla
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: gossip
+      port: 7000
+      targetPort: 7000
+    - name: gossip-ssl
+      port: 7001
+      targetPort: 7001
+    - name: cql
+      port: 9042
+      targetPort: 9042
+    - name: cql-shard
+      port: 19042
+      targetPort: 19042
+    - name: metrics
+      port: 9180
+      targetPort: 9180
+    - name: node-exporter
+      port: 9100
+      targetPort: 9100
+    - name: thrift
+      port: 9160
+      targetPort: 9160
+    - name: jmx
+      port: 7199
+      targetPort: 7199
+    - name: rest-api
+      port: 10000
+      targetPort: 10000
+  selector:
+    app: scylla
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylla
+  namespace: npon-v2
+  labels:
+    app: scylla
+spec:
+  type: ClusterIP
+  ports:
+    - name: cql
+      port: 9042
+      targetPort: 9042
+    - name: cql-shard
+      port: 19042
+      targetPort: 19042
+    - name: metrics
+      port: 9180
+      targetPort: 9180
+    - name: rest-api
+      port: 10000
+      targetPort: 10000
+  selector:
+    app: scylla
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: scylla
+  namespace: npon-v2
+  labels:
+    app: scylla
+spec:
+  serviceName: scylla-headless
+  podManagementPolicy: OrderedReady
+  replicas: 3
+  selector:
+    matchLabels:
+      app: scylla
+  template:
+    metadata:
+      labels:
+        app: scylla
+    spec:
+      containers:
+        - name: scylla
+          image: scylladb/scylla:latest
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              exec /docker-entrypoint.py \
+                --developer-mode=1 \
+                --overprovisioned=1 \
+                --smp=1 \
+                --seeds=scylla-0.scylla-headless.npon-v2.svc.cluster.local \
+                --listen-address=${POD_IP} \
+                --broadcast-address=${POD_IP} \
+                --broadcast-rpc-address=${POD_IP} \
+                --rpc-address=0.0.0.0 \
+                --api-address=0.0.0.0
+          ports:
+            - containerPort: 7000
+              name: gossip
+            - containerPort: 7001
+              name: gossip-ssl
+            - containerPort: 9042
+              name: cql
+            - containerPort: 19042
+              name: cql-shard
+            - containerPort: 9180
+              name: metrics
+            - containerPort: 9100
+              name: node-exporter
+            - containerPort: 9160
+              name: thrift
+            - containerPort: 7199
+              name: jmx
+            - containerPort: 10000
+              name: rest-api
+          volumeMounts:
+            - name: scylla-data
+              mountPath: /var/lib/scylla
+            - name: scylla-config
+              mountPath: /etc/scylla/scylla.yaml
+              subPath: scylla.yaml
+            - name: scylla-config
+              mountPath: /etc/scylla/cassandra-rackdc.properties
+              subPath: cassandra-rackdc.properties
+          readinessProbe:
+            tcpSocket:
+              port: 9042
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          livenessProbe:
+            tcpSocket:
+              port: 9042
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+      volumes:
+        - name: scylla-config
+          configMap:
+            name: scylla-config
+  volumeClaimTemplates:
+    - metadata:
+        name: scylla-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: npon-v2
+type: Opaque
+stringData:
+  MINIO_ROOT_USER: "minio"
+  MINIO_ROOT_PASSWORD: "minio123"
+  MINIO_ACCESS_KEY: "minio"
+  MINIO_SECRET_KEY: "minio123"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: npon-v2
+  labels:
+    app: minio
+spec:
+  type: ClusterIP
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+  selector:
+    app: minio
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: npon-v2
+  labels:
+    app: minio
+spec:
+  serviceName: minio
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args: ["server", "/data", "--console-address", ":9001"]
+          ports:
+            - containerPort: 9000
+              name: s3
+            - containerPort: 9001
+              name: console
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_SECRET_KEY
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+  volumeClaimTemplates:
+    - metadata:
+        name: minio-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylla-manager-db
+  namespace: npon-v2
+  labels:
+    app: scylla-manager-db
+spec:
+  clusterIP: None
+  ports:
+    - name: cql
+      port: 9042
+      targetPort: 9042
+  selector:
+    app: scylla-manager-db
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: scylla-manager-db
+  namespace: npon-v2
+  labels:
+    app: scylla-manager-db
+spec:
+  serviceName: scylla-manager-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scylla-manager-db
+  template:
+    metadata:
+      labels:
+        app: scylla-manager-db
+    spec:
+      containers:
+        - name: scylla-manager-db
+          image: scylladb/scylla:latest
+          args: ["--smp", "1", "--memory", "1G", "--developer-mode", "1", "--overprovisioned", "1"]
+          ports:
+            - containerPort: 9042
+              name: cql
+          volumeMounts:
+            - name: scylla-manager-db-data
+              mountPath: /var/lib/scylla
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "1000m"
+              memory: "1536Mi"
+  volumeClaimTemplates:
+    - metadata:
+        name: scylla-manager-db-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylla-manager
+  namespace: npon-v2
+  labels:
+    app: scylla-manager
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5080
+      targetPort: 5080
+    - name: prometheus
+      port: 56090
+      targetPort: 56090
+  selector:
+    app: scylla-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scylla-manager
+  namespace: npon-v2
+  labels:
+    app: scylla-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scylla-manager
+  template:
+    metadata:
+      labels:
+        app: scylla-manager
+    spec:
+      containers:
+        - name: scylla-manager
+          image: scylladb/scylla-manager:latest
+          ports:
+            - containerPort: 5080
+              name: http
+            - containerPort: 56090
+              name: prometheus
+          volumeMounts:
+            - name: scylla-config
+              mountPath: /etc/scylla-manager/scylla-manager.yaml
+              subPath: scylla-manager.yaml
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: scylla-config
+          configMap:
+            name: scylla-config

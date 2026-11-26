@@ -8,11 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="NpOn.CommonGrpcContract" />
       <PackageReference Include="protobuf-net.Core"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
     </ItemGroup>
 
 </Project>

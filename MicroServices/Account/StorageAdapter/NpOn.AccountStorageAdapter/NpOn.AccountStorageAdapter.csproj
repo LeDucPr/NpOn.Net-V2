@@ -8,13 +8,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.PostgresAppExtUse\NpOn.PostgresAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Applications\ApplicationExtensions\NpOn.RedisAppExtUse\NpOn.RedisAppExtUse.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj"/>
-        <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj"/>
-        <ProjectReference Include="..\..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj"/>
+        <PackageReference Include="NpOn.PostgresAppExtUse"/>
+        <PackageReference Include="NpOn.RedisAppExtUse"/>
+        <PackageReference Include="NpOn.CommonEnums"/>
+        <PackageReference Include="NpOn.CommonMode"/>
+        <PackageReference Include="NpOn.HandleFlow"/>
+        <PackageReference Include="NpOn.RedisExtCm"/>
+        <PackageReference Include="NpOn.IGeneralService"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\Definitions\NpOn.AccountConstant\NpOn.AccountConstant.csproj" />
         <ProjectReference Include="..\NpOn.IAccountStorageAdapter\NpOn.IAccountStorageAdapter.csproj"/>
     </ItemGroup>

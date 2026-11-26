@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cockroachdb-headless
+  namespace: npon-v2
+  labels:
+    app: cockroachdb
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: sql
+      port: 26257
+      targetPort: 26257
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: cockroachdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cockroachdb
+  namespace: npon-v2
+  labels:
+    app: cockroachdb
+spec:
+  type: ClusterIP
+  ports:
+    - name: sql
+      port: 26257
+      targetPort: 26257
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: cockroachdb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cockroachdb
+  namespace: npon-v2
+  labels:
+    app: cockroachdb
+spec:
+  serviceName: cockroachdb-headless
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cockroachdb
+  template:
+    metadata:
+      labels:
+        app: cockroachdb
+    spec:
+      containers:
+        - name: cockroachdb
+          image: cockroachdb/cockroach:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              exec /cockroach/cockroach start \
+                --insecure \
+                --advertise-addr=$(hostname -f) \
+                --join=cockroachdb-0.cockroachdb-headless.npon-v2.svc.cluster.local:26257,cockroachdb-1.cockroachdb-headless.npon-v2.svc.cluster.local:26257,cockroachdb-2.cockroachdb-headless.npon-v2.svc.cluster.local:26257 \
+                --cache=.25 \
+                --max-sql-memory=.25 \
+                --logtostderr=WARNING
+          ports:
+            - containerPort: 26257
+              name: sql
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - name: cockroach-data
+              mountPath: /cockroach/cockroach-data
+          readinessProbe:
+            httpGet:
+              path: /health?ready=1
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+  volumeClaimTemplates:
+    - metadata:
+        name: cockroach-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cockroachdb-init
+  namespace: npon-v2
+  labels:
+    app: cockroachdb
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: cockroachdb-init
+          image: cockroachdb/cockroach:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              until /cockroach/cockroach init --insecure --host=cockroachdb-0.cockroachdb-headless.npon-v2.svc.cluster.local:26257; do
+                echo "Waiting for cockroachdb-0..."
+                sleep 3
+              done
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

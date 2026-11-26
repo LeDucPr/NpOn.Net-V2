@@ -8,7 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.ZeroMqExtCm\NpOn.ZeroMqExtCm.csproj" />
+      <PackageReference Include="NpOn.ZeroMqExtCm" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\..\Definitions\NpOn.TrackerConstant\NpOn.TrackerConstant.csproj" />
     </ItemGroup>
 
